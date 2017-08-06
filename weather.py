@@ -8,12 +8,13 @@ import occurrence as fo
 import pandas as pd
 from apache_beam.metrics import Metrics
 import tensorflow as tf
+import logging
 
 import dateutil.parser
 # If fails:
 # gcloud auth application-default login
-@beam.typehints.with_input_types(fo.Occurrence)
-@beam.typehints.with_output_types(fo.Occurrence)
+@beam.typehints.with_input_types(tf.train.SequenceExample)
+@beam.typehints.with_output_types(tf.train.SequenceExample)
 class FetchWeatherDoFn(beam.DoFn):
     def __init__(self, project):
         super(FetchWeatherDoFn, self).__init__()
@@ -21,22 +22,22 @@ class FetchWeatherDoFn(beam.DoFn):
         self._dataset = 'bigquery-public-data:noaa_gsod'
         self.insufficient_weather_records = Metrics.counter('main', 'insufficient_weather_records')
 
-    def process(self, o):
+    def process(self, example):
         client = bigquery.Client(project=self._project)
 
-        lat = o.example.context.feature['latitude'].float_list.value[0]
-        lng = o.example.context.feature['longitude'].float_list.value[0]
+        lat = example.context.feature['latitude'].float_list.value[0]
+        lng = example.context.feature['longitude'].float_list.value[0]
 
         location = Point(lat, lng)
 
         # Calculate bounding box.
-        nw = distance.VincentyDistance(miles=20).destination(location, 315)
-        sw = distance.VincentyDistance(miles=20).destination(location, 135)
+        nw = distance.VincentyDistance(miles=40).destination(location, 315)
+        se = distance.VincentyDistance(miles=40).destination(location, 135)
 
         records = {}
 
         yearmonths = {}
-        date = datetime.fromtimestamp(o.example.context.feature['date'].int64_list.value[0])
+        date = datetime.fromtimestamp(example.context.feature['date'].int64_list.value[0])
         range = pd.date_range(end=date, periods=45, freq='D')
         for d in range.tolist():
             if str(d.year) not in yearmonths:
@@ -71,17 +72,17 @@ class FetchWeatherDoFn(beam.DoFn):
                     a.stn=b.usaf
                     AND a.wban=b.wban
                   WHERE
-                     lat >= {swLat} AND lat <= {neLat}
-                    AND lon >= {neLon} AND lon <= {swLon}
+                     lat <= {nLat} AND lat >= {sLat}
+                    AND lon >= {wLon} AND lon <= {eLon}
                     AND {monthQuery}
                   ORDER BY
                     da DESC
             """
             values = {
-                'neLat': str(nw.latitude),
-                'neLon': str(nw.longitude),
-                'swLat': str(sw.latitude),
-                'swLon': str(sw.longitude),
+                'nLat': str(nw.latitude),
+                'wLon': str(nw.longitude),
+                'sLat': str(se.latitude),
+                'eLon': str(se.longitude),
                 'year': year,
                 'monthQuery': monthquery
             }
@@ -106,14 +107,17 @@ class FetchWeatherDoFn(beam.DoFn):
         dates = records.keys()
         dates.sort()
 
-        if len(dates) != len(range):
+
+        if len(dates) != (len(range) - 1):
+            print(len(dates), len(range))
+            # logging.info("range: %.8f, %.8f, %s, %s", lat, lng, year, months)
             self.insufficient_weather_records.inc()
             return
 
-        tmax = o.example.feature_lists.feature_list["tmax"]
-        tmin = o.example.feature_lists.feature_list["tmin"]
-        prcp = o.example.feature_lists.feature_list["prcp"]
-        temp = o.example.feature_lists.feature_list["temp"]
+        tmax = example.feature_lists.feature_list["tmax"]
+        tmin = example.feature_lists.feature_list["tmin"]
+        prcp = example.feature_lists.feature_list["prcp"]
+        temp = example.feature_lists.feature_list["temp"]
 
         for d in dates:
             tmax.feature.add().float_list.value.append(records[d][2])
@@ -121,4 +125,4 @@ class FetchWeatherDoFn(beam.DoFn):
             prcp.feature.add().float_list.value.append(records[d][4])
             temp.feature.add().float_list.value.append(records[d][5])
 
-        yield o
+        yield example

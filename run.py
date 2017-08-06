@@ -7,31 +7,23 @@ from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
 from apache_beam.io.gcp.datastore.v1.datastoreio import ReadFromDatastore
 import logging
+from google.cloud.datastore import query
 from google.cloud.proto.datastore.v1 import query_pb2
 from googledatastore import helper as datastore_helper, PropertyFilter
 import googledatastore as ds
 from apache_beam.metrics import Metrics
 from apache_beam.metrics.metric import MetricsFilter
 import occurrence as fo
+import weather as fw
+import tensorflow as tf
 
-@beam.typehints.with_input_types(fo.Occurrence)
-@beam.typehints.with_output_types(beam.typehints.KV[int, fo.Occurrence])
-class GroupTaxa(beam.DoFn):
-    def __init__(self):
-        super(GroupTaxa, self).__init__()
-
-    def process(self, o):
-        yield o.example.features.feature['label'].int64_list.value[0], o
-
-
-@beam.typehints.with_input_types(beam.typehints.KV[int, beam.typehints.Iterable[fo.Occurrence]])
-@beam.typehints.with_output_types(fo.Occurrence)
+@beam.typehints.with_input_types(beam.typehints.KV[int, beam.typehints.Iterable[tf.train.SequenceExample]])
+@beam.typehints.with_output_types(tf.train.SequenceExample)
 class UnwindTaxaWithSufficientCount(beam.DoFn):
     def __init__(self):
         super(UnwindTaxaWithSufficientCount, self).__init__()
         self.sufficient_taxa_counter = Metrics.counter('main', 'sufficient_taxa')
         self.insufficient_taxa_counter = Metrics.counter('main', 'insufficient_taxa')
-        self.final_occurrence_count = Metrics.counter('main', 'final_occurrences')
 
     def process(self, element):
         if len(element[1]) <= 50:
@@ -40,9 +32,22 @@ class UnwindTaxaWithSufficientCount(beam.DoFn):
 
         self.sufficient_taxa_counter.inc()
 
+        logging.info("%d: %d", element[0], len(element[1]))
+
         for o in element[1]:
-            self.final_occurrence_count.inc()
             yield o
+
+
+@beam.typehints.with_input_types(tf.train.SequenceExample)
+@beam.typehints.with_output_types(str)
+class FormatToWrite(beam.DoFn):
+    def __init__(self):
+        super(FormatToWrite, self).__init__()
+        self.final_occurrence_count = Metrics.counter('main', 'final_occurrence_count')
+
+    def process(self, element):
+        self.final_occurrence_count.inc()
+        yield element.SerializeToString()
 
 # class LogDoFn(beam.DoFn):
 #     def __init__(self):
@@ -87,8 +92,13 @@ def run(argv=None):
 
     project = pipeline_options.get_all_options()['project']
 
+
+    # q = query.Query(kind='Occurrence', project=project)
+    # q.fetch()
     q = query_pb2.Query()
-    q.kind.add().name = 'Occurrence'
+    datastore_helper.set_kind(q, 'Occurrence')
+    # q.limit.name = 100
+
     # Need to index this in google.
 
     # datastore_helper.set_composite_filter(q.filter, CompositeFilter.AND,
@@ -102,12 +112,13 @@ def run(argv=None):
 
     lines = p \
         | 'ReadDatastoreOccurrences' >> ReadFromDatastore(project=project, query=q, num_splits=0) \
-        | 'ConvertEntitiesToOccurrences' >> beam.ParDo(fo.EntityToOccurrence()) \
+        | 'ConvertEntitiesToKeyStrings' >> beam.ParDo(fo.EntityToString()) \
         | 'RemoveDuplicates' >> beam.RemoveDuplicates() \
-        | 'ParseKeyValue' >> beam.ParDo(GroupTaxa()) \
+        | 'ConvertKeyStringsToTaxonSequenceExample' >> beam.ParDo(fo.StringToTaxonSequenceExample()) \
         | 'GroupByTaxon' >> beam.GroupByKey() \
         | 'UnwindSufficientTaxa' >> beam.ParDo(UnwindTaxaWithSufficientCount()) \
-        | 'FormatToWrite' >> beam.Map(lambda o: o.example.SerializeToString())
+        | 'AttachWeather' >> beam.ParDo(fw.FetchWeatherDoFn(project)) \
+        | 'FormatToWrite' >> beam.ParDo(FormatToWrite())
 
     lines | 'write' >> WriteToText(known_args.output)
 
@@ -122,7 +133,7 @@ def run(argv=None):
         'sufficient_taxa',
         'insufficient_taxa',
         'insufficient_weather_records',
-        'final_occurrences'
+        'final_occurrence_count'
     ]:
         query_result = result.metrics().query(MetricsFilter().with_name(v))
         if query_result['counters']:

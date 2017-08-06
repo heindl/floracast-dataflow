@@ -20,11 +20,18 @@ class OccurrenceParseTest(unittest.TestCase):
         entity['Date'] = datetime(2017,8,3, 0, 0, 0)
         entity['Location'] = helpers.GeoPoint(latitude=36.6316721,longitude=-81.8079655)
 
-        dofn = fo.EntityToOccurrence()
-        res = dofn.process(helpers.entity_to_protobuf(entity))
-        for r in res:
+        dofn1 = fo.EntityToString()
+        res1 = dofn1.process(helpers.entity_to_protobuf(entity))
+        for r in res1:
 
-            self.assertEqual(r.example.context.feature['label'].int64_list.value[0], 1234)
-            self.assertEqual(r.example.context.feature['date'].int64_list.value[0], long(1501736400))
-            self.assertEqual(r.example.context.feature['latitude'].float_list.value[0], 36.6316721)
-            self.assertEqual(r.example.context.feature['longitude'].float_list.value[0], -81.8079655)
+            dofn2 = fo.StringToTaxonSequenceExample()
+            res2 = dofn2.process(r)
+            for r in res1:
+
+                self.assertEqual(r[0], "1234|||36.63167210|||-81.80796550|||1501736400")
+                self.assertEqual(r[1].context.feature['label'].int64_list.value[0], 1234)
+                self.assertEqual(r[1].context.feature['date'].int64_list.value[0], long(1501736400))
+                self.assertEqual(r[1].context.feature['latitude'].float_list.value[0], 36.6316721)
+                self.assertEqual(r[1].context.feature['longitude'].float_list.value[0], -81.8079655)
+                self.assertEqual(r[1].context.feature['daylength'].int64_list.value[0], 50248)
+                self.assertEqual(r[1].context.feature['mgrs'].bytes_list.value[0], '19')
