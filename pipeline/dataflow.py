@@ -16,7 +16,7 @@ import mgrs
 import os
 from googlemaps import Client
 import apache_beam as beam
-from datetime import datetime, timedelta
+from datetime import datetime
 from google.cloud import bigquery
 from geopy import Point, distance
 import pandas as pd
@@ -299,7 +299,7 @@ class FetchWeatherDoFn(beam.DoFn):
 
         yearmonths = {}
         date = datetime.fromtimestamp(example.context.feature['date'].int64_list.value[0])
-        range = pd.date_range(end=date, periods=45, freq='D')
+        range = pd.date_range(end=datetime(date.year, date.month, date.day), periods=45, freq='D')
         for d in range.tolist():
             if str(d.year) not in yearmonths:
                 yearmonths[str(d.year)] = set()
@@ -358,19 +358,18 @@ class FetchWeatherDoFn(beam.DoFn):
                 if d > range.max() or d < range.min():
                     continue
                 if d in records:
-
                     previous = distance.vincenty().measure(Point(records[d][0], records[d][1]), location)
                     current = distance.vincenty().measure(Point(row[0], row[1]), location)
                     if current < previous:
                         records[d] = row
-                        continue
-                records[d] = row
+                else:
+                    records[d] = row
 
         dates = records.keys()
         dates.sort()
 
-
-        if len(dates) != (len(range) - 1):
+        if len(dates) != len(range):
+            print(len(dates), len(range))
             # logging.info("range: %.8f, %.8f, %s, %s", lat, lng, year, months)
             self.insufficient_weather_records.inc()
             return
