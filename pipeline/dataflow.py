@@ -9,6 +9,7 @@ from apache_beam.metrics.metric import MetricsFilter
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
 from google.cloud.proto.datastore.v1 import query_pb2
+from google.cloud.datastore import helpers, entity
 from googledatastore import helper as datastore_helper, PropertyFilter
 import random
 import mgrs
@@ -23,70 +24,11 @@ from apache_beam.metrics import Metrics
 import tensorflow as tf
 import logging
 import astral
-import dateutil.parser
+from pygeocoder import Geocoder, GeocoderError
 
-if __name__ == '__main__':
-    logging.getLogger().setLevel(logging.INFO)
-    run()
-
-@beam.typehints.with_input_types(beam.typehints.KV[int, beam.typehints.Iterable[tf.train.SequenceExample]])
-@beam.typehints.with_output_types(tf.train.SequenceExample)
-class UnwindTaxaWithSufficientCount(beam.DoFn):
-    def __init__(self):
-        super(UnwindTaxaWithSufficientCount, self).__init__()
-        self.sufficient_taxa_counter = Metrics.counter('main', 'sufficient_taxa')
-        self.insufficient_taxa_counter = Metrics.counter('main', 'insufficient_taxa')
-
-    def process(self, element):
-        print("length")
-        print(len(element[1]))
-        if len(element[1]) <= 50:
-            self.insufficient_taxa_counter.inc()
-            return
-
-        self.sufficient_taxa_counter.inc()
-
-        locations = []
-        blanks = []
-        for o in element[1]:
-            yield o
-
-            lat, lng, date = rand.random_point()
-            locations.append((lat, lng))
-            se = tf.train.SequenceExample()
-            se.context.feature["label"].int64_list.value.append(0)
-            se.context.feature["latitude"].float_list.value.append(lat)
-            se.context.feature["longitude"].float_list.value.append(lng)
-            se.context.feature["date"].int64_list.value.append(int(date.strftime("%s")))
-            se.context.feature["grid-zone"].bytes_list.value.append(mgrs.MGRS().toMGRS(lat, lng)[:2])
-            blanks.append(se)
-
-        client = Client(key=os.environ["FLORACAST_GOOGLE_MAPS_API_KEY"])
-
-        # Group here in order to run wider batches
-        for batch in group_list(locations, 300):
-            for r in client.elevation(batch):
-                for i, b in enumerate(blanks):
-                    if r['location']['lat'] != b.context.feature['latitude'].float_list.value[0]:
-                        continue
-                    if r['location']['lng'] != b.context.feature['longitude'].float_list.value[0]:
-                        continue
-                    blanks[i].context.feature["elevation"].float_list.value.append(b['elevation'])
-                    break
-
-        for b in blanks:
-            yield b
-
-
-def group_list(l, group_size):
-    """
-    :param l:           list
-    :param group_size:  size of each group
-    :return:            Yields successive group-sized lists from l.
-    """
-    for i in xrange(0, len(l), group_size):
-        yield l[i:i+group_size]
-
+# Constants
+MINIMUM_TAXON_COUNT=1
+RESTRICT_TO_TAXON=60608
 
 def run(argv=None):
     parser = argparse.ArgumentParser()
@@ -143,14 +85,18 @@ def run(argv=None):
 
     lines = p \
         | 'ReadDatastoreOccurrences' >> ReadFromDatastore(project=project, query=q, num_splits=0) \
-        | 'ConvertEntitiesToKeyStrings' >> beam.ParDo(foccurrence.EntityToString()) \
+        | 'ConvertEntitiesToKeyStrings' >> beam.ParDo(EntityToString()) \
         | 'RemoveDuplicates' >> beam.RemoveDuplicates() \
-        | 'ConvertKeyStringsToTaxonSequenceExample' >> beam.ParDo(foccurrence.StringToTaxonSequenceExample()) \
+        | 'ConvertKeyStringsToTaxonSequenceExample' >> beam.ParDo(StringToTaxonSequenceExample()) \
         | 'GroupByTaxon' >> beam.GroupByKey() \
         | 'UnwindSufficientTaxa' >> beam.ParDo(UnwindTaxaWithSufficientCount()) \
-        | 'AttachWeather' >> beam.ParDo(fweather.FetchWeatherDoFn(project))
+        | 'AttachWeather' >> beam.ParDo(FetchWeatherDoFn(project)) \
+        | 'EncodeForWrite' >> beam.ParDo(EncodeExample())
 
-    lines | 'Write' >> beam.io.WriteToTFRecord(known_args.output)
+    lines | 'Write' >> beam.io.WriteToTFRecord(
+        file_path_prefix=known_args.output,
+        file_name_suffix='.tfrecord',
+    )
 
     result = p.run()
 
@@ -161,6 +107,7 @@ def run(argv=None):
         'invalid_occurrence_elevation',
         'invalid_occurrence_location',
         'invalid_occurrence_date',
+        'following_removed_duplicates',
         'sufficient_taxa',
         'insufficient_taxa',
         'insufficient_weather_records',
@@ -171,33 +118,65 @@ def run(argv=None):
             logging.info('%s: %d', v, query_result['counters'][0].committed)
 
 
+@beam.typehints.with_input_types(beam.typehints.KV[int, beam.typehints.Iterable[tf.train.SequenceExample]])
+@beam.typehints.with_output_types(tf.train.SequenceExample)
+class UnwindTaxaWithSufficientCount(beam.DoFn):
+    def __init__(self):
+        super(UnwindTaxaWithSufficientCount, self).__init__()
+        self.sufficient_taxa_counter = Metrics.counter('main', 'sufficient_taxa')
+        self.insufficient_taxa_counter = Metrics.counter('main', 'insufficient_taxa')
 
-class SequenceExampleCoder(beam.coders.Coder):
+    def process(self, element):
+        if len(element[1]) <= MINIMUM_TAXON_COUNT:
+            self.insufficient_taxa_counter.inc()
+            return
 
-    def encode(self, o):
-        return o.SerializeToString()
+        self.sufficient_taxa_counter.inc()
 
-    def decode(self, str):
-        se = tf.train.SequenceExample()
-        se.ParseFromString(str)
+        locations = []
+        blanks = []
+        for o in element[1]:
+            yield o
 
-        #
-        #
-        # se = tf.train.SequenceExample()
-        # for k, v in context_parsed:
-        #
-        # se.context = tf.train.Features(feature=context_parsed)
-        # se.feature_lists = tf.train.FeatureLists(feature_list=sequence_parsed)
-        return se
+            lat, lng, date = random_point()
+            locations.append((lat, lng))
+            se = tf.train.SequenceExample()
+            se.context.feature["label"].int64_list.value.append(0)
+            se.context.feature["latitude"].float_list.value.append(lat)
+            se.context.feature["longitude"].float_list.value.append(lng)
+            se.context.feature["date"].int64_list.value.append(int(date.strftime("%s")))
+            se.context.feature["grid-zone"].bytes_list.value.append(mgrs.MGRS().toMGRS(lat, lng)[:2])
+            blanks.append(se)
 
-    def is_deterministic(self):
-        return True
+        client = Client(key=os.environ["FLORACAST_GOOGLE_MAPS_API_KEY"])
+
+        # Group here in order to run wider batches
+        for batch in group_list(locations, 300):
+            for r in client.elevation(batch):
+                for i, b in enumerate(blanks):
+                    if r['location']['lat'] != b.context.feature['latitude'].float_list.value[0]:
+                        continue
+                    if r['location']['lng'] != b.context.feature['longitude'].float_list.value[0]:
+                        continue
+                    blanks[i].context.feature["elevation"].float_list.value.append(b['elevation'])
+                    break
+
+        for b in blanks:
+            yield b
 
 
-beam.coders.registry.register_coder(tf.train.SequenceExample, SequenceExampleCoder)
+def group_list(l, group_size):
+    """
+    :param l:           list
+    :param group_size:  size of each group
+    :return:            Yields successive group-sized lists from l.
+    """
+    for i in xrange(0, len(l), group_size):
+        yield l[i:i+group_size]
+
 
 # Filter and prepare for duplicate sort.
-@beam.typehints.with_input_types(datastore.Entity)
+@beam.typehints.with_input_types(entity.Entity)
 @beam.typehints.with_output_types(str)
 class EntityToString(beam.DoFn):
     def __init__(self):
@@ -214,8 +193,9 @@ class EntityToString(beam.DoFn):
         """
         e = helpers.entity_from_protobuf(element)
 
-        if e.key.parent.parent.id != 60606:
-            return
+        if RESTRICT_TO_TAXON != 0:
+            if e.key.parent.parent.id != RESTRICT_TO_TAXON:
+                return
 
         self.new_occurrence_counter.inc()
 
@@ -235,7 +215,7 @@ class EntityToString(beam.DoFn):
         if type(loc) is helpers.GeoPoint:
             lat = loc.latitude
             lng = loc.longitude
-        elif type(loc) is datastore.entity.Entity:
+        elif type(loc) is entity.Entity:
             lat = loc['Lat']
             lng = loc['Lng']
         else:
@@ -255,13 +235,26 @@ class EntityToString(beam.DoFn):
             elevation
         )
 
+# Filter and prepare for duplicate sort.
+@beam.typehints.with_input_types(tf.train.SequenceExample)
+@beam.typehints.with_output_types(str)
+class EncodeExample(beam.DoFn):
+    def __init__(self):
+        super(EncodeExample, self).__init__()
+
+    def process(self, element):
+        yield element.SerializeToString()
+
 @beam.typehints.with_input_types(str)
 @beam.typehints.with_output_types(beam.typehints.KV[int, tf.train.SequenceExample])
 class StringToTaxonSequenceExample(beam.DoFn):
     def __init__(self):
         super(StringToTaxonSequenceExample, self).__init__()
+        self.following_removed_duplicates = Metrics.counter('main', 'following_removed_duplicates')
 
     def process(self, element):
+
+        self.following_removed_duplicates.inc()
 
         ls = element.split("|||")
         taxon = int(ls[0])
@@ -306,7 +299,7 @@ class FetchWeatherDoFn(beam.DoFn):
 
         yearmonths = {}
         date = datetime.fromtimestamp(example.context.feature['date'].int64_list.value[0])
-        range = pd.date_range(end=date, periods=60, freq='D')
+        range = pd.date_range(end=date, periods=45, freq='D')
         for d in range.tolist():
             if str(d.year) not in yearmonths:
                 yearmonths[str(d.year)] = set()
@@ -404,9 +397,9 @@ class FetchWeatherDoFn(beam.DoFn):
                     return
 
             daylight.feature.add().float_list.value.append(daylength)
-            tmax.feature.add().float_list.value.append(records[d][2])
+            prcp.feature.add().float_list.value.append(records[d][2])
             tmin.feature.add().float_list.value.append(records[d][3])
-            prcp.feature.add().float_list.value.append(records[d][4])
+            tmax.feature.add().float_list.value.append(records[d][4])
             temp.feature.add().float_list.value.append(records[d][5])
 
         self.final_occurrence_count.inc()
@@ -442,3 +435,8 @@ def random_point():
                 return gcode[0].coordinates[0], gcode[0].coordinates[1], date
         except GeocoderError:
             continue
+
+
+if __name__ == '__main__':
+    logging.getLogger().setLevel(logging.INFO)
+    run()
