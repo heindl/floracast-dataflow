@@ -1,2 +1,0 @@
-
-WeatherDaysBeforeOccurrence = 45

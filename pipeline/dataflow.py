@@ -25,10 +25,12 @@ import tensorflow as tf
 import logging
 import astral
 from pygeocoder import Geocoder, GeocoderError
+import math as math
 
 # Constants
-MINIMUM_TAXON_COUNT=1
-RESTRICT_TO_TAXON=60608
+MINIMUM_TAXON_COUNT=40
+RESTRICT_TO_TAXON=60606
+MAX_WEATHER_STATION_DISTANCE_FROM_OCCURRENCE=100
 
 def run(argv=None):
     parser = argparse.ArgumentParser()
@@ -90,7 +92,7 @@ def run(argv=None):
         | 'ConvertKeyStringsToTaxonSequenceExample' >> beam.ParDo(StringToTaxonSequenceExample()) \
         | 'GroupByTaxon' >> beam.GroupByKey() \
         | 'UnwindSufficientTaxa' >> beam.ParDo(UnwindTaxaWithSufficientCount()) \
-        | 'AttachWeather' >> beam.ParDo(FetchWeatherDoFn(project)) \
+        | 'FetchWeather' >> beam.ParDo(FetchWeatherDoFn(project)) \
         | 'EncodeForWrite' >> beam.ParDo(EncodeExample())
 
     lines | 'Write' >> beam.io.WriteToTFRecord(
@@ -117,6 +119,8 @@ def run(argv=None):
         if query_result['counters']:
             logging.info('%s: %d', v, query_result['counters'][0].committed)
 
+def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
+    return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
 @beam.typehints.with_input_types(beam.typehints.KV[int, beam.typehints.Iterable[tf.train.SequenceExample]])
 @beam.typehints.with_output_types(tf.train.SequenceExample)
@@ -145,7 +149,7 @@ class UnwindTaxaWithSufficientCount(beam.DoFn):
             se.context.feature["latitude"].float_list.value.append(lat)
             se.context.feature["longitude"].float_list.value.append(lng)
             se.context.feature["date"].int64_list.value.append(int(date.strftime("%s")))
-            se.context.feature["grid-zone"].bytes_list.value.append(mgrs.MGRS().toMGRS(lat, lng)[:2])
+            se.context.feature["grid-zone"].bytes_list.value.append(mgrs.MGRS().toMGRS(lat, lng)[:2].encode())
             blanks.append(se)
 
         client = Client(key=os.environ["FLORACAST_GOOGLE_MAPS_API_KEY"])
@@ -154,11 +158,19 @@ class UnwindTaxaWithSufficientCount(beam.DoFn):
         for batch in group_list(locations, 300):
             for r in client.elevation(batch):
                 for i, b in enumerate(blanks):
-                    if r['location']['lat'] != b.context.feature['latitude'].float_list.value[0]:
+                    if not isclose(
+                            r['location']['lat'],
+                            b.context.feature['latitude'].float_list.value[0],
+                            abs_tol=0.00001
+                    ):
                         continue
-                    if r['location']['lng'] != b.context.feature['longitude'].float_list.value[0]:
+                    if not isclose(
+                            r['location']['lng'],
+                            b.context.feature['longitude'].float_list.value[0],
+                            abs_tol=0.00001
+                    ):
                         continue
-                    blanks[i].context.feature["elevation"].float_list.value.append(b['elevation'])
+                    blanks[i].context.feature["elevation"].float_list.value.append(r['elevation'])
                     break
 
         for b in blanks:
@@ -241,9 +253,25 @@ class EntityToString(beam.DoFn):
 class EncodeExample(beam.DoFn):
     def __init__(self):
         super(EncodeExample, self).__init__()
+        self.final_occurrence_count = Metrics.counter('main', 'final_occurrence_count')
 
-    def process(self, element):
-        yield element.SerializeToString()
+    def process(self, ex):
+        if "elevation" not in ex.context.feature:
+            print(
+                "missing elevation",
+                ex.context.feature["latitude"].float_list.value[0],
+                ex.context.feature["longitude"].float_list.value[0],
+                ex.context.feature["label"].int64_list.value[0]
+            )
+            return
+        print(
+            "writing",
+            ex.context.feature["latitude"].float_list.value[0],
+            ex.context.feature["longitude"].float_list.value[0],
+            ex.context.feature["label"].int64_list.value[0]
+        )
+        self.final_occurrence_count.inc()
+        yield ex.SerializeToString()
 
 @beam.typehints.with_input_types(str)
 @beam.typehints.with_output_types(beam.typehints.KV[int, tf.train.SequenceExample])
@@ -269,7 +297,7 @@ class StringToTaxonSequenceExample(beam.DoFn):
         se.context.feature["longitude"].float_list.value.append(lng)
         se.context.feature["date"].int64_list.value.append(intDate)
         se.context.feature["elevation"].float_list.value.append(elevation)
-        se.context.feature["grid-zone"].bytes_list.value.append(mgrs.MGRS().toMGRS(lat, lng)[:2])
+        se.context.feature["grid-zone"].bytes_list.value.append(mgrs.MGRS().toMGRS(lat, lng)[:2].encode())
 
         yield taxon, se
 
@@ -281,7 +309,6 @@ class FetchWeatherDoFn(beam.DoFn):
         self._project = project
         self._dataset = 'bigquery-public-data:noaa_gsod'
         self.insufficient_weather_records = Metrics.counter('main', 'insufficient_weather_records')
-        self.final_occurrence_count = Metrics.counter('main', 'final_occurrence_count')
 
     def process(self, example):
         client = bigquery.Client(project=self._project)
@@ -292,8 +319,8 @@ class FetchWeatherDoFn(beam.DoFn):
         location = Point(lat, lng)
 
         # Calculate bounding box.
-        nw = distance.VincentyDistance(miles=40).destination(location, 315)
-        se = distance.VincentyDistance(miles=40).destination(location, 135)
+        nw = distance.VincentyDistance(miles=MAX_WEATHER_STATION_DISTANCE_FROM_OCCURRENCE).destination(location, 315)
+        se = distance.VincentyDistance(miles=MAX_WEATHER_STATION_DISTANCE_FROM_OCCURRENCE).destination(location, 135)
 
         records = {}
 
@@ -369,7 +396,13 @@ class FetchWeatherDoFn(beam.DoFn):
         dates.sort()
 
         if len(dates) != len(range):
-            print(len(dates), len(range))
+            print("fail",
+                  len(dates),
+                  len(range),
+                  example.context.feature["latitude"].float_list.value[0],
+                  example.context.feature["longitude"].float_list.value[0],
+                  example.context.feature["label"].int64_list.value[0]
+                  )
             # logging.info("range: %.8f, %.8f, %s, %s", lat, lng, year, months)
             self.insufficient_weather_records.inc()
             return
@@ -401,8 +434,13 @@ class FetchWeatherDoFn(beam.DoFn):
             tmax.feature.add().float_list.value.append(records[d][4])
             temp.feature.add().float_list.value.append(records[d][5])
 
-        self.final_occurrence_count.inc()
 
+        print(
+            "success",
+              example.context.feature["latitude"].float_list.value[0],
+              example.context.feature["longitude"].float_list.value[0],
+              example.context.feature["label"].int64_list.value[0]
+        )
         yield example
 
 
