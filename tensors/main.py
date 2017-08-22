@@ -31,15 +31,15 @@ flags.DEFINE_string(
 
 context_features={
      'elevation': tf.FixedLenFeature(shape=[1], dtype=tf.float32),
-     'grid-zone': tf.VarLenFeature(dtype=tf.string),
+     # 'grid-zone': tf.VarLenFeature(dtype=tf.string),
      'label': tf.FixedLenFeature(shape=[1], dtype=tf.int64)
  }
 
 sequence_features={
     "tmax": tf.FixedLenSequenceFeature(shape=[1], dtype=tf.float32),
-    "tmin": tf.FixedLenSequenceFeature(shape=[1], dtype=tf.float32),
-    "prcp": tf.FixedLenSequenceFeature(shape=[1], dtype=tf.float32),
-    "daylight": tf.FixedLenSequenceFeature(shape=[1], dtype=tf.float32),
+    # "tmin": tf.FixedLenSequenceFeature(shape=[1], dtype=tf.float32),
+    # "prcp": tf.FixedLenSequenceFeature(shape=[1], dtype=tf.float32),
+    # "daylight": tf.FixedLenSequenceFeature(shape=[1], dtype=tf.float32),
 }
 
 def print_records(file):
@@ -58,7 +58,7 @@ def print_records(file):
 
 def input_fn(file, mode, batch_size):
 
-    filename_queue = tf.train.string_input_producer([file], num_epochs=2)
+    filename_queue = tf.train.string_input_producer([file], num_epochs=10)
 
     reader = tf.TFRecordReader()
     _, example = reader.read(filename_queue)
@@ -72,9 +72,9 @@ def input_fn(file, mode, batch_size):
     features = context_parsed.copy()
     features.update(sequence_parsed)
     features['tmax'].set_shape((DAYS_BEFORE_OCCURRENCE,1))
-    features['tmin'].set_shape((DAYS_BEFORE_OCCURRENCE,1))
-    features['prcp'].set_shape((DAYS_BEFORE_OCCURRENCE,1))
-    features['daylight'].set_shape((DAYS_BEFORE_OCCURRENCE,1))
+    # features['tmin'].set_shape((DAYS_BEFORE_OCCURRENCE,1))
+    # features['prcp'].set_shape((DAYS_BEFORE_OCCURRENCE,1))
+    # features['daylight'].set_shape((DAYS_BEFORE_OCCURRENCE,1))
 
     x = tf.train.shuffle_batch(
         features,
@@ -101,26 +101,27 @@ def build_classifier(file, model_dir):
 
     context_feature_columns=[
         # real_valued_column("label", dtype=tf.int64),
-        tf.contrib.layers.embedding_column(gz, dimension=8),
+        # tf.contrib.layers.embedding_column(gz, dimension=8),
         real_valued_column("elevation", dtype=tf.float32, dimension=1)
     ]
     sequence_feature_columns=[
         real_valued_column("tmax", dtype=tf.float32),
-        real_valued_column("tmin", dtype=tf.float32),
-        real_valued_column("prcp", dtype=tf.float32),
-        real_valued_column("daylight", dtype=tf.float32)
+        # real_valued_column("tmin", dtype=tf.float32),
+        # real_valued_column("prcp", dtype=tf.float32),
+        # real_valued_column("daylight", dtype=tf.float32)
     ]
 
     return dynamic_rnn_estimator.DynamicRnnEstimator(problem_type = constants.ProblemType.CLASSIFICATION,
                                               prediction_type = rnn_common.PredictionType.MULTIPLE_VALUE,
                                               sequence_feature_columns = sequence_feature_columns,
                                               context_feature_columns = context_feature_columns,
-                                              num_units = 5,
+                                              num_units = 10,
                                               predict_probabilities=True,
                                               num_classes=2,
                                               cell_type = 'lstm',
                                               optimizer = 'SGD',
-                                              learning_rate = 0.1)
+                                              # gradient_clipping_norm=1.0,
+                                              learning_rate = 0.01)
 
 
 def run():
@@ -128,10 +129,10 @@ def run():
     print("model directory = %s" % model_dir)
     classifier = build_classifier(FLAGS.train_data, model_dir)
     classifier.fit(
-        input_fn=lambda: input_fn(FLAGS.train_data, tf.contrib.learn.ModeKeys.TRAIN, 40),
-        steps=FLAGS.train_steps
+        input_fn=lambda: input_fn(FLAGS.train_data, tf.contrib.learn.ModeKeys.TRAIN, 10),
+        # steps=FLAGS.train_steps
     )
-    results = classifier.evaluate(input_fn=lambda: input_fn(FLAGS.train_data, tf.contrib.learn.ModeKeys.EVAL, 5), steps=1)
+    results = classifier.evaluate(input_fn=lambda: input_fn(FLAGS.train_data, tf.contrib.learn.ModeKeys.EVAL, 5))
     for key in sorted(results):
         print("%s: %s" % (key, results[key]))
 
