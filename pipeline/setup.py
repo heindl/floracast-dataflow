@@ -94,19 +94,35 @@ class CustomCommands(setuptools.Command):
 # Note that the Python Dataflow containers come with numpy already installed
 # so this dependency will not trigger anything to be installed unless a version
 # restriction is specified.
+# REQUIRED_PACKAGES = [
+#     "apache-beam==2.0.0",
+#     "astral==1.4",
+#     "geopy==1.11.0",
+#     "google-cloud==0.27.0",
+#     "google-cloud-bigquery==0.26.0",
+#     "googlemaps==2.5.1",
+#     "mgrs==1.3.5",
+#     "numpy==1.13.1",
+#     "pandas==0.20.3",
+#     "pygeocoder==1.2.5",
+#     "python-dateutil==2.6.1",
+#     "tensorflow==1.3.0"
+# ]
+
 REQUIRED_PACKAGES = [
-    "apache-beam==2.0.0",
-    "astral==1.4",
-    "geopy==1.11.0",
-    "google-cloud==0.27.0",
-    "google-cloud-bigquery=0.26.0"
-    "googlemaps==2.5.1",
-    "mgrs==1.3.5",
-    "numpy==1.13.1",
-    "pandas==0.20.3",
-    "pygeocoder==1.2.5",
-    "python-dateutil==2.6.1",
-    "tensorflow==1.3.0"
+    "tensorflow",
+    "apache-beam[gcp]",
+    "google-cloud",
+    "google-cloud-bigquery==0.26.0",
+    "astral",
+    "geopy",
+    "google-cloud",
+    "googlemaps",
+    "mgrs",
+    "numpy",
+    "pandas",
+    "pygeocoder",
+    "python-dateutil"
 ]
 
 setuptools.setup(

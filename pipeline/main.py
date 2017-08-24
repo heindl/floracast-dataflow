@@ -139,22 +139,72 @@ class EntityToString(beam.DoFn):
             elevation
         )
 
-def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
-    return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
-
-
+# Unwind taxa with a sufficient number of occurrences, and add a random test point to each occurrence.
+# It's confusing to include the random point creation here, but it allows us to batch elevation queries
+# and save on api hits to google maps.
 @beam.typehints.with_input_types(beam.typehints.KV[int, beam.typehints.Iterable[tf.train.SequenceExample]])
 @beam.typehints.with_output_types(tf.train.SequenceExample)
 class UnwindTaxaWithSufficientCount(beam.DoFn):
-    def __init__(self, minimum_taxon_count):
+    def __init__(self, minimum_taxon_count, project):
         super(UnwindTaxaWithSufficientCount, self).__init__()
         from apache_beam.metrics import Metrics
+        from google.cloud import storage
+
         self.sufficient_taxa_counter = Metrics.counter('main', 'sufficient_taxa')
         self.insufficient_taxa_counter = Metrics.counter('main', 'insufficient_taxa')
         self.minimum_taxon_count = minimum_taxon_count
+        self.NORTHERNMOST = 49.
+        self.SOUTHERNMOST = 25.
+        self.EASTERNMOST = -66.
+        self.WESTERNMOST = -124.
+
+        client = storage.Client(project=project)
+        bucket = client.get_bucket('floracast-conf')
+        content = storage.Blob('dataflow.sh', bucket).download_as_string()
+        for line in content.split(b'\n'):
+            if "FLORACAST_GOOGLE_MAPS_API_KEY" in line.decode("utf-8"):
+                self.FLORACAST_GOOGLE_MAPS_API_KEY = line.decode("utf-8").split("=")[1]
+
+    def random_point(self):
+        import random
+        from datetime import datetime
+        from pygeocoder import Geocoder, GeocoderError
+
+        date = datetime(
+            random.randint(2015, 2017),
+            random.randint(1, 12),
+            random.randint(1, 28)
+        )
+        while True:
+            lat = round(random.uniform(self.SOUTHERNMOST, self.NORTHERNMOST), 6)
+            lng = round(random.uniform(self.EASTERNMOST, self.WESTERNMOST), 6)
+            try:
+                gcode = Geocoder.reverse_geocode(lat, lng)
+
+                if gcode[0].data[0]['formatted_address'][-6:] in ('Canada', 'Mexico'):
+                    continue
+                elif 'unnamed road' in gcode[0].data[0]['formatted_address']:
+                    continue
+                elif 'Unnamed Road' in gcode[0].data[0]['formatted_address']:
+                    continue
+                else:
+                    return gcode[0].coordinates[0], gcode[0].coordinates[1], date
+            except GeocoderError:
+                continue
+
+    def isclose(self, a, b, rel_tol=1e-09, abs_tol=0.0):
+        return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+
+    def group_list(self, l, group_size):
+        """
+        :param l:           list
+        :param group_size:  size of each group
+        :return:            Yields successive group-sized lists from l.
+        """
+        for i in xrange(0, len(l), group_size):
+            yield l[i:i+group_size]
 
     def process(self, element):
-        import os
         import tensorflow as tf
         from googlemaps import Client
         import mgrs
@@ -171,7 +221,7 @@ class UnwindTaxaWithSufficientCount(beam.DoFn):
         for o in taxon_list:
             yield o
 
-            lat, lng, date = random_point()
+            lat, lng, date = self.random_point()
             locations.append((lat, lng))
             se = tf.train.SequenceExample()
             se.context.feature["label"].int64_list.value.append(0)
@@ -181,19 +231,19 @@ class UnwindTaxaWithSufficientCount(beam.DoFn):
             se.context.feature["grid-zone"].bytes_list.value.append(mgrs.MGRS().toMGRS(lat, lng)[:2].encode())
             blanks.append(se)
 
-        client = Client(key=os.environ["FLORACAST_GOOGLE_MAPS_API_KEY"])
+        client = Client(key=self.FLORACAST_GOOGLE_MAPS_API_KEY)
 
         # Group here in order to run wider batches
-        for batch in group_list(locations, 300):
+        for batch in self.group_list(locations, 300):
             for r in client.elevation(batch):
                 for i, b in enumerate(blanks):
-                    if not isclose(
+                    if not self.isclose(
                             r['location']['lat'],
                             b.context.feature['latitude'].float_list.value[0],
                             abs_tol=0.00001
                     ):
                         continue
-                    if not isclose(
+                    if not self.isclose(
                             r['location']['lng'],
                             b.context.feature['longitude'].float_list.value[0],
                             abs_tol=0.00001
@@ -204,16 +254,6 @@ class UnwindTaxaWithSufficientCount(beam.DoFn):
 
         for b in blanks:
             yield b
-
-
-def group_list(l, group_size):
-    """
-    :param l:           list
-    :param group_size:  size of each group
-    :return:            Yields successive group-sized lists from l.
-    """
-    for i in xrange(0, len(l), group_size):
-        yield l[i:i+group_size]
 
 
 # Filter and prepare for duplicate sort.
@@ -285,6 +325,7 @@ class FetchWeatherDoFn(beam.DoFn):
 
         client = bigquery.Client(project=self._project)
 
+
         lat = example.context.feature['latitude'].float_list.value[0]
         lng = example.context.feature['longitude'].float_list.value[0]
 
@@ -305,13 +346,51 @@ class FetchWeatherDoFn(beam.DoFn):
             yearmonths[str(d.year)].add('{:02d}'.format(d.month))
 
         for year, months in yearmonths.iteritems():
-            monthquery = ""
+            month_query = ""
             for m in months:
-                if monthquery == "":
-                    monthquery = "(mo = '%s'" % m
+                if month_query == "":
+                    month_query = "(mo = '%s'" % m
                 else:
-                    monthquery += " OR mo = '%s'" % m
-            monthquery += ")"
+                    month_query += " OR mo = '%s'" % m
+            month_query += ")"
+
+            # q = """
+            #       SELECT
+            #         lat,
+            #         lon,
+            #         prcp,
+            #         min,
+            #         max,
+            #         temp,
+            #         mo,
+            #         da,
+            #         year,
+            #         elev
+            #       FROM
+            #         [bigquery-public-data:noaa_gsod.gsod@year] a
+            #       JOIN
+            #         [bigquery-public-data:noaa_gsod.stations] b
+            #       ON
+            #         a.stn=b.usaf
+            #         AND a.wban=b.wban
+            #       WHERE
+            #          lat <= @n_lat AND lat >= @s_lat
+            #         AND lon >= @w_lon AND lon <= @e_lon
+            #         AND @month_query
+            #       ORDER BY
+            #         da DESC
+            # """
+            # sync_query = client.run_sync_query(
+            #     query=q,
+            #     query_parameters=(
+            #         bigquery.ScalarQueryParameter('n_lat', 'STRING', str(nw.latitude)),
+            #         bigquery.ScalarQueryParameter('w_lon', 'STRING', str(nw.longitude)),
+            #         bigquery.ScalarQueryParameter('s_lat', 'STRING', str(se.latitude)),
+            #         bigquery.ScalarQueryParameter('e_lon', 'STRING', str(se.longitude)),
+            #         bigquery.ScalarQueryParameter('year', 'STRING', str(year)),
+            #         bigquery.ScalarQueryParameter('month_query', 'STRING', month_query)
+            #     )
+            # )
 
             q = """
                   SELECT
@@ -345,27 +424,25 @@ class FetchWeatherDoFn(beam.DoFn):
                 'sLat': str(se.latitude),
                 'eLon': str(se.longitude),
                 'year': year,
-                'monthQuery': monthquery
+                'monthQuery': month_query
             }
 
-            query_results = client.run_sync_query(q.format(**values))
-            query_results.run()
+
+            # Had some trouble with conflicting versions of this package between local runner and remote.
+            #  pip install --upgrade google-cloud-bigquery
+            sync_query = client.run_sync_query(q.format(**values))
+            sync_query.timeout_ms = 30000
+            sync_query.run()
 
             page_token=None
             while True:
 
-                row_data, total_rows, page_token = query_results.fetch_data(
+                iterator = sync_query.fetch_data(
                     max_results=1000,
                     page_token=page_token
                 )
 
-                if total_rows == 0:
-                    break
-
-                for row in row_data:
-                    if row == 0:
-                        logging.error("bigquery weather row is 0")
-                        continue
+                for row in iterator:
                     d = datetime(int(row[8]), int(row[6]), int(row[7]))
                     if d > range.max() or d < range.min():
                         continue
@@ -377,8 +454,9 @@ class FetchWeatherDoFn(beam.DoFn):
                     else:
                         records[d] = row
 
-                if page_token is None:
+                if iterator.next_page_token is None:
                     break
+
 
         dates = records.keys()
         dates.sort()
@@ -418,40 +496,6 @@ class FetchWeatherDoFn(beam.DoFn):
         yield example
 
 
-NORTHERNMOST = 49.
-SOUTHERNMOST = 25.
-EASTERNMOST = -66.
-WESTERNMOST = -124.
-
-
-def random_point():
-    import random
-    from datetime import datetime
-    from pygeocoder import Geocoder, GeocoderError
-
-    date = datetime(
-        random.randint(2015, 2017),
-        random.randint(1, 12),
-        random.randint(1, 28)
-    )
-    while True:
-        lat = round(random.uniform(SOUTHERNMOST, NORTHERNMOST), 6)
-        lng = round(random.uniform(EASTERNMOST, WESTERNMOST), 6)
-        try:
-            gcode = Geocoder.reverse_geocode(lat, lng)
-
-            if gcode[0].data[0]['formatted_address'][-6:] in ('Canada', 'Mexico'):
-                continue
-            elif 'unnamed road' in gcode[0].data[0]['formatted_address']:
-                continue
-            elif 'Unnamed Road' in gcode[0].data[0]['formatted_address']:
-                continue
-            else:
-                return gcode[0].coordinates[0], gcode[0].coordinates[1], date
-        except GeocoderError:
-            continue
-
-
 def datastore_query():
     from google.cloud.proto.datastore.v1 import query_pb2
     # q = query.Query(kind='Occurrence', project=project)
@@ -487,7 +531,7 @@ def run():
 
     google_cloud_options = pipeline_options.view_as(GoogleCloudOptions)
     occurrence_pipeline_options = pipeline_options.view_as(OccurrencePipelineOptions)
-    # standard_options = pipeline_options.view_as(StandardOptions)
+    standard_options = pipeline_options.view_as(StandardOptions)
 
     with beam.Pipeline(options=google_cloud_options) as p:
 
@@ -501,7 +545,10 @@ def run():
             | 'RemoveDuplicates' >> beam.RemoveDuplicates()
             | 'ConvertKeyStringsToTaxonSequenceExample' >> beam.ParDo(StringToTaxonSequenceExample())
             | 'GroupByTaxon' >> beam.GroupByKey()
-            | 'UnwindSufficientTaxa' >> beam.ParDo(UnwindTaxaWithSufficientCount(occurrence_pipeline_options.minimum_occurrences_within_taxon))
+            | 'UnwindSufficientTaxa' >> beam.ParDo(UnwindTaxaWithSufficientCount(
+                occurrence_pipeline_options.minimum_occurrences_within_taxon,
+                google_cloud_options.project
+            ))
             | 'FetchWeather' >> beam.ParDo(FetchWeatherDoFn(
                     google_cloud_options.project,
                     occurrence_pipeline_options.weather_station_distance
@@ -515,8 +562,8 @@ def run():
         #
         # result = p.run()
         # result.wait_until_finish()
-        #
-        # # Print metrics if local runner.
+        # #
+        # # # Print metrics if local runner.
         # if standard_options.runner == "DirectRunner":
         #
         #     for v in [
