@@ -118,6 +118,7 @@ REQUIRED_PACKAGES = [
     "geopy",
     "google-cloud",
     "googlemaps",
+    # "googledatastore",
     "mgrs",
     "numpy",
     "pandas",

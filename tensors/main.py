@@ -38,8 +38,8 @@ context_features={
 sequence_features={
     "tmax": tf.FixedLenSequenceFeature(shape=[1], dtype=tf.float32),
     # "tmin": tf.FixedLenSequenceFeature(shape=[1], dtype=tf.float32),
-    # "prcp": tf.FixedLenSequenceFeature(shape=[1], dtype=tf.float32),
-    # "daylight": tf.FixedLenSequenceFeature(shape=[1], dtype=tf.float32),
+    "prcp": tf.FixedLenSequenceFeature(shape=[1], dtype=tf.float32),
+    "daylight": tf.FixedLenSequenceFeature(shape=[1], dtype=tf.float32),
 }
 
 def print_records(file):
@@ -48,11 +48,13 @@ def print_records(file):
     c = 0
     for record in record_iterator:
         c += 1
-        example = tf.train.Example()
+        example = tf.train.SequenceExample()
         example.ParseFromString(record)
-        print(example.features.feature['label']
-                     .int64_list
-                     .value[0])
+        # print(example.features.feature['label']
+        #              .int64_list
+        #              .value[0])
+        print(example)
+        break
 
     print("total", c)
 
@@ -73,8 +75,8 @@ def input_fn(file, mode, batch_size):
     features.update(sequence_parsed)
     features['tmax'].set_shape((DAYS_BEFORE_OCCURRENCE,1))
     # features['tmin'].set_shape((DAYS_BEFORE_OCCURRENCE,1))
-    # features['prcp'].set_shape((DAYS_BEFORE_OCCURRENCE,1))
-    # features['daylight'].set_shape((DAYS_BEFORE_OCCURRENCE,1))
+    features['prcp'].set_shape((DAYS_BEFORE_OCCURRENCE,1))
+    features['daylight'].set_shape((DAYS_BEFORE_OCCURRENCE,1))
 
     x = tf.train.shuffle_batch(
         features,
@@ -107,15 +109,15 @@ def build_classifier(file, model_dir):
     sequence_feature_columns=[
         real_valued_column("tmax", dtype=tf.float32),
         # real_valued_column("tmin", dtype=tf.float32),
-        # real_valued_column("prcp", dtype=tf.float32),
-        # real_valued_column("daylight", dtype=tf.float32)
+        real_valued_column("prcp", dtype=tf.float32),
+        real_valued_column("daylight", dtype=tf.float32)
     ]
 
     return dynamic_rnn_estimator.DynamicRnnEstimator(problem_type = constants.ProblemType.CLASSIFICATION,
                                               prediction_type = rnn_common.PredictionType.MULTIPLE_VALUE,
                                               sequence_feature_columns = sequence_feature_columns,
                                               context_feature_columns = context_feature_columns,
-                                              num_units = 10,
+                                              num_units = 20,
                                               predict_probabilities=True,
                                               num_classes=2,
                                               cell_type = 'lstm',

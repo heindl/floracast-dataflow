@@ -1,0 +1,13 @@
+tensorflow
+apache-beam[gcp]
+google-cloud
+google-cloud-bigquery==0.26.0
+astral
+geopy
+google-cloud
+googlemaps
+mgrs
+numpy
+pandas
+pygeocoder
+python-dateutil

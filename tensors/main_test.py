@@ -16,7 +16,7 @@ class InputFnTest(tf.test.TestCase):
 
     def testSquare(self):
 
-        file = "./records-00000-of-00001.tfrecord"
+        file = "./tfrecords-occurrences.tfrecords-00000-of-00001.tfrecord"
         # c = 0
         # for record in tf.python_io.tf_record_iterator(file):
         #     if c == 0:

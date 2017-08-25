@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from apache_beam.options.pipeline_options import PipelineOptions
 import logging
-import tensorflow as tf
+from tensorflow.core.example import example_pb2
 from google.cloud.proto.datastore.v1 import entity_pb2
 import apache_beam as beam
 # pip install "apache_beam[gcp]"
@@ -62,14 +62,13 @@ class OccurrencePipelineOptions(PipelineOptions):
 
         parser.add_argument(
             '--taxon',
-            required=False,
-            default=60606,
+            required=True,
             help='Restrict occurrence fetch to this taxa')
 
         parser.add_argument(
             '--weather_station_distance',
             required=False,
-            default=100,
+            default=75,
             help='Maximum distance a weather station can be from an occurrence when fetching weather.')
 
 
@@ -85,7 +84,7 @@ class EntityToString(beam.DoFn):
         self.invalid_occurrence_date = Metrics.counter('main', 'invalid_occurrence_date')
         self.invalid_occurrence_elevation = Metrics.counter('main', 'invalid_occurrence_elevation')
         self.invalid_occurrence_location = Metrics.counter('main', 'invalid_occurrence_location')
-        self._taxon = taxon
+        self._taxon = int(taxon)
 
     def process(self, element):
         from google.cloud.datastore.helpers import entity_from_protobuf, GeoPoint
@@ -139,24 +138,12 @@ class EntityToString(beam.DoFn):
             elevation
         )
 
-# Unwind taxa with a sufficient number of occurrences, and add a random test point to each occurrence.
-# It's confusing to include the random point creation here, but it allows us to batch elevation queries
-# and save on api hits to google maps.
-@beam.typehints.with_input_types(beam.typehints.KV[int, beam.typehints.Iterable[tf.train.SequenceExample]])
-@beam.typehints.with_output_types(tf.train.SequenceExample)
-class UnwindTaxaWithSufficientCount(beam.DoFn):
-    def __init__(self, minimum_taxon_count, project):
-        super(UnwindTaxaWithSufficientCount, self).__init__()
-        from apache_beam.metrics import Metrics
+@beam.typehints.with_input_types(example_pb2.SequenceExample)
+@beam.typehints.with_output_types(example_pb2.SequenceExample)
+class ElevationBundler(beam.DoFn):
+    def __init__(self, project):
+        super(ElevationBundler, self).__init__()
         from google.cloud import storage
-
-        self.sufficient_taxa_counter = Metrics.counter('main', 'sufficient_taxa')
-        self.insufficient_taxa_counter = Metrics.counter('main', 'insufficient_taxa')
-        self.minimum_taxon_count = minimum_taxon_count
-        self.NORTHERNMOST = 49.
-        self.SOUTHERNMOST = 25.
-        self.EASTERNMOST = -66.
-        self.WESTERNMOST = -124.
 
         client = storage.Client(project=project)
         bucket = client.get_bucket('floracast-conf')
@@ -165,99 +152,142 @@ class UnwindTaxaWithSufficientCount(beam.DoFn):
             if "FLORACAST_GOOGLE_MAPS_API_KEY" in line.decode("utf-8"):
                 self.FLORACAST_GOOGLE_MAPS_API_KEY = line.decode("utf-8").split("=")[1]
 
+    def start_bundle(self):
+        self._buffer = []
+
+    def finish_bundle(self):
+        self._flush()
+
+    def isclose(self, a, b, rel_tol=1e-09, abs_tol=0.0):
+        return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+
+    def _flush(self):
+        from googlemaps import Client
+        client = Client(key=self.FLORACAST_GOOGLE_MAPS_API_KEY)
+
+        coords = []
+        for e in self._buffer:
+            coords.append((
+                e.context.feature["latitude"].float_list.value[0],
+                e.context.feature["longitude"].float_list.value[1]
+            ))
+
+        for r in client.elevation(coords):
+            for i, b in enumerate(self._buffer):
+                if not self.isclose(
+                        r['location']['lat'],
+                        b.context.feature['latitude'].float_list.value[0],
+                        abs_tol=0.00001
+                ):
+                    continue
+                if not self.isclose(
+                        r['location']['lng'],
+                        b.context.feature['longitude'].float_list.value[0],
+                        abs_tol=0.00001
+                ):
+                    continue
+                self._buffer[i].context.feature["elevation"].float_list.value.append(r['elevation'])
+                break
+
+        for b in self._buffer:
+            yield b
+
+        self._buffer = []
+
+    def process(self, element):
+
+        if "elevation" in element.context.feature:
+            yield element
+
+        self._buffer.append(element)
+
+        if len(self._buffer) >= 200:
+            self._flush()
+
+
+# # Unwind taxa with a sufficient number of occurrences.
+# @beam.typehints.with_input_types(beam.typehints.KV[int, beam.typehints.Iterable[example_pb2.SequenceExample]])
+# @beam.typehints.with_output_types(example_pb2.SequenceExample)
+# class UnwindTaxaWithSufficientCount(beam.DoFn):
+#     def __init__(self, minimum_taxon_count):
+#         super(UnwindTaxaWithSufficientCount, self).__init__()
+#         from apache_beam.metrics import Metrics
+#         self.sufficient_taxa_counter = Metrics.counter('main', 'sufficient_taxa')
+#         self.insufficient_taxa_counter = Metrics.counter('main', 'insufficient_taxa')
+#         self.minimum_taxon_count = minimum_taxon_count
+#
+#     def process(self, element):
+#
+#         taxon_list = list(element[1])
+#         if len(taxon_list) <= self.minimum_taxon_count:
+#             self.insufficient_taxa_counter.inc()
+#             return
+#
+#         self.sufficient_taxa_counter.inc()
+#
+#         # locations = []
+#         # blanks = []
+#         for o in taxon_list:
+#             yield o
+
+@beam.typehints.with_input_types(example_pb2.SequenceExample)
+@beam.typehints.with_output_types(example_pb2.SequenceExample)
+class AddRandomTrainPoint(beam.DoFn):
+    def __init__(self):
+        super(AddRandomTrainPoint, self).__init__()
+        self.NORTHERNMOST = 49.
+        self.SOUTHERNMOST = 25.
+        self.EASTERNMOST = -66.
+        self.WESTERNMOST = -124.
+
     def random_point(self):
         import random
         from datetime import datetime
-        from pygeocoder import Geocoder, GeocoderError
 
         date = datetime(
             random.randint(2015, 2017),
             random.randint(1, 12),
             random.randint(1, 28)
         )
-        while True:
-            lat = round(random.uniform(self.SOUTHERNMOST, self.NORTHERNMOST), 6)
-            lng = round(random.uniform(self.EASTERNMOST, self.WESTERNMOST), 6)
-            try:
-                gcode = Geocoder.reverse_geocode(lat, lng)
-
-                if gcode[0].data[0]['formatted_address'][-6:] in ('Canada', 'Mexico'):
-                    continue
-                elif 'unnamed road' in gcode[0].data[0]['formatted_address']:
-                    continue
-                elif 'Unnamed Road' in gcode[0].data[0]['formatted_address']:
-                    continue
-                else:
-                    return gcode[0].coordinates[0], gcode[0].coordinates[1], date
-            except GeocoderError:
-                continue
-
-    def isclose(self, a, b, rel_tol=1e-09, abs_tol=0.0):
-        return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
-
-    def group_list(self, l, group_size):
-        """
-        :param l:           list
-        :param group_size:  size of each group
-        :return:            Yields successive group-sized lists from l.
-        """
-        for i in xrange(0, len(l), group_size):
-            yield l[i:i+group_size]
+        lat = round(random.uniform(self.SOUTHERNMOST, self.NORTHERNMOST), 6)
+        lng = round(random.uniform(self.EASTERNMOST, self.WESTERNMOST), 6)
+        return lat, lng, date
+        # while True:
+        #     lat = round(random.uniform(self.SOUTHERNMOST, self.NORTHERNMOST), 6)
+        #     lng = round(random.uniform(self.EASTERNMOST, self.WESTERNMOST), 6)
+        #     try:
+        #         gcode = Geocoder.reverse_geocode(lat, lng)
+        #
+        #         if gcode[0].data[0]['formatted_address'][-6:] in ('Canada', 'Mexico'):
+        #             continue
+        #         elif 'unnamed road' in gcode[0].data[0]['formatted_address']:
+        #             continue
+        #         elif 'Unnamed Road' in gcode[0].data[0]['formatted_address']:
+        #             continue
+        #         else:
+        #             return gcode[0].coordinates[0], gcode[0].coordinates[1], date
+        #     except GeocoderError:
+        #         continue
 
     def process(self, element):
-        import tensorflow as tf
-        from googlemaps import Client
+        from tensorflow.core.example import example_pb2
         import mgrs
+        print("train point")
+        yield element
 
-        taxon_list = list(element[1])
-        if len(taxon_list) <= self.minimum_taxon_count:
-            self.insufficient_taxa_counter.inc()
-            return
+        lat, lng, date = self.random_point()
+        se = example_pb2.SequenceExample()
+        se.context.feature["label"].int64_list.value.append(0)
+        se.context.feature["latitude"].float_list.value.append(lat)
+        se.context.feature["longitude"].float_list.value.append(lng)
+        se.context.feature["date"].int64_list.value.append(int(date.strftime("%s")))
+        se.context.feature["grid-zone"].bytes_list.value.append(mgrs.MGRS().toMGRS(lat, lng)[:2].encode())
 
-        self.sufficient_taxa_counter.inc()
-
-        locations = []
-        blanks = []
-        for o in taxon_list:
-            yield o
-
-            lat, lng, date = self.random_point()
-            locations.append((lat, lng))
-            se = tf.train.SequenceExample()
-            se.context.feature["label"].int64_list.value.append(0)
-            se.context.feature["latitude"].float_list.value.append(lat)
-            se.context.feature["longitude"].float_list.value.append(lng)
-            se.context.feature["date"].int64_list.value.append(int(date.strftime("%s")))
-            se.context.feature["grid-zone"].bytes_list.value.append(mgrs.MGRS().toMGRS(lat, lng)[:2].encode())
-            blanks.append(se)
-
-        client = Client(key=self.FLORACAST_GOOGLE_MAPS_API_KEY)
-
-        # Group here in order to run wider batches
-        for batch in self.group_list(locations, 300):
-            for r in client.elevation(batch):
-                for i, b in enumerate(blanks):
-                    if not self.isclose(
-                            r['location']['lat'],
-                            b.context.feature['latitude'].float_list.value[0],
-                            abs_tol=0.00001
-                    ):
-                        continue
-                    if not self.isclose(
-                            r['location']['lng'],
-                            b.context.feature['longitude'].float_list.value[0],
-                            abs_tol=0.00001
-                    ):
-                        continue
-                    blanks[i].context.feature["elevation"].float_list.value.append(r['elevation'])
-                    break
-
-        for b in blanks:
-            yield b
+        yield se
 
 
 # Filter and prepare for duplicate sort.
-@beam.typehints.with_input_types(tf.train.SequenceExample)
+@beam.typehints.with_input_types(example_pb2.SequenceExample)
 @beam.typehints.with_output_types(str)
 class EncodeExample(beam.DoFn):
     def __init__(self):
@@ -273,7 +303,7 @@ class EncodeExample(beam.DoFn):
 
 
 @beam.typehints.with_input_types(str)
-@beam.typehints.with_output_types(beam.typehints.KV[int, tf.train.SequenceExample])
+@beam.typehints.with_output_types(beam.typehints.KV[int, example_pb2.SequenceExample])
 class StringToTaxonSequenceExample(beam.DoFn):
     def __init__(self):
         super(StringToTaxonSequenceExample, self).__init__()
@@ -282,7 +312,7 @@ class StringToTaxonSequenceExample(beam.DoFn):
 
     def process(self, element):
         import mgrs
-        import tensorflow as tf
+        from tensorflow.core.example import example_pb2
 
         self.following_removed_duplicates.inc()
 
@@ -293,7 +323,7 @@ class StringToTaxonSequenceExample(beam.DoFn):
         intDate = int(ls[3])
         elevation = float(ls[4])
 
-        se = tf.train.SequenceExample()
+        se = example_pb2.SequenceExample()
         se.context.feature["label"].int64_list.value.append(taxon)
         se.context.feature["latitude"].float_list.value.append(lat)
         se.context.feature["longitude"].float_list.value.append(lng)
@@ -304,8 +334,8 @@ class StringToTaxonSequenceExample(beam.DoFn):
         yield taxon, se
 
 
-@beam.typehints.with_input_types(tf.train.SequenceExample)
-@beam.typehints.with_output_types(tf.train.SequenceExample)
+@beam.typehints.with_input_types(example_pb2.SequenceExample)
+@beam.typehints.with_output_types(example_pb2.SequenceExample)
 class FetchWeatherDoFn(beam.DoFn):
     def __init__(self, project, weather_station_distance):
         super(FetchWeatherDoFn, self).__init__()
@@ -324,7 +354,6 @@ class FetchWeatherDoFn(beam.DoFn):
         from datetime import datetime
 
         client = bigquery.Client(project=self._project)
-
 
         lat = example.context.feature['latitude'].float_list.value[0]
         lng = example.context.feature['longitude'].float_list.value[0]
@@ -353,44 +382,6 @@ class FetchWeatherDoFn(beam.DoFn):
                 else:
                     month_query += " OR mo = '%s'" % m
             month_query += ")"
-
-            # q = """
-            #       SELECT
-            #         lat,
-            #         lon,
-            #         prcp,
-            #         min,
-            #         max,
-            #         temp,
-            #         mo,
-            #         da,
-            #         year,
-            #         elev
-            #       FROM
-            #         [bigquery-public-data:noaa_gsod.gsod@year] a
-            #       JOIN
-            #         [bigquery-public-data:noaa_gsod.stations] b
-            #       ON
-            #         a.stn=b.usaf
-            #         AND a.wban=b.wban
-            #       WHERE
-            #          lat <= @n_lat AND lat >= @s_lat
-            #         AND lon >= @w_lon AND lon <= @e_lon
-            #         AND @month_query
-            #       ORDER BY
-            #         da DESC
-            # """
-            # sync_query = client.run_sync_query(
-            #     query=q,
-            #     query_parameters=(
-            #         bigquery.ScalarQueryParameter('n_lat', 'STRING', str(nw.latitude)),
-            #         bigquery.ScalarQueryParameter('w_lon', 'STRING', str(nw.longitude)),
-            #         bigquery.ScalarQueryParameter('s_lat', 'STRING', str(se.latitude)),
-            #         bigquery.ScalarQueryParameter('e_lon', 'STRING', str(se.longitude)),
-            #         bigquery.ScalarQueryParameter('year', 'STRING', str(year)),
-            #         bigquery.ScalarQueryParameter('month_query', 'STRING', month_query)
-            #     )
-            # )
 
             q = """
                   SELECT
@@ -427,7 +418,6 @@ class FetchWeatherDoFn(beam.DoFn):
                 'monthQuery': month_query
             }
 
-
             # Had some trouble with conflicting versions of this package between local runner and remote.
             #  pip install --upgrade google-cloud-bigquery
             sync_query = client.run_sync_query(q.format(**values))
@@ -436,13 +426,12 @@ class FetchWeatherDoFn(beam.DoFn):
 
             page_token=None
             while True:
-
                 iterator = sync_query.fetch_data(
                     max_results=1000,
                     page_token=page_token
                 )
-
                 for row in iterator:
+
                     d = datetime(int(row[8]), int(row[6]), int(row[7]))
                     if d > range.max() or d < range.min():
                         continue
@@ -453,10 +442,9 @@ class FetchWeatherDoFn(beam.DoFn):
                             records[d] = row
                     else:
                         records[d] = row
-
                 if iterator.next_page_token is None:
                     break
-
+                page_token = iterator.next_page_token
 
         dates = records.keys()
         dates.sort()
@@ -498,6 +486,8 @@ class FetchWeatherDoFn(beam.DoFn):
 
 def datastore_query():
     from google.cloud.proto.datastore.v1 import query_pb2
+    # from googledatastore import helper
+    # from google.cloud.datastore import Filter
     # q = query.Query(kind='Occurrence', project=project)
     # q.fetch()
     q = query_pb2.Query()
@@ -506,6 +496,11 @@ def datastore_query():
     # q.limit.name = 100
 
     # Need to index this in google.
+
+    # helper.set_property_filter(
+    #     Filter(),
+    #     '__key__', datastore.PropertyFilter.HAS_ANCESTOR,
+    #     default_todo_list.key))
 
     # datastore_helper.set_composite_filter(q.filter, CompositeFilter.AND,
     # datastore_helper.set_property_filter(ds.Filter(), 'Location.Lat', PropertyFilter.GREATER_THAN_OR_EQUAL, 5.4995),
@@ -545,10 +540,12 @@ def run():
             | 'RemoveDuplicates' >> beam.RemoveDuplicates()
             | 'ConvertKeyStringsToTaxonSequenceExample' >> beam.ParDo(StringToTaxonSequenceExample())
             | 'GroupByTaxon' >> beam.GroupByKey()
-            | 'UnwindSufficientTaxa' >> beam.ParDo(UnwindTaxaWithSufficientCount(
-                occurrence_pipeline_options.minimum_occurrences_within_taxon,
-                google_cloud_options.project
-            ))
+            | 'FilterTaxonWithInsufficientOccurrences' >> beam.Filter(
+                    lambda (taxon, occurrences): len(occurrences) > occurrence_pipeline_options.minimum_occurrences_within_taxon
+               )
+            | 'UnwindOccurrences' >> beam.FlatMap(lambda (taxon, occurrences): occurrences)
+            | 'AddRandomTrainPoint' >> beam.ParDo(AddRandomTrainPoint())
+            | 'EnsureElevation' >> beam.ParDo(ElevationBundler(google_cloud_options.project))
             | 'FetchWeather' >> beam.ParDo(FetchWeatherDoFn(
                     google_cloud_options.project,
                     occurrence_pipeline_options.weather_station_distance
