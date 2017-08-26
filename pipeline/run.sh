@@ -11,10 +11,11 @@ if [ $1 == "remote" ]; then
              --staging_location=gs://occurrence_dataflow/staging/ \
              --setup_file ./setup.py \
              --region=us-east1 \
-             --taxon=58583
+             --taxon=58583 \
+             --disk_size_gb=100
 #             --num_workers=8
 #             --extra_package=./entity
-#             --disk_size_gb=500
+#
 
 elif [ $1 == "local" ]; then
     python -m main \

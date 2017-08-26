@@ -50,11 +50,11 @@ def print_records(file):
         c += 1
         example = tf.train.SequenceExample()
         example.ParseFromString(record)
-        # print(example.features.feature['label']
-        #              .int64_list
-        #              .value[0])
-        print(example)
-        break
+        print(example.context.feature['elevation']
+                     .float_list
+                     .value)
+        # print(example)
+        # break
 
     print("total", c)
 
@@ -104,11 +104,11 @@ def build_classifier(file, model_dir):
     context_feature_columns=[
         # real_valued_column("label", dtype=tf.int64),
         # tf.contrib.layers.embedding_column(gz, dimension=8),
-        real_valued_column("elevation", dtype=tf.float32, dimension=1)
+        real_valued_column("elevation", dtype=tf.float32)
     ]
     sequence_feature_columns=[
         real_valued_column("tmax", dtype=tf.float32),
-        # real_valued_column("tmin", dtype=tf.float32),
+        # # real_valued_column("tmin", dtype=tf.float32),
         real_valued_column("prcp", dtype=tf.float32),
         real_valued_column("daylight", dtype=tf.float32)
     ]

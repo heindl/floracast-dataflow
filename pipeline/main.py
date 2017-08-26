@@ -152,28 +152,45 @@ class ElevationBundler(beam.DoFn):
             if "FLORACAST_GOOGLE_MAPS_API_KEY" in line.decode("utf-8"):
                 self.FLORACAST_GOOGLE_MAPS_API_KEY = line.decode("utf-8").split("=")[1]
 
-    def start_bundle(self):
         self._buffer = []
 
+    def start_bundle(self):
+        del self._buffer[:]
+
     def finish_bundle(self):
-        self._flush()
+        from apache_beam.utils.windowed_value import WindowedValue
+        from apache_beam.transforms import window
+        self._set_elevations()
+
+        print("finishing elevations", len(self._buffer))
+        for b in self._buffer:
+            yield WindowedValue(b, -1, [window.GlobalWindow()])
+
+        self._buffer = []
 
     def isclose(self, a, b, rel_tol=1e-09, abs_tol=0.0):
         return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
-    def _flush(self):
+    def _set_elevations(self):
         from googlemaps import Client
         client = Client(key=self.FLORACAST_GOOGLE_MAPS_API_KEY)
+
+        if len(self._buffer) == 0:
+            return
+
+        print("setting elevations", len(self._buffer))
 
         coords = []
         for e in self._buffer:
             coords.append((
                 e.context.feature["latitude"].float_list.value[0],
-                e.context.feature["longitude"].float_list.value[1]
+                e.context.feature["longitude"].float_list.value[0]
             ))
 
         for r in client.elevation(coords):
             for i, b in enumerate(self._buffer):
+                if len(self._buffer[i].context.feature["elevation"].float_list.value) > 0:
+                    continue
                 if not self.isclose(
                         r['location']['lat'],
                         b.context.feature['latitude'].float_list.value[0],
@@ -189,23 +206,23 @@ class ElevationBundler(beam.DoFn):
                 self._buffer[i].context.feature["elevation"].float_list.value.append(r['elevation'])
                 break
 
-        for b in self._buffer:
-            yield b
-
-        self._buffer = []
-
     def process(self, element):
 
         if "elevation" in element.context.feature:
             yield element
+            return
 
         self._buffer.append(element)
 
         if len(self._buffer) >= 200:
-            self._flush()
+            self._set_elevations()
+            print("processing elevations", len(self._buffer))
+            for b in self._buffer:
+                yield b
+            self._buffer = []
 
 
-# # Unwind taxa with a sufficient number of occurrences.
+# # # Unwind taxa with a sufficient number of occurrences.
 # @beam.typehints.with_input_types(beam.typehints.KV[int, beam.typehints.Iterable[example_pb2.SequenceExample]])
 # @beam.typehints.with_output_types(example_pb2.SequenceExample)
 # class UnwindTaxaWithSufficientCount(beam.DoFn):
@@ -225,8 +242,6 @@ class ElevationBundler(beam.DoFn):
 #
 #         self.sufficient_taxa_counter.inc()
 #
-#         # locations = []
-#         # blanks = []
 #         for o in taxon_list:
 #             yield o
 
@@ -272,7 +287,6 @@ class AddRandomTrainPoint(beam.DoFn):
     def process(self, element):
         from tensorflow.core.example import example_pb2
         import mgrs
-        print("train point")
         yield element
 
         lat, lng, date = self.random_point()
@@ -512,7 +526,6 @@ def datastore_query():
     # )
     return q
 
-
 def run():
     from apache_beam.io.gcp.datastore.v1.datastoreio import ReadFromDatastore
     from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions, StandardOptions
@@ -528,6 +541,12 @@ def run():
     occurrence_pipeline_options = pipeline_options.view_as(OccurrencePipelineOptions)
     standard_options = pipeline_options.view_as(StandardOptions)
 
+    def unwind_and_filter((key, values)):
+        # This consumes all the data from shuffle
+        value_list = list(values)
+        if len(value_list) >= 50:
+            yield value_list
+
     with beam.Pipeline(options=google_cloud_options) as p:
 
         (p
@@ -540,10 +559,11 @@ def run():
             | 'RemoveDuplicates' >> beam.RemoveDuplicates()
             | 'ConvertKeyStringsToTaxonSequenceExample' >> beam.ParDo(StringToTaxonSequenceExample())
             | 'GroupByTaxon' >> beam.GroupByKey()
-            | 'FilterTaxonWithInsufficientOccurrences' >> beam.Filter(
-                    lambda (taxon, occurrences): len(occurrences) > occurrence_pipeline_options.minimum_occurrences_within_taxon
-               )
-            | 'UnwindOccurrences' >> beam.FlatMap(lambda (taxon, occurrences): occurrences)
+            # | 'FilterTaxonWithInsufficientOccurrences' >> beam.Filter(
+            #         lambda (taxon, occurrences): len(list(occurrences)) > occurrence_pipeline_options.minimum_occurrences_within_taxon
+            #    )
+            | 'FilterAndUnwindOccurrences' >> beam.FlatMap(lambda (taxon, occurrences):
+                 occurrences if len(list(occurrences)) >= occurrence_pipeline_options.minimum_occurrences_within_taxon else [])
             | 'AddRandomTrainPoint' >> beam.ParDo(AddRandomTrainPoint())
             | 'EnsureElevation' >> beam.ParDo(ElevationBundler(google_cloud_options.project))
             | 'FetchWeather' >> beam.ParDo(FetchWeatherDoFn(
