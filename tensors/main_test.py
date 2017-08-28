@@ -6,6 +6,7 @@ from tensorflow.python.training import queue_runner_impl
 from tensorflow.python.framework import errors
 from main import input_fn, print_records
 from tensorflow.contrib.layers import real_valued_column
+from tensorflow.python.ops import random_ops
 
 DAYS_BEFORE_OCCURRENCE = 45
 BATCH_SIZE=2
@@ -16,6 +17,7 @@ class InputFnTest(tf.test.TestCase):
 
     def testSquare(self):
 
+
         file = "/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/tensors/occurrences.tfrecord-00000-of-00001.tfrecord"
         # c = 0
         # for record in tf.python_io.tf_record_iterator(file):
@@ -24,13 +26,25 @@ class InputFnTest(tf.test.TestCase):
         #     c += 1
         # print_records(file)
         # return
+        # return
         # x, y = input_fn(1, file, 10)
         # print(x)
         # print(x)
 
-        x, y = input_fn(file, tf.contrib.learn.ModeKeys.TRAIN, 3)
-        sequence = tf.contrib.learn.run_n({'y': y}, n=1, feed_dict=None)
+        # BATCH_SIZE = 32
+        # SEQUENCE_LENGTH = 16
+        # #
+        # x = tf.random_uniform([BATCH_SIZE, SEQUENCE_LENGTH])
+        # y = tf.reduce_mean(x, axis=1)
+        # x = tf.expand_dims(x, axis=2)
+        # return {"": x}, y
+
+        x, y = input_fn(file, tf.contrib.learn.ModeKeys.TRAIN, 1)
+        sequence = tf.contrib.learn.run_n(x, n=1, feed_dict=None)
+        # sequence = tf.contrib.learn.run_n(x, n=1, feed_dict=None)
         print sequence
+        sequence = tf.contrib.learn.run_n({'x':y}, n=1, feed_dict=None)
+        print(sequence)
         # input_features = set([
         #     tf.contrib.layers.real_valued_column("label", dtype=tf.int64),
         #     tf.contrib.layers.sparse_column_with_hash_bucket(

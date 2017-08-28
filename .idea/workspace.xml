@@ -2,13 +2,17 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d5d946e7-fd45-4ccd-884b-e8aec6a492d9" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/tensors/records-00000-of-00001.tfrecord" afterPath="" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tensors/playground/__init__.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tensors/playground/data.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tensors/playground/model.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tensors/playground/run.sh" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tensors/playground/task.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tensors/split.py" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/tensors/occurrences.tfrecord-00000-of-00001.tfrecord" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/tensors/test.py" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pipeline/main.py" afterPath="$PROJECT_DIR$/pipeline/main.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pipeline/run.sh" afterPath="$PROJECT_DIR$/pipeline/run.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tensors/main.py" afterPath="$PROJECT_DIR$/tensors/main.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tensors/main_test.py" afterPath="$PROJECT_DIR$/tensors/main_test.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tensors/run.sh" afterPath="$PROJECT_DIR$/tensors/run.sh" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -24,63 +28,44 @@
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pipeline/main.py">
+        <entry file="file://$PROJECT_DIR$/tensors/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="415">
-              <caret line="192" column="28" lean-forward="false" selection-start-line="192" selection-start-column="28" selection-end-line="192" selection-end-column="28" />
+            <state relative-caret-position="319">
+              <caret line="144" column="42" lean-forward="false" selection-start-line="144" selection-start-column="42" selection-end-line="144" selection-end-column="57" />
               <folding>
                 <element signature="e#0#38#0" expanded="true" />
-                <marker date="1503768607000" expanded="true" signature="14668:15418" ph="SELECT lat, " />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file leaf-file-name="run.sh" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pipeline/run.sh">
+        <entry file="file://$PROJECT_DIR$/tensors/playground/run.sh">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="476">
-              <caret line="28" column="2" lean-forward="false" selection-start-line="28" selection-start-column="2" selection-end-line="28" selection-end-column="2" />
+            <state relative-caret-position="34">
+              <caret line="2" column="55" lean-forward="true" selection-start-line="2" selection-start-column="55" selection-end-line="2" selection-end-column="55" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/tensors/main.py">
+      <file leaf-file-name="task.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tensors/playground/task.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="289">
-              <caret line="73" column="36" lean-forward="true" selection-start-line="73" selection-start-column="36" selection-end-line="73" selection-end-column="36" />
-              <folding />
+            <state relative-caret-position="544">
+              <caret line="32" column="33" lean-forward="false" selection-start-line="32" selection-start-column="33" selection-end-line="32" selection-end-column="33" />
+              <folding>
+                <element signature="e#668#684#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="feature_column.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/contrib/layers/python/layers/feature_column.py">
+      <file leaf-file-name="saved_model_export_utils.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/contrib/learn/python/learn/utils/saved_model_export_utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="429">
-              <caret line="1836" column="61" lean-forward="false" selection-start-line="1836" selection-start-column="61" selection-end-line="1836" selection-end-column="61" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="run.sh" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tensors/run.sh">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="85">
-              <caret line="5" column="41" lean-forward="false" selection-start-line="5" selection-start-column="41" selection-end-line="5" selection-end-column="41" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="test.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tensors/test.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="425">
-              <caret line="32" column="3" lean-forward="false" selection-start-line="32" selection-start-column="3" selection-end-line="32" selection-end-column="3" />
+            <state relative-caret-position="225">
+              <caret line="344" column="25" lean-forward="false" selection-start-line="344" selection-start-column="25" selection-end-line="344" selection-end-column="25" />
               <folding />
             </state>
           </provider>
@@ -89,18 +74,40 @@
       <file leaf-file-name="main_test.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tensors/main_test.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="357">
-              <caret line="31" column="14" lean-forward="false" selection-start-line="31" selection-start-column="14" selection-end-line="31" selection-end-column="14" />
+            <state relative-caret-position="1083">
+              <caret line="93" column="21" lean-forward="false" selection-start-line="93" selection-start-column="21" selection-end-line="93" selection-end-column="21" />
+              <folding>
+                <element signature="e#0#23#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="split.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/tensors/split.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="204">
+              <caret line="12" column="41" lean-forward="true" selection-start-line="12" selection-start-column="41" selection-end-line="12" selection-end-column="41" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="occurrences.tfrecord-00000-of-00001.tfrecord" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tensors/occurrences.tfrecord-00000-of-00001.tfrecord">
+      <file leaf-file-name="tf_record.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/python/lib/io/tf_record.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+            <state relative-caret-position="263">
+              <caret line="115" column="6" lean-forward="false" selection-start-line="115" selection-start-column="6" selection-end-line="115" selection-end-column="6" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="pywrap_tensorflow_internal.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/python/pywrap_tensorflow_internal.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="225">
+              <caret line="260" column="8" lean-forward="false" selection-start-line="260" selection-start-column="8" selection-end-line="260" selection-end-column="8" />
               <folding />
             </state>
           </provider>
@@ -116,6 +123,18 @@
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="model.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tensors/playground/model.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-663">
+              <caret line="31" column="16" lean-forward="false" selection-start-line="31" selection-start-column="11" selection-end-line="31" selection-end-column="16" />
+              <folding>
+                <element signature="e#621#644#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
     </leaf>
   </component>
   <component name="FileTemplateManagerImpl">
@@ -127,22 +146,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>entity</find>
-      <find>EntityTo</find>
-      <find>googledatastore</find>
-      <find>element[1]</find>
-      <find>for result</find>
-      <find>random_po</find>
-      <find>random</find>
-      <find>souther</find>
-      <find>group_list</find>
-      <find>_list</find>
-      <find>group</find>
-      <find>grouplist</find>
-      <find>query</find>
-      <find>query_pb2.Query</find>
-      <find>Query</find>
-      <find>label</find>
       <find>elevation</find>
       <find>print</find>
       <find>taxon</find>
@@ -157,6 +160,22 @@
       <find>train point</find>
       <find>EnsureElevat</find>
       <find>elevationbund</find>
+      <find>label</find>
+      <find>x</find>
+      <find>to_csv</find>
+      <find>sns</find>
+      <find>learn_runner</find>
+      <find>create_</find>
+      <find>cell_type</find>
+      <find>shape</find>
+      <find>_list</find>
+      <find>steps</find>
+      <find>TRAIN_STEPS</find>
+      <find>num_classes</find>
+      <find>targets</find>
+      <find>epoch</find>
+      <find>SEQ_L</find>
+      <find>model_dir</find>
     </findStrings>
     <dirStrings>
       <dir>$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages</dir>
@@ -190,7 +209,6 @@
         <option value="$PROJECT_DIR$/tftest.py" />
         <option value="$PROJECT_DIR$/pipeline/writer.py" />
         <option value="$PROJECT_DIR$/pipeline/random_generator.py" />
-        <option value="$PROJECT_DIR$/tensors/example.py" />
         <option value="$PROJECT_DIR$/pipeline/occurrence.py" />
         <option value="$PROJECT_DIR$/pipeline/weather.py" />
         <option value="$PROJECT_DIR$/pipeline/pipeline_test.py" />
@@ -213,8 +231,16 @@
         <option value="$PROJECT_DIR$/pipeline/run.sh" />
         <option value="$PROJECT_DIR$/tensors/run.sh" />
         <option value="$PROJECT_DIR$/pipeline/main.py" />
+        <option value="$PROJECT_DIR$/tensors/example.py" />
+        <option value="$PROJECT_DIR$/tensors/playground/example.py" />
+        <option value="$PROJECT_DIR$/tensors/playground/rnn.py" />
+        <option value="$PROJECT_DIR$/tensors/playground/main.py" />
+        <option value="$PROJECT_DIR$/tensors/playground/task.py" />
+        <option value="$PROJECT_DIR$/tensors/playground/run.sh" />
+        <option value="$PROJECT_DIR$/tensors/playground/model.py" />
         <option value="$PROJECT_DIR$/tensors/main_test.py" />
         <option value="$PROJECT_DIR$/tensors/main.py" />
+        <option value="$PROJECT_DIR$/tensors/split.py" />
       </list>
     </option>
   </component>
@@ -231,9 +257,8 @@
     </treeState>
   </component>
   <component name="ProjectFrameBounds" fullScreen="true">
-    <option name="y" value="23" />
     <option name="width" value="1280" />
-    <option name="height" value="709" />
+    <option name="height" value="800" />
   </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
     <entry key="Project Default">
@@ -293,6 +318,12 @@
             </path>
             <path>
               <item name="dataflow" type="b2602c69:ProjectViewProjectNode" />
+              <item name="dataflow" type="462c0819:PsiDirectoryNode" />
+              <item name="tensors" type="462c0819:PsiDirectoryNode" />
+              <item name="playground" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="dataflow" type="b2602c69:ProjectViewProjectNode" />
               <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
             </path>
           </expand>
@@ -312,6 +343,7 @@
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/tensors/playground" />
       <recent name="$PROJECT_DIR$/tensors" />
       <recent name="$PROJECT_DIR$/pipeline/dofn" />
       <recent name="$PROJECT_DIR$/pipeline/entity" />
@@ -460,12 +492,12 @@
       <workItem from="1502646372070" duration="2362000" />
       <workItem from="1502655088976" duration="66755000" />
       <workItem from="1503237498256" duration="42439000" />
-      <workItem from="1503456893962" duration="46725000" />
+      <workItem from="1503456893962" duration="67638000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="346360000" />
+    <option name="totallyTimeSpent" value="367273000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1280" height="800" extended-state="0" />
@@ -513,99 +545,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/apache_beam/transforms/util.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="472">
-          <caret line="158" column="4" lean-forward="false" selection-start-line="158" selection-start-column="4" selection-end-line="158" selection-end-column="4" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/local/Cellar/python/2.7.13_1/Frameworks/Python.framework/Versions/2.7/lib/python2.7/argparse.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="218">
-          <caret line="1262" column="8" lean-forward="false" selection-start-line="1262" selection-start-column="8" selection-end-line="1262" selection-end-column="8" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/apache_beam/pipeline.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="318">
-          <caret line="83" column="6" lean-forward="false" selection-start-line="83" selection-start-column="6" selection-end-line="83" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/google/cloud/proto/datastore/v1/query_pb2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="297">
-          <caret line="892" column="0" lean-forward="false" selection-start-line="892" selection-start-column="0" selection-end-line="892" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/google/cloud/datastore/entity.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2389">
-          <caret line="20" column="6" lean-forward="false" selection-start-line="20" selection-start-column="6" selection-end-line="20" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/apache_beam/io/gcp/datastore/v1/datastoreio.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="218">
-          <caret line="85" column="6" lean-forward="false" selection-start-line="85" selection-start-column="6" selection-end-line="85" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/googledatastore/helper.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="225">
-          <caret line="321" column="4" lean-forward="false" selection-start-line="321" selection-start-column="4" selection-end-line="321" selection-end-column="4" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pipeline/dataflow_test.py" />
-    <entry file="file://$PROJECT_DIR$/pipeline/run-local.sh" />
-    <entry file="file://$PROJECT_DIR$/pipeline/options.py" />
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/google/cloud/proto/datastore/v1/entity_pb2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/google/cloud/datastore/helpers.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="408">
-          <caret line="24" column="10" lean-forward="false" selection-start-line="24" selection-start-column="10" selection-end-line="24" selection-end-column="10" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pipeline/requirements.txt" />
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/setuptools/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="225">
-          <caret line="111" column="0" lean-forward="false" selection-start-line="111" selection-start-column="0" selection-end-line="111" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pipeline/dofn/entity.py" />
-    <entry file="file://$PROJECT_DIR$/pipeline/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///usr/local/Cellar/python/2.7.13_1/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/google/cloud/bigquery/table.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="10608">
@@ -725,14 +664,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/contrib/learn/python/learn/estimators/dynamic_rnn_estimator.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="225">
-          <caret line="552" column="15" lean-forward="false" selection-start-line="552" selection-start-column="15" selection-end-line="552" selection-end-column="15" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/pygeocoder.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="456">
@@ -839,18 +770,133 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tensors/test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="425">
-          <caret line="32" column="3" lean-forward="false" selection-start-line="32" selection-start-column="3" selection-end-line="32" selection-end-column="3" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/contrib/layers/python/layers/feature_column.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="429">
           <caret line="1836" column="61" lean-forward="false" selection-start-line="1836" selection-start-column="61" selection-end-line="1836" selection-end-column="61" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tensors/occurrences.tfrecord-00000-of-00001.tfrecord">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/python/ops/gen_array_ops.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-176">
+          <caret line="2548" column="4" lean-forward="false" selection-start-line="2548" selection-start-column="4" selection-end-line="2548" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tensors/playground/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1292">
+          <caret line="76" column="0" lean-forward="true" selection-start-line="76" selection-start-column="0" selection-end-line="76" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tensors/playground/rnn.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="832">
+          <caret line="77" column="40" lean-forward="true" selection-start-line="11" selection-start-column="0" selection-end-line="77" selection-end-column="40" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tensors/playground/train.csv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/contrib/learn/python/learn/estimators/model_fn.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="225">
+          <caret line="61" column="6" lean-forward="false" selection-start-line="61" selection-start-column="6" selection-end-line="61" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tensors/occurrences.tfrecord-00000-of-00001.tfrecord">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tensors/run.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="68">
+          <caret line="4" column="24" lean-forward="false" selection-start-line="4" selection-start-column="24" selection-end-line="4" selection-end-column="24" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tensors/test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="391">
+          <caret line="30" column="11" lean-forward="true" selection-start-line="30" selection-start-column="11" selection-end-line="30" selection-end-column="11" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pipeline/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="150">
+          <caret line="344" column="26" lean-forward="true" selection-start-line="344" selection-start-column="26" selection-end-line="344" selection-end-column="26" />
+          <folding>
+            <element signature="e#0#38#0" expanded="true" />
+            <marker date="1503768607000" expanded="true" signature="14668:15418" ph="SELECT lat, " />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tensors/playground/valid.csv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/contrib/learn/python/learn/estimators/estimator.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="208">
+          <caret line="428" column="52" lean-forward="false" selection-start-line="428" selection-start-column="47" selection-end-line="428" selection-end-column="52" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/contrib/learn/python/learn/estimators/dynamic_rnn_estimator.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3813">
+          <caret line="597" column="50" lean-forward="false" selection-start-line="597" selection-start-column="50" selection-end-line="597" selection-end-column="50" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tensors/playground/data.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="255">
+          <caret line="15" column="0" lean-forward="false" selection-start-line="15" selection-start-column="0" selection-end-line="15" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/contrib/learn/python/learn/utils/saved_model_export_utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="225">
+          <caret line="344" column="25" lean-forward="false" selection-start-line="344" selection-start-column="25" selection-end-line="344" selection-end-column="25" />
           <folding />
         </state>
       </provider>
@@ -863,45 +909,74 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tensors/run.sh">
+    <entry file="file://$PROJECT_DIR$/tensors/main_test.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="85">
-          <caret line="5" column="41" lean-forward="false" selection-start-line="5" selection-start-column="41" selection-end-line="5" selection-end-column="41" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pipeline/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="415">
-          <caret line="192" column="28" lean-forward="false" selection-start-line="192" selection-start-column="28" selection-end-line="192" selection-end-column="28" />
+        <state relative-caret-position="1083">
+          <caret line="93" column="21" lean-forward="false" selection-start-line="93" selection-start-column="21" selection-end-line="93" selection-end-column="21" />
           <folding>
-            <element signature="e#0#38#0" expanded="true" />
-            <marker date="1503768607000" expanded="true" signature="14668:15418" ph="SELECT lat, " />
+            <element signature="e#0#23#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tensors/occurrences.tfrecord-00000-of-00001.tfrecord">
+    <entry file="file://$PROJECT_DIR$/tensors/playground/run.sh">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        <state relative-caret-position="34">
+          <caret line="2" column="55" lean-forward="true" selection-start-line="2" selection-start-column="55" selection-end-line="2" selection-end-column="55" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tensors/main_test.py">
+    <entry file="file://$PROJECT_DIR$/tensors/playground/task.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="357">
-          <caret line="31" column="14" lean-forward="false" selection-start-line="31" selection-start-column="14" selection-end-line="31" selection-end-column="14" />
-          <folding />
+        <state relative-caret-position="544">
+          <caret line="32" column="33" lean-forward="false" selection-start-line="32" selection-start-column="33" selection-end-line="32" selection-end-column="33" />
+          <folding>
+            <element signature="e#668#684#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tensors/playground/model.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-663">
+          <caret line="31" column="16" lean-forward="false" selection-start-line="31" selection-start-column="11" selection-end-line="31" selection-end-column="16" />
+          <folding>
+            <element signature="e#621#644#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/tensors/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="289">
-          <caret line="73" column="36" lean-forward="true" selection-start-line="73" selection-start-column="36" selection-end-line="73" selection-end-column="36" />
+        <state relative-caret-position="319">
+          <caret line="144" column="42" lean-forward="false" selection-start-line="144" selection-start-column="42" selection-end-line="144" selection-end-column="57" />
+          <folding>
+            <element signature="e#0#38#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/python/pywrap_tensorflow_internal.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="225">
+          <caret line="260" column="8" lean-forward="false" selection-start-line="260" selection-start-column="8" selection-end-line="260" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/python/lib/io/tf_record.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="263">
+          <caret line="115" column="6" lean-forward="false" selection-start-line="115" selection-start-column="6" selection-end-line="115" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tensors/split.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="12" column="41" lean-forward="true" selection-start-line="12" selection-start-column="41" selection-end-line="12" selection-end-column="41" />
           <folding />
         </state>
       </provider>

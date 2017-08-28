@@ -6,14 +6,14 @@ import tempfile
 import tensorflow as tf
 from tensorflow.contrib.layers import real_valued_column, sparse_column_with_hash_bucket
 from tensorflow.python.ops import io_ops
-from tensorflow.contrib import learn, layers
+from tensorflow.contrib.learn import Experiment
 from tensorflow.contrib.learn.python.learn.estimators import constants
 from tensorflow.contrib.learn.python.learn.estimators import rnn_common
 from tensorflow.contrib.learn.python.learn.estimators import dynamic_rnn_estimator
 # Constants
 DAYS_BEFORE_OCCURRENCE = 45
-BATCH_SIZE = 10
-TRAIN_STEPS=200
+BATCH_SIZE = 20
+TRAIN_STEPS = 200
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
@@ -31,7 +31,7 @@ flags.DEFINE_string(
 
 context_features={
      'elevation': tf.FixedLenFeature(shape=[1], dtype=tf.float32),
-     # 'grid-zone': tf.VarLenFeature(dtype=tf.string),
+     'grid-zone': tf.VarLenFeature(dtype=tf.string),
      'label': tf.FixedLenFeature(shape=[1], dtype=tf.int64)
  }
 
@@ -46,17 +46,19 @@ def print_records(file):
 
     record_iterator = tf.python_io.tf_record_iterator(file)
     c = 0
+    d = 0
     for record in record_iterator:
-        c += 1
         example = tf.train.SequenceExample()
         example.ParseFromString(record)
-        print(example.context.feature['elevation']
-                     .float_list
-                     .value)
+        if example.context.feature["label"].int64_list.value[0] == 0:
+            d += 1
+        else:
+            c += 1
+        # print(example.context.feature["label"].int32_list.value[0])
         # print(example)
         # break
 
-    print("total", c)
+    print("total", c, d)
 
 def input_fn(file, mode, batch_size):
 
@@ -74,6 +76,7 @@ def input_fn(file, mode, batch_size):
     features = context_parsed.copy()
     features.update(sequence_parsed)
     features['tmax'].set_shape((DAYS_BEFORE_OCCURRENCE,1))
+    # features['tmax'].set_shape((DAYS_BEFORE_OCCURRENCE,1))
     # features['tmin'].set_shape((DAYS_BEFORE_OCCURRENCE,1))
     features['prcp'].set_shape((DAYS_BEFORE_OCCURRENCE,1))
     features['daylight'].set_shape((DAYS_BEFORE_OCCURRENCE,1))
@@ -85,7 +88,12 @@ def input_fn(file, mode, batch_size):
         min_after_dequeue=20,
         name="read_batch_features_{}".format(mode)
     )
+    x["elevation"] = tf.squeeze(x["elevation"])
+    x["tmax"] = tf.squeeze(x["tmax"])
+    x["prcp"] = tf.squeeze(x["prcp"])
+    x["daylight"] = tf.squeeze(x["daylight"])
 
+    # y = tf.squeeze(x.pop("label"))
     y = x.pop("label")
 
     len_key = tf.placeholder(tf.int16, shape=(batch_size))
@@ -94,7 +102,7 @@ def input_fn(file, mode, batch_size):
     return x, y
 
 
-def build_classifier(file, model_dir):
+def build_classifier():
 
     gz = sparse_column_with_hash_bucket(
         column_name="grid-zone",
@@ -103,38 +111,45 @@ def build_classifier(file, model_dir):
 
     context_feature_columns=[
         # real_valued_column("label", dtype=tf.int64),
-        # tf.contrib.layers.embedding_column(gz, dimension=8),
+        tf.contrib.layers.embedding_column(gz, dimension=8),
         real_valued_column("elevation", dtype=tf.float32)
     ]
     sequence_feature_columns=[
         real_valued_column("tmax", dtype=tf.float32),
         # # real_valued_column("tmin", dtype=tf.float32),
         real_valued_column("prcp", dtype=tf.float32),
-        real_valued_column("daylight", dtype=tf.float32)
+        # real_valued_column("daylight", dtype=tf.float32)
     ]
 
     return dynamic_rnn_estimator.DynamicRnnEstimator(problem_type = constants.ProblemType.CLASSIFICATION,
-                                              prediction_type = rnn_common.PredictionType.MULTIPLE_VALUE,
+                                              prediction_type = rnn_common.PredictionType.SINGLE_VALUE,
                                               sequence_feature_columns = sequence_feature_columns,
                                               context_feature_columns = context_feature_columns,
-                                              num_units = 20,
+                                              num_units = 50,
                                               predict_probabilities=True,
                                               num_classes=2,
-                                              cell_type = 'lstm',
+                                              cell_type = 'gru',
                                               optimizer = 'SGD',
                                               # gradient_clipping_norm=1.0,
                                               learning_rate = 0.01)
 
 
 def run():
+
+    e = Experiment(
+        estimator = build_classifier(),
+        train_input_fn=
+    )
+
+
     model_dir = tempfile.mkdtemp() if not FLAGS.model_dir else FLAGS.model_dir
     print("model directory = %s" % model_dir)
     classifier = build_classifier(FLAGS.train_data, model_dir)
     classifier.fit(
-        input_fn=lambda: input_fn(FLAGS.train_data, tf.contrib.learn.ModeKeys.TRAIN, 10),
+        input_fn=lambda: input_fn(FLAGS.train_data, tf.contrib.learn.ModeKeys.TRAIN, BATCH_SIZE),
         # steps=FLAGS.train_steps
     )
-    results = classifier.evaluate(input_fn=lambda: input_fn(FLAGS.train_data, tf.contrib.learn.ModeKeys.EVAL, 5))
+    results = classifier.evaluate(input_fn=lambda: input_fn(FLAGS.train_data, tf.contrib.learn.ModeKeys.EVAL, BATCH_SIZE))
     for key in sorted(results):
         print("%s: %s" % (key, results[key]))
 
