@@ -4,6 +4,9 @@ import logging
 from tensorflow.core.example import example_pb2
 from google.cloud.proto.datastore.v1 import entity_pb2
 import apache_beam as beam
+from elevation import ElevationBundleDoFn
+from weather import FetchWeatherDoFn
+from encode import EncodeExampleDoFn
 # pip install "apache_beam[gcp]"
 
 class OccurrencePipelineOptions(PipelineOptions):
@@ -75,11 +78,11 @@ class OccurrencePipelineOptions(PipelineOptions):
 # Filter and prepare for duplicate sort.
 @beam.typehints.with_input_types(entity_pb2.Entity)
 @beam.typehints.with_output_types(str)
-class EntityToString(beam.DoFn):
+class OccurrenceEntityToString(beam.DoFn):
 
     def __init__(self, taxon=0):
         from apache_beam.metrics import Metrics
-        super(EntityToString, self).__init__()
+        super(OccurrenceEntityToString, self).__init__()
         self.new_occurrence_counter = Metrics.counter('main', 'new_occurrences')
         self.invalid_occurrence_date = Metrics.counter('main', 'invalid_occurrence_date')
         self.invalid_occurrence_elevation = Metrics.counter('main', 'invalid_occurrence_elevation')
@@ -140,113 +143,6 @@ class EntityToString(beam.DoFn):
 
 @beam.typehints.with_input_types(example_pb2.SequenceExample)
 @beam.typehints.with_output_types(example_pb2.SequenceExample)
-class ElevationBundler(beam.DoFn):
-    def __init__(self, project):
-        super(ElevationBundler, self).__init__()
-        from google.cloud import storage
-
-        client = storage.Client(project=project)
-        bucket = client.get_bucket('floracast-conf')
-        content = storage.Blob('dataflow.sh', bucket).download_as_string()
-        for line in content.split(b'\n'):
-            if "FLORACAST_GOOGLE_MAPS_API_KEY" in line.decode("utf-8"):
-                self.FLORACAST_GOOGLE_MAPS_API_KEY = line.decode("utf-8").split("=")[1]
-
-        self._buffer = []
-
-    def start_bundle(self):
-        del self._buffer[:]
-
-    def finish_bundle(self):
-        from apache_beam.utils.windowed_value import WindowedValue
-        from apache_beam.transforms import window
-        self._set_elevations()
-
-        print("finishing elevations", len(self._buffer))
-        for b in self._buffer:
-            yield WindowedValue(b, -1, [window.GlobalWindow()])
-
-        self._buffer = []
-
-    def isclose(self, a, b, rel_tol=1e-09, abs_tol=0.0):
-        return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
-
-    def _set_elevations(self):
-        from googlemaps import Client
-        client = Client(key=self.FLORACAST_GOOGLE_MAPS_API_KEY)
-
-        if len(self._buffer) == 0:
-            return
-
-        print("setting elevations", len(self._buffer))
-
-        coords = []
-        for e in self._buffer:
-            coords.append((
-                e.context.feature["latitude"].float_list.value[0],
-                e.context.feature["longitude"].float_list.value[0]
-            ))
-
-        for r in client.elevation(coords):
-            for i, b in enumerate(self._buffer):
-                if len(self._buffer[i].context.feature["elevation"].float_list.value) > 0:
-                    continue
-                if not self.isclose(
-                        r['location']['lat'],
-                        b.context.feature['latitude'].float_list.value[0],
-                        abs_tol=0.00001
-                ):
-                    continue
-                if not self.isclose(
-                        r['location']['lng'],
-                        b.context.feature['longitude'].float_list.value[0],
-                        abs_tol=0.00001
-                ):
-                    continue
-                self._buffer[i].context.feature["elevation"].float_list.value.append(r['elevation'])
-                break
-
-    def process(self, element):
-
-        if "elevation" in element.context.feature:
-            yield element
-            return
-
-        self._buffer.append(element)
-
-        if len(self._buffer) >= 200:
-            self._set_elevations()
-            print("processing elevations", len(self._buffer))
-            for b in self._buffer:
-                yield b
-            self._buffer = []
-
-
-# # # Unwind taxa with a sufficient number of occurrences.
-# @beam.typehints.with_input_types(beam.typehints.KV[int, beam.typehints.Iterable[example_pb2.SequenceExample]])
-# @beam.typehints.with_output_types(example_pb2.SequenceExample)
-# class UnwindTaxaWithSufficientCount(beam.DoFn):
-#     def __init__(self, minimum_taxon_count):
-#         super(UnwindTaxaWithSufficientCount, self).__init__()
-#         from apache_beam.metrics import Metrics
-#         self.sufficient_taxa_counter = Metrics.counter('main', 'sufficient_taxa')
-#         self.insufficient_taxa_counter = Metrics.counter('main', 'insufficient_taxa')
-#         self.minimum_taxon_count = minimum_taxon_count
-#
-#     def process(self, element):
-#
-#         taxon_list = list(element[1])
-#         if len(taxon_list) <= self.minimum_taxon_count:
-#             self.insufficient_taxa_counter.inc()
-#             return
-#
-#         self.sufficient_taxa_counter.inc()
-#
-#         for o in taxon_list:
-#             yield o
-
-@beam.typehints.with_input_types(example_pb2.SequenceExample)
-@beam.typehints.with_output_types(example_pb2.SequenceExample)
 class AddRandomTrainPoint(beam.DoFn):
     def __init__(self):
         super(AddRandomTrainPoint, self).__init__()
@@ -300,22 +196,6 @@ class AddRandomTrainPoint(beam.DoFn):
         yield se
 
 
-# Filter and prepare for duplicate sort.
-@beam.typehints.with_input_types(example_pb2.SequenceExample)
-@beam.typehints.with_output_types(str)
-class EncodeExample(beam.DoFn):
-    def __init__(self):
-        super(EncodeExample, self).__init__()
-        from apache_beam.metrics import Metrics
-        self.final_occurrence_count = Metrics.counter('main', 'final_occurrence_count')
-
-    def process(self, ex):
-        if "elevation" not in ex.context.feature:
-            return
-        self.final_occurrence_count.inc()
-        yield ex.SerializeToString()
-
-
 @beam.typehints.with_input_types(str)
 @beam.typehints.with_output_types(beam.typehints.KV[int, example_pb2.SequenceExample])
 class StringToTaxonSequenceExample(beam.DoFn):
@@ -346,156 +226,6 @@ class StringToTaxonSequenceExample(beam.DoFn):
         se.context.feature["grid-zone"].bytes_list.value.append(mgrs.MGRS().toMGRS(lat, lng)[:2].encode())
 
         yield taxon, se
-
-
-@beam.typehints.with_input_types(example_pb2.SequenceExample)
-@beam.typehints.with_output_types(example_pb2.SequenceExample)
-class FetchWeatherDoFn(beam.DoFn):
-    def __init__(self, project, weather_station_distance):
-        super(FetchWeatherDoFn, self).__init__()
-        from apache_beam.metrics import Metrics
-        self._project = project
-        self._dataset = 'bigquery-public-data:noaa_gsod'
-        self.insufficient_weather_records = Metrics.counter('main', 'insufficient_weather_records')
-        self._weather_station_distance = weather_station_distance
-
-    def process(self, example):
-        from geopy import Point, distance
-        from google.cloud import bigquery
-        import astral
-        import logging
-        from pandas import date_range
-        from datetime import datetime
-
-        client = bigquery.Client(project=self._project)
-
-        lat = example.context.feature['latitude'].float_list.value[0]
-        lng = example.context.feature['longitude'].float_list.value[0]
-
-        location = Point(lat, lng)
-
-        # Calculate bounding box.
-        nw = distance.VincentyDistance(miles=self._weather_station_distance).destination(location, 315)
-        se = distance.VincentyDistance(miles=self._weather_station_distance).destination(location, 135)
-
-        records = {}
-
-        yearmonths = {}
-        date = datetime.fromtimestamp(example.context.feature['date'].int64_list.value[0])
-        range = date_range(end=datetime(date.year, date.month, date.day), periods=45, freq='D')
-        for d in range.tolist():
-            if str(d.year) not in yearmonths:
-                yearmonths[str(d.year)] = set()
-            yearmonths[str(d.year)].add('{:02d}'.format(d.month))
-
-        for year, months in yearmonths.iteritems():
-            month_query = ""
-            for m in months:
-                if month_query == "":
-                    month_query = "(mo = '%s'" % m
-                else:
-                    month_query += " OR mo = '%s'" % m
-            month_query += ")"
-
-            q = """
-                  SELECT
-                    lat,
-                    lon,
-                    prcp,
-                    min,
-                    max,
-                    temp,
-                    mo,
-                    da,
-                    year,
-                    elev
-                  FROM
-                    [bigquery-public-data:noaa_gsod.gsod{year}] a
-                  JOIN
-                    [bigquery-public-data:noaa_gsod.stations] b
-                  ON
-                    a.stn=b.usaf
-                    AND a.wban=b.wban
-                  WHERE
-                     lat <= {nLat} AND lat >= {sLat}
-                    AND lon >= {wLon} AND lon <= {eLon}
-                    AND {monthQuery}
-                  ORDER BY
-                    da DESC
-            """
-            values = {
-                'nLat': str(nw.latitude),
-                'wLon': str(nw.longitude),
-                'sLat': str(se.latitude),
-                'eLon': str(se.longitude),
-                'year': year,
-                'monthQuery': month_query
-            }
-
-            # Had some trouble with conflicting versions of this package between local runner and remote.
-            #  pip install --upgrade google-cloud-bigquery
-            sync_query = client.run_sync_query(q.format(**values))
-            sync_query.timeout_ms = 30000
-            sync_query.run()
-
-            page_token=None
-            while True:
-                iterator = sync_query.fetch_data(
-                    max_results=1000,
-                    page_token=page_token
-                )
-                for row in iterator:
-
-                    d = datetime(int(row[8]), int(row[6]), int(row[7]))
-                    if d > range.max() or d < range.min():
-                        continue
-                    if d in records:
-                        previous = distance.vincenty().measure(Point(records[d][0], records[d][1]), location)
-                        current = distance.vincenty().measure(Point(row[0], row[1]), location)
-                        if current < previous:
-                            records[d] = row
-                    else:
-                        records[d] = row
-                if iterator.next_page_token is None:
-                    break
-                page_token = iterator.next_page_token
-
-        dates = records.keys()
-        dates.sort()
-
-        if len(dates) != len(range):
-            # logging.info("range: %.8f, %.8f, %s, %s", lat, lng, year, months)
-            self.insufficient_weather_records.inc()
-            return
-
-        tmax = example.feature_lists.feature_list["tmax"]
-        tmin = example.feature_lists.feature_list["tmin"]
-        prcp = example.feature_lists.feature_list["prcp"]
-        temp = example.feature_lists.feature_list["temp"]
-        daylight = example.feature_lists.feature_list["daylight"]
-
-        for d in dates:
-
-            daylength = 0
-            try:
-                a = astral.Astral()
-                a.solar_depression = 'civil'
-                astro = a.sun_utc(d, lat, lng)
-                daylength = (astro['sunset'] - astro['sunrise']).seconds
-            except astral.AstralError as err:
-                if "Sun never reaches 6 degrees below the horizon" in err.message:
-                    daylength = 86400
-                else:
-                    logging.error("Error parsing day[%s] length at [%.6f,%.6f]: %s", date, lat, lng, err)
-                    return
-
-            daylight.feature.add().float_list.value.append(daylength)
-            prcp.feature.add().float_list.value.append(records[d][2])
-            tmin.feature.add().float_list.value.append(records[d][3])
-            tmax.feature.add().float_list.value.append(records[d][4])
-            temp.feature.add().float_list.value.append(records[d][5])
-
-        yield example
 
 
 def datastore_query():
@@ -552,10 +282,9 @@ def run():
         (p
             | 'ReadDatastoreOccurrences' >> ReadFromDatastore(
                 project=google_cloud_options.project,
-                query=datastore_query(),
-                num_splits=0
+                query=datastore_query()
             )
-            | 'ConvertEntitiesToKeyStrings' >> beam.ParDo(EntityToString(occurrence_pipeline_options.taxon))
+            | 'ConvertEntitiesToKeyStrings' >> beam.ParDo(OccurrenceEntityToString(occurrence_pipeline_options.taxon))
             | 'RemoveDuplicates' >> beam.RemoveDuplicates()
             | 'ConvertKeyStringsToTaxonSequenceExample' >> beam.ParDo(StringToTaxonSequenceExample())
             | 'GroupByTaxon' >> beam.GroupByKey()
@@ -565,12 +294,12 @@ def run():
             | 'FilterAndUnwindOccurrences' >> beam.FlatMap(lambda (taxon, occurrences):
                  occurrences if len(list(occurrences)) >= occurrence_pipeline_options.minimum_occurrences_within_taxon else [])
             | 'AddRandomTrainPoint' >> beam.ParDo(AddRandomTrainPoint())
-            | 'EnsureElevation' >> beam.ParDo(ElevationBundler(google_cloud_options.project))
+            | 'EnsureElevation' >> beam.ParDo(ElevationBundleDoFn(google_cloud_options.project))
             | 'FetchWeather' >> beam.ParDo(FetchWeatherDoFn(
                     google_cloud_options.project,
                     occurrence_pipeline_options.weather_station_distance
                 ))
-            | 'EncodeForWrite' >> beam.ParDo(EncodeExample())
+            | 'EncodeForWrite' >> beam.ParDo(EncodeExampleDoFn())
             | 'Write' >> beam.io.WriteToTFRecord(
                     file_path_prefix=occurrence_pipeline_options.output,
                     file_name_suffix='.tfrecord',
