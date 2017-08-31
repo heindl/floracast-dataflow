@@ -21,7 +21,7 @@ flags.DEFINE_string("model_dir", "", "Base directory for output models.")
 
 flags.DEFINE_integer(
     "epochs",
-    30,
+    50,
     "Number of epochs to run over file")
 
 flags.DEFINE_integer(
@@ -31,7 +31,7 @@ flags.DEFINE_integer(
 
 flags.DEFINE_integer(
     "training_batch_size",
-    50,
+    40,
     "Size of training batch")
 
 flags.DEFINE_integer(
@@ -220,13 +220,12 @@ def get_dnn_estimator():
 
     return DNNClassifier(
         feature_columns=feature_columns,
-        # hidden_units=[16, 8],
-        hidden_units=[30, 60, 30],
-        n_classes=2
-        # optimizer=tf.train.ProximalAdagradOptimizer(
-        #     learning_rate=0.1,
-        #     l1_regularization_strength=0.001
-        # )
+        hidden_units=[60, 120, 60],
+        n_classes=2,
+        optimizer=tf.train.ProximalAdagradOptimizer(
+            learning_rate=0.01,
+            l1_regularization_strength=0.001
+        )
     )
 
 

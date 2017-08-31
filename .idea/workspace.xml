@@ -2,19 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d5d946e7-fd45-4ccd-884b-e8aec6a492d9" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tensors/print_input.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tensors/utils/__init__.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tensors/utils/count.py" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/tensors/main_test.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/tensors/playground/data.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/tensors/playground/model.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/tensors/playground/run.sh" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/tensors/playground/task.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/tensors/playground/train.csv" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/tensors/playground/valid.csv" afterPath="" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/tensors/experiment.py" afterPath="$PROJECT_DIR$/tensors/print_input.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/tensors/playground/__init__.py" afterPath="$PROJECT_DIR$/tensors/utils/__init__.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/tensors/split.py" afterPath="$PROJECT_DIR$/tensors/utils/split.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tensors/main.py" afterPath="$PROJECT_DIR$/tensors/main.py" />
     </list>
@@ -31,11 +18,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/tensors/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="226">
-              <caret line="222" column="31" lean-forward="true" selection-start-line="222" selection-start-column="31" selection-end-line="222" selection-end-column="31" />
+            <state relative-caret-position="399">
+              <caret line="30" column="0" lean-forward="true" selection-start-line="30" selection-start-column="0" selection-end-line="30" selection-end-column="0" />
               <folding>
                 <element signature="e#0#38#0" expanded="true" />
               </folding>
@@ -53,7 +40,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="run.sh" pinned="false" current-in-tab="true">
+      <file leaf-file-name="run.sh" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tensors/run.sh">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="85">
@@ -466,12 +453,12 @@
       <workItem from="1502646372070" duration="2362000" />
       <workItem from="1502655088976" duration="66755000" />
       <workItem from="1503237498256" duration="42439000" />
-      <workItem from="1503456893962" duration="112622000" />
+      <workItem from="1503456893962" duration="113260000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="412257000" />
+    <option name="totallyTimeSpent" value="412895000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1280" height="800" extended-state="0" />
@@ -894,16 +881,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tensors/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="226">
-          <caret line="222" column="31" lean-forward="true" selection-start-line="222" selection-start-column="31" selection-end-line="222" selection-end-column="31" />
-          <folding>
-            <element signature="e#0#38#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/tensors/playground/data.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="255">
@@ -933,6 +910,16 @@
         <state relative-caret-position="85">
           <caret line="5" column="30" lean-forward="true" selection-start-line="5" selection-start-column="30" selection-end-line="5" selection-end-column="30" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tensors/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="399">
+          <caret line="30" column="0" lean-forward="true" selection-start-line="30" selection-start-column="0" selection-end-line="30" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#38#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
