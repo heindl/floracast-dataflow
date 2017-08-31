@@ -1,6 +1,0 @@
-setup.py
-occurrence_tfrecords.egg-info/PKG-INFO
-occurrence_tfrecords.egg-info/SOURCES.txt
-occurrence_tfrecords.egg-info/dependency_links.txt
-occurrence_tfrecords.egg-info/requires.txt
-occurrence_tfrecords.egg-info/top_level.txt

@@ -126,9 +126,9 @@ def run():
 
         (p
          | 'ReadDatastoreOccurrences' >> ReadFromDatastore(
-            project=google_cloud_options.project,
-            query=forest_query()
-        )
+                project=google_cloud_options.project,
+                query=forest_query()
+            )
          | 'ConvertForestEntityToSequenceExample' >> beam.ParDo(ForestEntityToSequenceExample(forest_pipeline_options.weeks_before))
          | 'EnsureElevation' >> beam.ParDo(ElevationBundleDoFn(google_cloud_options.project))
          | 'FetchWeather' >> beam.ParDo(FetchWeatherDoFn(
