@@ -42,6 +42,9 @@ class Example:
         else:
             self._example = example_pb2.Example()
 
+    def __getitem__(self, key):
+        return self._example.features.feature[key]
+
     def _append_value(self, feature, typer, value):
         if typer == LIST_TYPE_INT64:
             self._example.features.feature[feature].int64_list.value.append(value)
@@ -49,6 +52,20 @@ class Example:
             self._example.features.feature[feature].float_list.value.append(value)
         elif typer == LIST_TYPE_BYTES:
             self._example.features.feature[feature].bytes_list.value.append(value)
+
+    def as_map(self):
+        v = {}
+        for k in self._example.features.feature:
+            if len(self._example.features.feature[k].int64_list.value) > 0:
+                v[k] = self._example.features.feature[k].int64_list.value
+                continue
+            if len(self._example.features.feature[k].float_list.value) > 0:
+                v[k] = self._example.features.feature[k].float_list.value
+                continue
+            if len(self._example.features.feature[k].bytes_list.value) > 0:
+                v[k] = self._example.features.feature[k].bytes_list.value
+                continue
+        return v
 
     def _set_value(self, feature, typer, value, i=0):
         if typer == LIST_TYPE_INT64:
@@ -69,18 +86,21 @@ class Example:
 
     def _get_value(self, feature, typer):
         v = self._get_values(feature, typer)
-        if v is None:
-            return v
-        return v[0]
+        if v is not None:
+            return v[0]
+        return None
 
     def _get_values(self, feature, typer):
+
+        f = self._example.features.feature[feature]
+
         v = []
         if typer == LIST_TYPE_INT64:
-            v = self._example.features.feature[feature].int64_list.value
+            v = f.int64_list.value
         elif typer == LIST_TYPE_FLOAT:
-            v = self._example.features.feature[feature].float_list.value
+            v = f.float_list.value
         elif typer == LIST_TYPE_BYTES:
-            v = self._example.features.feature[feature].bytes_list.value
+            v = f.bytes_list.value
         else:
             return None
 
@@ -96,7 +116,10 @@ class Example:
         self._set_value(KEY_OCCURRENCE_ID, LIST_TYPE_INT64, occurrence_id)
 
     def taxon(self):
-        return self._get_value(KEY_TAXON, LIST_TYPE_INT64)
+        t = self._get_value(KEY_TAXON, LIST_TYPE_INT64)
+        if t is None:
+            return 0
+        return t
 
     def set_taxon(self, taxon):
         self._set_value(KEY_TAXON, LIST_TYPE_INT64, taxon)
@@ -140,6 +163,9 @@ class Example:
     def as_pb2(self):
         return self._example
 
+    def as_dict(self):
+        return self._example.features
+
     def encode(self):
         return self._example.SerializeToString()
 
@@ -154,7 +180,7 @@ class Example:
             self.date()
         )
 
-    def from_random_location(self):
+    def set_random_location_values(self):
         import random
         from datetime import datetime
 
@@ -169,6 +195,8 @@ class Example:
             random.randint(1, 28)
         )
 
+        self.set_taxon(0)
+        self.set_occurrence_id(random.randint(100000,900000))
         self.set_longitude(round(random.uniform(EASTERNMOST, WESTERNMOST), 6))
         self.set_latitude(round(random.uniform(SOUTHERNMOST, NORTHERNMOST), 6))
         self.set_date(int(date.strftime("%s")))
@@ -207,7 +235,7 @@ class Example:
 
 def make_input_schema(mode):
     from tensorflow_transform.tf_metadata import dataset_schema
-    from tensorflow import FixedLenFeature, float32, string
+    from tensorflow import FixedLenFeature, float32, string, int64, VarLenFeature
     from tensorflow.contrib.learn import ModeKeys
     """Input schema definition.
     Args:
@@ -217,12 +245,12 @@ def make_input_schema(mode):
       A `Schema` object.
     """
     result = ({} if mode == ModeKeys.INFER else {
-        KEY_TAXON: FixedLenFeature(shape=[], dtype=float32)
+        KEY_TAXON: FixedLenFeature(shape=[1], dtype=int64)
     })
     result.update({
-        KEY_OCCURRENCE_ID: FixedLenFeature(shape=[], dtype=string),
+        KEY_OCCURRENCE_ID: FixedLenFeature(shape=[1], dtype=int64),
         KEY_ELEVATION: FixedLenFeature(shape=[1], dtype=float32),
-        KEY_GRID_ZONE: FixedLenFeature(shape=[], dtype=string),
+        KEY_GRID_ZONE: FixedLenFeature(shape=[1], dtype=string),
         KEY_MAX_TEMP: FixedLenFeature(shape=[45], dtype=float32),
         KEY_MIN_TEMP: FixedLenFeature(shape=[45], dtype=float32),
         KEY_AVG_TEMP: FixedLenFeature(shape=[45], dtype=float32),
@@ -248,6 +276,16 @@ def make_input_schema(mode):
     #
     # x = tf.concat([tmax, prcp, daylight, features['elevation']], 0)
 
+def RandomExample():
+    e = Example()
+    e.set_random_location_values()
+    return e
+
+def FromSerialized(serialized):
+    e = Example()
+    e.decode_from_string(serialized)
+    return e
+
 def make_preprocessing_fn():
     import tensorflow_transform as tt
     """Creates a preprocessing function for reddit.
@@ -257,20 +295,31 @@ def make_preprocessing_fn():
       A preprocessing function.
     """
 
-    def preprocessing_fn(inputs):
+    def preprocessing_fn(i):
 
-        m = {}
-        m[KEY_ELEVATION] = tt.scale_to_0_1(inputs[KEY_ELEVATION])
-        m[KEY_MAX_TEMP] = tt.scale_to_0_1(inputs[KEY_MAX_TEMP])
-        m[KEY_MIN_TEMP] = tt.scale_to_0_1(inputs[KEY_MIN_TEMP])
-        m[KEY_AVG_TEMP] = tt.scale_to_0_1(inputs[KEY_AVG_TEMP])
-        m[KEY_PRCP] = tt.scale_to_0_1(inputs[KEY_PRCP])
-        m[KEY_DAYLIGHT] = tt.scale_to_0_1(inputs[KEY_DAYLIGHT])
+        return {
+            KEY_OCCURRENCE_ID: i[KEY_TAXON],
+            KEY_ELEVATION: tt.scale_to_0_1(i[KEY_ELEVATION]),
+            KEY_AVG_TEMP: tt.scale_to_0_1(i[KEY_AVG_TEMP]),
+            KEY_MIN_TEMP: tt.scale_to_0_1(i[KEY_MIN_TEMP]),
+            KEY_MAX_TEMP: tt.scale_to_0_1(i[KEY_MAX_TEMP]),
+            KEY_PRCP: tt.scale_to_0_1(i[KEY_PRCP]),
+            KEY_DAYLIGHT: tt.scale_to_0_1(i[KEY_DAYLIGHT]),
+            KEY_GRID_ZONE: tt.hash_strings(i[KEY_GRID_ZONE], 8)
+        }
 
-        m[KEY_GRID_ZONE] = tt.hash_strings(inputs[KEY_GRID_ZONE], 8)
+        # m = {}
+        # m[KEY_ELEVATION] = tt.scale_to_0_1(inputs[KEY_ELEVATION])
+        # m[KEY_MAX_TEMP] = tt.scale_to_0_1(inputs[KEY_MAX_TEMP])
+        # m[KEY_MIN_TEMP] = tt.scale_to_0_1(inputs[KEY_MIN_TEMP])
+        # m[KEY_AVG_TEMP] = tt.scale_to_0_1(inputs[KEY_AVG_TEMP])
+        # m[KEY_PRCP] = tt.scale_to_0_1(inputs[KEY_PRCP])
+        # m[KEY_DAYLIGHT] = tt.scale_to_0_1(inputs[KEY_DAYLIGHT])
+        #
+        # m[KEY_GRID_ZONE] = tt.hash_strings(inputs[KEY_GRID_ZONE], 8)
 
         # m['tmax'] = array_ops.reshape(m['tmax'])
 
-        return m
+        # return m
 
     return preprocessing_fn

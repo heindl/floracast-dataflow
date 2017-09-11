@@ -151,8 +151,6 @@ def main(argv=None):
                         datetime.datetime.now().strftime("%s"),
                     )
 
-                print(intermediate_records)
-
                 # If specified, first generate intermediate tfrecords with raw source data, with no transformations applied.
                 # This can be reused with modified transformations without incurring BigQuery cost.
                 if process_pipeline_options.intermediate_data_prefix is None:
@@ -160,6 +158,7 @@ def main(argv=None):
                     preprocess.fetch_train(
                         pipeline=pipeline,
                         records_file_path=intermediate_records,
+                        mode=process_pipeline_options.mode,
                         project=google_cloud_options.project,
                         occurrence_taxa=process_pipeline_options.occurrence_taxa,
                         weather_station_distance=process_pipeline_options.weather_station_distance,
@@ -167,46 +166,16 @@ def main(argv=None):
                         add_random_train_point=process_pipeline_options.add_random_train_point
                     )
 
-                    # print("end of python")
-                    #
-                    # result = pipeline.run()
-                    # result.wait_until_finish()
-                    # #
-                    # # # Print metrics if local runner.
-                    # print("RUNNER")
-                    # print(standard_options.runner)
-                    # if standard_options.runner == "DirectRunner":
-                    #
-                    #     for v in [
-                    #         'new_occurrences',
-                    #         'invalid_occurrence_elevation',
-                    #         'invalid_occurrence_location',
-                    #         'invalid_occurrence_date',
-                    #         'following_removed_duplicates',
-                    #         'sufficient_taxa',
-                    #         'insufficient_taxa',
-                    #         'insufficient_weather_records',
-                    #         'final_occurrence_count',
-                    #         "sufficient_weather_records",
-                    #         'found_elevation'
-                    #     ]:
-                    #         query_result = result.metrics().query(MetricsFilter().with_name(v))
-                    #         if query_result['counters']:
-                    #             print(v, query_result['counters'][0].committed)
-                    #             # logging.info('%s: %d', v, query_result['counters'][0].committed)
-
-                    return
-
-                train_directory_path = os.path.join(process_pipeline_options.train_directory, datetime.datetime.now().strftime("%s"))
+                train_directory_path = os.path.join(process_pipeline_options.train_data, datetime.datetime.now().strftime("%s"))
 
                 preprocess.preprocess_train(
                     pipeline,
-                    records_file_path=intermediate_records,
+                    intermediate_records=intermediate_records,
                     mode=process_pipeline_options.mode,
                     metadata_path=os.path.join(train_directory_path, RAW_METADATA_DIR),
                     training_data_path=os.path.join(train_directory_path, TRANSFORMED_TRAIN_DATA_FILE_PREFIX),
                     eval_data_path=os.path.join(train_directory_path, TRANSFORMED_EVAL_DATA_FILE_PREFIX),
-                    partition_random_seed=process_pipeline_options.partition_random_seed,
+                    partition_random_seed=int(datetime.datetime.now().strftime("%s")),
                     percent_eval=10,
                 )
 
@@ -222,6 +191,8 @@ def main(argv=None):
                     weeks_before=process_pipeline_options.weeks_before,
                     weather_station_distance=process_pipeline_options.weather_station_distance
                 )
+
+            pipeline.run().wait_until_finish()
 
 
 if __name__ == '__main__':

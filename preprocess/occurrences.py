@@ -72,14 +72,16 @@ class OccurrenceEntityToExample(beam.DoFn):
 
         yield ex
 
+
 class Counter(beam.DoFn):
     def __init__(self, which):
         self._which = which
         self._counter = 0
     def process(self, element):
         self._counter += 1
-        print(self._which, self._counter, element.equality_key(), element.occurrence_id())
+        print(self._which, self._counter, element)
         yield element
+
 
 class RemoveScantTaxa(beam.PTransform):
     """Count as a subclass of PTransform, with an apply method."""
@@ -93,6 +95,7 @@ class RemoveScantTaxa(beam.PTransform):
                 | 'GroupByTaxon' >> beam.GroupByKey() \
                 | 'FilterAndUnwindOccurrences' >> beam.FlatMap(
             lambda (taxon, occurrences): occurrences if len(list(occurrences)) >= self._minimum_occurrences_within_taxon else [])
+
 
 @beam.ptransform_fn
 def RemoveOccurrenceExampleLocationDuplicates(pcoll):  # pylint: disable=invalid-name

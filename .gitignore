@@ -1,6 +1,7 @@
 beam-temp*
 
 run.sh
+gs/
 
 # Ignore IntelliJ files.
 .idea/

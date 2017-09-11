@@ -27,9 +27,8 @@ class ElevationBundleDoFn(beam.DoFn):
         self._set_elevations()
 
         for b in self._buffer:
-            if b.elevation() is None:
-                continue
-            yield WindowedValue(b, -1, [window.GlobalWindow()])
+            if b.elevation() is not None:
+               yield WindowedValue(b, -1, [window.GlobalWindow()])
 
         # Type features.Example
         self._buffer = []
@@ -46,11 +45,8 @@ class ElevationBundleDoFn(beam.DoFn):
 
         coords = []
         for e in self._buffer:
-            if e.elevation() is not None:
-                continue
-            coords.append(e.coordinates())
-
-        print("coords", coords)
+            if e.elevation() is None:
+                coords.append(e.coordinates())
 
         if len(coords) == 0:
             return
@@ -61,30 +57,30 @@ class ElevationBundleDoFn(beam.DoFn):
                     continue
                 if not self.isclose(
                         r['location']['lat'],
-                        self._buffer[i].lat(),
+                        self._buffer[i].latitude(),
                         abs_tol=0.00001
                 ):
                     continue
                 if not self.isclose(
                         r['location']['lng'],
-                        self._buffer[i].lng(),
+                        self._buffer[i].longitude(),
                         abs_tol=0.00001
                 ):
                     continue
                 self._buffer[i].set_elevation(r['elevation'])
                 break
 
-    def process(self, example):
+    def process(self, e):
 
-        if example.elevation() is not None:
-            yield example
+        if e.elevation() is not None:
+            yield e
+            return
 
-        self._buffer.append(example)
+        self._buffer.append(e)
 
         if len(self._buffer) >= 200:
             self._set_elevations()
             for e in self._buffer:
-                if e.elevation() is None:
-                    continue
-                yield e
+                if e.elevation() is not None:
+                    yield e
             self._buffer = []
