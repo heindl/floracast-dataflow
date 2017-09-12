@@ -286,7 +286,7 @@ def FromSerialized(serialized):
     e.decode_from_string(serialized)
     return e
 
-def make_preprocessing_fn():
+def make_preprocessing_fn(num_classes):
     import tensorflow_transform as tt
     """Creates a preprocessing function for reddit.
     Args:
@@ -297,17 +297,28 @@ def make_preprocessing_fn():
 
     def preprocessing_fn(i):
 
-        return {
-            KEY_OCCURRENCE_ID: i[KEY_TAXON],
+        import tensorflow as tf
+
+        m = {
+            KEY_OCCURRENCE_ID: i[KEY_OCCURRENCE_ID],
             KEY_ELEVATION: tt.scale_to_0_1(i[KEY_ELEVATION]),
             KEY_AVG_TEMP: tt.scale_to_0_1(i[KEY_AVG_TEMP]),
             KEY_MIN_TEMP: tt.scale_to_0_1(i[KEY_MIN_TEMP]),
             KEY_MAX_TEMP: tt.scale_to_0_1(i[KEY_MAX_TEMP]),
             KEY_PRCP: tt.scale_to_0_1(i[KEY_PRCP]),
             KEY_DAYLIGHT: tt.scale_to_0_1(i[KEY_DAYLIGHT]),
-            KEY_GRID_ZONE: tt.hash_strings(i[KEY_GRID_ZONE], 8)
+            # KEY_GRID_ZONE: tt.hash_strings(i[KEY_GRID_ZONE], 1000)
+            KEY_GRID_ZONE: i[KEY_GRID_ZONE],
+            # KEY_TAXON: tf.cast(i[KEY_TAXON], tf.bool)
         }
 
+        if num_classes == 2:
+            m[KEY_TAXON] = tt.apply_function((lambda l: [0] if l[0] == 0 else [1]), i[KEY_TAXON])
+            m[KEY_TAXON] = tf.cast(i[KEY_TAXON], tf.int64)
+        else:
+            m[KEY_TAXON] = i[KEY_TAXON]
+
+        return m
         # m = {}
         # m[KEY_ELEVATION] = tt.scale_to_0_1(inputs[KEY_ELEVATION])
         # m[KEY_MAX_TEMP] = tt.scale_to_0_1(inputs[KEY_MAX_TEMP])

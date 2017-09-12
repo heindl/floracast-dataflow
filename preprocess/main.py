@@ -82,6 +82,11 @@ class ProcessPipelineOptions(PipelineOptions):
             required=True,
             help='Directory that contains timestamped files for each training iteration')
 
+        parser.add_argument(
+            '--num_classes',
+            required=True,
+            type=int,
+            help='Number of training classes')
 
         #### INFER ####
 
@@ -117,13 +122,9 @@ def main(argv=None):
     import apache_beam as beam
     import os
 
-    TRANSFORM_FN_DIR = 'transform_fn'
+
     RAW_METADATA_DIR = 'raw_metadata'
-    TRANSFORMED_METADATA_DIR = 'transformed_metadata'
-    TRANSFORMED_TRAIN_DATA_FILE_PREFIX = 'features_train'
-    TRANSFORMED_EVAL_DATA_FILE_PREFIX = 'features_eval'
     TRANSFORMED_PREDICT_DATA_FILE_PREFIX = 'features_predict'
-    TRAIN_RESULTS_FILE = 'train_results'
 
     pipeline_options = PipelineOptions(
         #['--taxon', 58583]
@@ -141,12 +142,12 @@ def main(argv=None):
                 intermediate_records=""
 
                 if process_pipeline_options.intermediate_data_prefix is not None:
-                    intermediate_records=os.path.join(
+                    intermediate_records = os.path.join(
                         process_pipeline_options.intermediate_data,
                         process_pipeline_options.intermediate_data_prefix,
                     )
                 else:
-                    intermediate_records = intermediate_records=os.path.join(
+                    intermediate_records = os.path.join(
                         process_pipeline_options.intermediate_data,
                         datetime.datetime.now().strftime("%s"),
                     )
@@ -166,17 +167,18 @@ def main(argv=None):
                         add_random_train_point=process_pipeline_options.add_random_train_point
                     )
 
+                    return
+
                 train_directory_path = os.path.join(process_pipeline_options.train_data, datetime.datetime.now().strftime("%s"))
 
                 preprocess.preprocess_train(
                     pipeline,
                     intermediate_records=intermediate_records,
                     mode=process_pipeline_options.mode,
-                    metadata_path=os.path.join(train_directory_path, RAW_METADATA_DIR),
-                    training_data_path=os.path.join(train_directory_path, TRANSFORMED_TRAIN_DATA_FILE_PREFIX),
-                    eval_data_path=os.path.join(train_directory_path, TRANSFORMED_EVAL_DATA_FILE_PREFIX),
+                    output_path=train_directory_path,
                     partition_random_seed=int(datetime.datetime.now().strftime("%s")),
                     percent_eval=10,
+                    num_classes=process_pipeline_options.num_classes,
                 )
 
             elif process_pipeline_options.mode == tf.contrib.learn.ModeKeys.INFER:
@@ -191,8 +193,6 @@ def main(argv=None):
                     weeks_before=process_pipeline_options.weeks_before,
                     weather_station_distance=process_pipeline_options.weather_station_distance
                 )
-
-            pipeline.run().wait_until_finish()
 
 
 if __name__ == '__main__':

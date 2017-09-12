@@ -36,7 +36,7 @@ def preprocess_infer(
     infer_coder = coders.ExampleProtoCoder(infer_schema)
 
     serialized_examples = pipeline \
-                          | 'ReadDatastoreOccurrences' >> forests.ReadDatastoreForests(project=project) \
+                          | 'ReadDatastoreForests' >> forests.ReadDatastoreForests(project=project) \
                           | 'ConvertForestEntityToSequenceExample' >> beam.ParDo(
                                 forests.ForestEntityToExample(periods=weeks_before)) \
                           | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(project)) \
@@ -67,7 +67,6 @@ def fetch_train(
     import apache_beam as beam
     import occurrences, example, elevation, weather
     from apache_beam.io import WriteToText
-    from tensorflow_transform import coders
 
     data = pipeline \
            | occurrences.ReadDatastoreOccurrences(project=project) \
@@ -111,44 +110,44 @@ def preprocess_train(
         pipeline,
         intermediate_records,
         mode,
-        metadata_path,
-        training_data_path,
-        eval_data_path,
+        output_path,
         partition_random_seed,
         percent_eval,
+        num_classes,
 ):
     import example
-    from tensorflow_transform.tf_metadata import dataset_metadata
     from tensorflow_transform.beam import tft_beam_io
     from tensorflow_transform.beam import impl as tft
     from tensorflow_transform import coders
-    import tensorflow_transform as tt
-    import occurrences
-    from tensorflow_transform.tf_metadata import dataset_schema, dataset_metadata
-    import tensorflow as tf
+    from tensorflow_transform.tf_metadata import dataset_metadata
+    import os
+
+    RAW_METADATA_DIR = 'raw_metadata'
+    TRANSFORMED_TRAIN_DATA_FILE_PREFIX = 'features_train'
+    TRANSFORMED_EVAL_DATA_FILE_PREFIX = 'features_eval'
 
     input_schema = example.make_input_schema(mode)
-    proto_coder = coders.ExampleProtoCoder(input_schema)
+    input_coder = coders.ExampleProtoCoder(input_schema)
 
     records = pipeline \
         | 'ReadInitialTFRecords' >> beam.io.ReadFromTFRecord(intermediate_records) \
-        | 'DecodeProtoExamples' >> beam.Map(proto_coder.decode)
-        # | 'Refit' >> beam.Map(lambda e: {
-        #         'elevation': e.pop("elevation"),
-        #         'occurrence_id': e.pop("occurrence_id")
-        #    })
-        # | 'CounterOne' >> beam.ParDo(occurrences.Counter("one"))
-        # | 'DecodeProtoExamples' >> beam.Map(lambda s: example.FromSerialized(s).as_pb2()) \
+        | 'DecodeProtoExamples' >> beam.Map(input_coder.decode)
 
+    # records = records | 'RecordsDataset' >> beam.ParDo(occurrences.Counter("main"))
 
-    preprocessing_fn = example.make_preprocessing_fn()
+    preprocessing_fn = example.make_preprocessing_fn(num_classes)
     metadata = dataset_metadata.DatasetMetadata(schema=input_schema)
 
     _ = metadata \
-        | 'WriteInputMetadata' >> tft_beam_io.WriteMetadata(path=metadata_path, pipeline=pipeline)
+        | 'WriteInputMetadata' >> tft_beam_io.WriteMetadata(
+            path=os.path.join(output_path, RAW_METADATA_DIR),
+            pipeline=pipeline)
 
     (records_dataset, records_metadata), transform_fn = (
         (records, metadata) | tft.AnalyzeAndTransformDataset(preprocessing_fn))
+
+    _ = (transform_fn
+         | 'WriteTransformFn' >> tft_beam_io.WriteTransformFn(output_path))
 
     def train_eval_partition_fn(ex, unused_num_partitions):
         return partition_fn(ex, partition_random_seed, percent_eval)
@@ -160,44 +159,32 @@ def preprocess_train(
     _ = train_dataset \
         | 'SerializeTrainExamples' >> beam.Map(coder.encode) \
         | 'ShuffleTraining' >> _Shuffle() \
-        | 'WriteTraining' >> beam.io.WriteToTFRecord(training_data_path, file_name_suffix='.tfrecord.gz')
+        | 'WriteTraining' >> beam.io.WriteToTFRecord(
+                os.path.join(output_path, TRANSFORMED_TRAIN_DATA_FILE_PREFIX),
+                file_name_suffix='.tfrecord.gz')
 
     _ = eval_dataset \
         | 'SerializeEvalExamples' >> beam.Map(coder.encode) \
         | 'ShuffleEval' >> _Shuffle() \
-        | 'WriteEval' >> beam.io.WriteToTFRecord(eval_data_path, file_name_suffix='.tfrecord.gz')
+        | 'WriteEval' >> beam.io.WriteToTFRecord(
+                os.path.join(output_path, TRANSFORMED_EVAL_DATA_FILE_PREFIX),
+                file_name_suffix='.tfrecord.gz')
 
-def _hash_fingerprint(user_id, partition_random_seed):
-    import hashlib
-    """Convert user_id to an MD5 hashed integer.
-    The hashed value is based on the input of user_id + partition_random_seed so
-    that the output is deterministic for a fixed partition_random_seed and people
-    still have the option to partition in a different way by using a different
-    seed.
-    Args:
-      user_id: an integer user id.
-      partition_random_seed: partitioning seed so we can preserve consistent
-      partitions across runs.
-    Returns:
-      An MD5 hashed value encoded as integer.
-    """
-    m = hashlib.md5(str(user_id + partition_random_seed))
-    return int(m.hexdigest(), 16)
+    _ = train_dataset \
+                  | 'CountTraining' >> beam.combiners.Count.Globally() \
+                  | 'WriteTrainCount' >> beam.io.WriteToText(
+                    os.path.join(output_path, 'train_count'), file_name_suffix=".txt")
+
+    _ = eval_dataset \
+        | 'CountEval' >> beam.combiners.Count.Globally() \
+        | 'WriteEvalCount' >> beam.io.WriteToText(
+                os.path.join(output_path, 'eval_count'), file_name_suffix=".txt")
+
 
 # def partition_fn(user_id, partition_random_seed, percent_eval):
 # I hope taxon_id will provide wide enough variation between results.
 def partition_fn(ex, partition_random_seed, percent_eval):
-    """Partition data to train and eval set.
-    To generate an unskewed partition that is deterministic, we use
-    hash_fingerprint(user_id, partition_random_seed) % 100.
-    Args:
-      user_id: an integer user id.
-      partition_random_seed: partitioning seed so we can preserve consistent
-      partitions across runs.
-      percent_eval: percentage of the data to use as the eval set.
-    Returns:
-      Either 0 or 1.
-    """
-
-    hash_value = _hash_fingerprint(ex["occurrence_id"][0], partition_random_seed) % 100
+    import hashlib
+    m = hashlib.md5(str(ex["occurrence_id"][0] + partition_random_seed))
+    hash_value = int(m.hexdigest(), 16) % 100
     return 0 if hash_value >= percent_eval else 1
