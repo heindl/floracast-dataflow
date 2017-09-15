@@ -146,6 +146,12 @@ class Example:
     def date(self):
         return self._get_value(KEY_DATE, LIST_TYPE_INT64)
 
+    def date_string(self):
+        from datetime import datetime
+        d = datetime.fromtimestamp(self.date())
+        return "%d %d %d" % d.year, d.month, d.day
+
+
     def set_date(self, date):
         self._set_value(KEY_DATE, LIST_TYPE_INT64, date)
 

@@ -179,13 +179,13 @@ def get_experiment_fn(args):
 
         train_input_fn = get_transformed_reader_input_fn(
             transformed_metadata,
-            os.path.join(args.train_data_path, "features_train-00000-of-00001.tfrecord.gz"),
+            args.train_data_path + "/train_data/*.gz",
             args.batch_size,
             tf.estimator.ModeKeys.TRAIN)
 
         eval_input_fn = get_transformed_reader_input_fn(
             transformed_metadata,
-            os.path.join(args.train_data_path, "features_eval-00000-of-00001.tfrecord.gz"),
+            args.train_data_path + "/eval_data/*.gz",
             args.batch_size,
             tf.estimator.ModeKeys.EVAL)
 

@@ -3,7 +3,6 @@
 import apache_beam as beam
 
 def preprocess_train(
-        pipeline,
         pipeline_options,
         intermediate_records,
         output_path,
@@ -15,31 +14,30 @@ def preprocess_train(
     from tensorflow_transform.tf_metadata import dataset_metadata
     import os
     import utils as utils
-    from apache_beam.options.pipeline_options import GoogleCloudOptions
-    from options import ProcessPipelineOptions
+    from datetime import datetime
+    from apache_beam.io.filesystem import CompressionTypes
 
-    google_cloud_options = pipeline_options.vew_as(GoogleCloudOptions)
-    process_pipeline_options = pipeline_options.view_as(ProcessPipelineOptions)
-
-    options = pipeline.get_all_options()
+    options = pipeline_options.get_all_options()
 
     with beam.Pipeline(options['runner'], options=pipeline_options) as pipeline:
         with tft.Context(temp_dir=options['temp_location']):
 
             RAW_METADATA_DIR = 'raw_metadata'
-            TRANSFORMED_TRAIN_DATA_FILE_PREFIX = 'features_train'
-            TRANSFORMED_EVAL_DATA_FILE_PREFIX = 'features_eval'
+            TRANSFORMED_TRAIN_DATA_FILE_PREFIX = 'train'
+            TRANSFORMED_EVAL_DATA_FILE_PREFIX = 'eval'
 
-            input_schema = example.make_input_schema(google_cloud_options.mode)
+            input_schema = example.make_input_schema(options['mode'])
             input_coder = coders.ExampleProtoCoder(input_schema)
 
             records = pipeline \
-                | 'ReadInitialTFRecords' >> beam.io.ReadFromTFRecord(intermediate_records) \
+                | 'ReadInitialTFRecords' >> beam.io.ReadFromTFRecord(
+                        intermediate_records+"/*.gz",
+                        compression_type=CompressionTypes.GZIP) \
                 | 'DecodeProtoExamples' >> beam.Map(input_coder.decode)
 
             # records = records | 'RecordsDataset' >> beam.ParDo(occurrences.Counter("main"))
 
-            preprocessing_fn = example.make_preprocessing_fn(process_pipeline_options.num_classes)
+            preprocessing_fn = example.make_preprocessing_fn(options['num_classes'])
             metadata = dataset_metadata.DatasetMetadata(schema=input_schema)
 
             _ = metadata \
@@ -53,8 +51,9 @@ def preprocess_train(
             _ = (transform_fn
                  | 'WriteTransformFn' >> tft_beam_io.WriteTransformFn(output_path))
 
+            random_seed = int(datetime.now().strftime("%s"))
             def train_eval_partition_fn(ex, unused_num_partitions):
-                return partition_fn(ex, process_pipeline_options.partition_random_seed, process_pipeline_options.percent_eval)
+                return partition_fn(ex, random_seed, options['percent_eval'])
 
             train_dataset, eval_dataset = records_dataset \
                 | 'TrainEvalPartition' >> beam.Partition(train_eval_partition_fn, 2)
@@ -64,14 +63,14 @@ def preprocess_train(
                 | 'SerializeTrainExamples' >> beam.Map(coder.encode) \
                 | 'ShuffleTraining' >> utils.Shuffle() \
                 | 'WriteTraining' >> beam.io.WriteToTFRecord(
-                        os.path.join(output_path, TRANSFORMED_TRAIN_DATA_FILE_PREFIX),
+                        os.path.join(output_path, "/train_data/", TRANSFORMED_TRAIN_DATA_FILE_PREFIX),
                         file_name_suffix='.tfrecord.gz')
 
             _ = eval_dataset \
                 | 'SerializeEvalExamples' >> beam.Map(coder.encode) \
                 | 'ShuffleEval' >> utils.Shuffle() \
                 | 'WriteEval' >> beam.io.WriteToTFRecord(
-                        os.path.join(output_path, TRANSFORMED_EVAL_DATA_FILE_PREFIX),
+                        os.path.join(output_path, "/eval_data/", TRANSFORMED_EVAL_DATA_FILE_PREFIX),
                         file_name_suffix='.tfrecord.gz')
 
             _ = train_dataset \
@@ -89,6 +88,6 @@ def preprocess_train(
 # I hope taxon_id will provide wide enough variation between results.
 def partition_fn(ex, partition_random_seed, percent_eval):
     import hashlib
-    m = hashlib.md5(str(ex["occurrence_id"][0] + partition_random_seed))
+    m = hashlib.md5(str(ex["occurrence_id"][0]) + str(partition_random_seed))
     hash_value = int(m.hexdigest(), 16) % 100
     return 0 if hash_value >= percent_eval else 1

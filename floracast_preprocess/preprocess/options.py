@@ -22,7 +22,7 @@ class ProcessPipelineOptions(PipelineOptions):
         # Intermediate TFRecords are stored in their own directory, each with a corresponding metadata file.
         # The metadata lists how many records, how many of each taxon label.
         parser.add_argument(
-            '--intermediate_data',
+            '--intermediate_location',
             required=True,
             help='The intermediate TFRecords file that contains downloaded features from BigQuery'
         )
@@ -30,10 +30,10 @@ class ProcessPipelineOptions(PipelineOptions):
         # The intermediate filenames are unix timestamps.
         # If not specified new occurrence data will be fetched and a new timestamp given.
         parser.add_argument(
-            '--intermediate_data_prefix',
+            '--intermediate_location_prefix',
             required=False,
             default=None,
-            help='A unix timestamp representing the fetched time of an occurrence TFRecords file.'
+            help='A unix timestamp representing the fetched time of occurrences, the directory in which tfrecords are stored.'
         )
 
         parser.add_argument(
@@ -57,9 +57,15 @@ class ProcessPipelineOptions(PipelineOptions):
 
         #### TRAIN ####
 
+        parser.add_argument(
+            '--percent_eval',
+            required=False,
+            default=10,
+            type=int,
+            help='Directory that contains timestamped files for each training iteration')
 
         parser.add_argument(
-            '--train_data',
+            '--train_location',
             required=True,
             help='Directory that contains timestamped files for each training iteration')
 
@@ -86,7 +92,7 @@ class ProcessPipelineOptions(PipelineOptions):
 
 
         parser.add_argument(
-            '--infer_data',
+            '--infer_location',
             required=True,
             help='Directory that contains timestamped files for collected infer data. Should be similar meta to fetched format.')
 

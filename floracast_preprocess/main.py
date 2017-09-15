@@ -21,8 +21,6 @@ def main(argv=None):
     import datetime
     import os
     from preprocess import options, train, occurrences, forests
-    import apache_beam as beam
-    from tensorflow_transform.beam import impl as tft
 
     pipeline_options = PipelineOptions(flags=argv)
     # ['--setup_file', os.path.abspath(os.path.join(os.path.dirname(__file__), 'setup.py'))],
@@ -38,29 +36,27 @@ def main(argv=None):
 
         intermediate_records=""
 
-        if process_pipeline_options.intermediate_data_prefix is not None:
+        if process_pipeline_options.intermediate_location_prefix is not None:
             intermediate_records = os.path.join(
-                process_pipeline_options.intermediate_data,
-                process_pipeline_options.intermediate_data_prefix,
+                process_pipeline_options.intermediate_location,
+                process_pipeline_options.intermediate_location_prefix,
             )
         else:
             intermediate_records = os.path.join(
-                process_pipeline_options.intermediate_data,
+                process_pipeline_options.intermediate_location,
                 datetime.datetime.now().strftime("%s"),
             )
 
         # If specified, first generate intermediate tfrecords with raw source data, with no transformations applied.
         # This can be reused with modified transformations without incurring BigQuery cost.
-        if process_pipeline_options.intermediate_data_prefix is None:
+        if process_pipeline_options.intermediate_location_prefix is None:
 
             occurrences.fetch_occurrences(
                 pipeline_options=pipeline_options,
                 output_path=intermediate_records
             )
 
-            return
-
-        train_directory_path = os.path.join(process_pipeline_options.train_data, datetime.datetime.now().strftime("%s"))
+        train_directory_path = os.path.join(process_pipeline_options.train_location, datetime.datetime.now().strftime("%s"))
 
         train.preprocess_train(
             pipeline_options=pipeline_options,
@@ -72,7 +68,7 @@ def main(argv=None):
 
         forests.fetch_forests(
             pipeline_options=pipeline_options,
-            output_path=os.path.join(process_pipeline_options.infer_data, datetime.datetime.now().strftime("%s"))
+            output_path=os.path.join(process_pipeline_options.infer_location, datetime.datetime.now().strftime("%s"))
         )
 
 

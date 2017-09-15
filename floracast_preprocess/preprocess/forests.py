@@ -8,7 +8,7 @@ from example import Example
 def fetch_forests(
         pipeline_options,
         output_path,
-):
+    ):
     import elevation as elevation
     import weather as weather
     import occurrences as occurrences
@@ -16,6 +16,8 @@ def fetch_forests(
     from tensorflow_transform.beam import impl as tft
     from apache_beam.options.pipeline_options import GoogleCloudOptions
     from options import ProcessPipelineOptions
+    from datetime import datetime, timedelta
+    from pandas import date_range
 
     google_cloud_options = pipeline_options.vew_as(GoogleCloudOptions)
     process_pipeline_options = pipeline_options.view_as(ProcessPipelineOptions)
@@ -25,22 +27,33 @@ def fetch_forests(
     with beam.Pipeline(options['runner'], options=pipeline_options) as pipeline:
         with tft.Context(temp_dir=options['temp_location']):
 
-            serialized_examples = pipeline \
+            # Fetch dates
+            today = datetime.now()
+            friday = today + timedelta((4 - today.weekday()) % 7)
+            dates = []
+            unix = []
+            for d in date_range(end=friday, periods=process_pipeline_options.weeks_before, freq='W').tolist():
+                dates.append(d.strftime("%d%m%y"))
+                unix.append(int(d.strftime('%s')))
+
+            examples = pipeline \
                                   | _ReadDatastoreForests(project=google_cloud_options.project) \
-                                  | 'ConvertForestEntityToExample' >> beam.ParDo(
-                                        _ForestEntityToExample(periods=process_pipeline_options.weeks_before)) \
+                                  | 'ConvertForestEntityToExample' >> beam.ParDo(_ForestEntityToExample(dates)) \
                                   | 'Count' >> beam.ParDo(occurrences.Counter("main")) \
-                                  | 'EnsureElevation' >> beam.ParDo(
-                elevation.ElevationBundleDoFn(google_cloud_options.project)) \
-                                  | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(google_cloud_options.project, process_pipeline_options.weather_station_distance)) \
-                                  | 'ProtoForWrite' >> beam.Map(lambda e: e.encode())
+                                  | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(google_cloud_options.project)) \
+                                  | 'FetchWeather' >> beam.ParDo(
+                                        weather.FetchWeatherDoFn(
+                                                google_cloud_options.project,
+                                                process_pipeline_options.weather_station_distance)
+                                    ).with_outputs(dates) \
+                                  | 'ExtractDateKeyForGrouping' >> beam.Map(lambda e: (e.date_string(), e)) \
+                                  | 'GroupByKey' >> beam.GroupByKey()
 
-            _ = serialized_examples \
-                | 'WritePredictDataAsTFRecord' >> beam.io.WriteToTFRecord(output_path, file_name_suffix='.tfrecord.gz')
-
-            _ = serialized_examples \
-                | 'EncodePredictAsB64Json' >> beam.Map(utils.encode_as_b64_json) \
-                | 'WritePredictDataAsText' >> beam.io.WriteToText(output_path, file_name_suffix='.txt')
+            for d in dates:
+                path = output_path+"-"+d
+                _ = examples[d] \
+                    | 'ProtoForWrite' >> beam.Map(lambda e: e.encode()) \
+                    | 'WritePredictDataAsTFRecord' >> beam.io.WriteToTFRecord(path, file_name_suffix='.tfrecord.gz')
 
 
 # Filter and prepare for duplicate sort.
@@ -48,14 +61,10 @@ def fetch_forests(
 @beam.typehints.with_output_types(Example)
 class _ForestEntityToExample(beam.DoFn):
 
-    def __init__(self, friday=None, periods=1):
-        from datetime import datetime, timedelta
+    def __init__(self, dates=None):
         super(_ForestEntityToExample, self).__init__()
-        self._friday = friday
-        if friday is None:
-            today = datetime.now()
-            self._friday = today + timedelta((4 - today.weekday()) % 7)
-        self._periods = periods
+        # dates are expected to be unix timestamp integers.
+        self._dates = dates
 
     def _parse_point(self, loc):
         from geopy import Point
@@ -71,20 +80,19 @@ class _ForestEntityToExample(beam.DoFn):
 
     def process(self, element):
         from google.cloud.datastore.helpers import entity_from_protobuf
-        from pandas import date_range
+        from example import Example
         """
             Element should be an occurrence entity.
             The key has should be a sufficient key.
         """
         e = entity_from_protobuf(element)
         centre = self._parse_point(e['Centre'])
-        for d in date_range(end=self._friday, periods=self._periods, freq='W').tolist():
-            intDate = int(d.strftime("%s"))
+        for d in self._dates:
             ex = Example()
-            ex.set_occurrence_id("%d|||%d" % (e.key.id, intDate))
+            ex.set_occurrence_id("%d|||%d" % (e.key.id, d))
             ex.set_longitude(centre.longitude)
             ex.set_latitude(centre.latitude)
-            ex.set_date(intDate)
+            ex.set_date(d)
             yield ex
 
 

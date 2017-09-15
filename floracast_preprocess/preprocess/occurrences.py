@@ -46,9 +46,9 @@ def fetch_occurrences(
             _ = data \
                 | 'Write' >> beam.io.WriteToTFRecord(output_path, file_name_suffix='.tfrecord.gz')
 
-            _ = data \
-                | 'EncodePredictAsB64Json' >> beam.Map(utils.encode_as_b64_json) \
-                | 'WritePredictDataAsText' >> beam.io.WriteToText(output_path, file_name_suffix='.txt')
+            # _ = data \
+            #     | 'EncodePredictAsB64Json' >> beam.Map(utils.encode_as_b64_json) \
+            #     | 'WritePredictDataAsText' >> beam.io.WriteToText(output_path, file_name_suffix='.txt')
 
 
             # Write metadata
@@ -58,7 +58,7 @@ def fetch_occurrences(
                 'minimum_occurrences_within_taxon': options['minimum_occurrences_within_taxon'],
                 'random_train_points': options['add_random_train_point']
             }]) \
-                | 'WriteToMetadataFile' >> WriteToText(output_path, file_name_suffix=".meta")
+                | 'WriteToMetadataFile' >> WriteToText(output_path+"/"+"metadata", file_name_suffix=".meta")
 
 # Filter and prepare for duplicate sort.
 @beam.typehints.with_input_types(entity_pb2.Entity)

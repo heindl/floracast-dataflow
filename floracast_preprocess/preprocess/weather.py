@@ -22,6 +22,7 @@ class FetchWeatherDoFn(beam.DoFn):
         import logging
         from pandas import date_range
         from datetime import datetime
+        from apache_beam import pvalue
 
         client = bigquery.Client(project=self._project)
 
@@ -143,4 +144,6 @@ class FetchWeatherDoFn(beam.DoFn):
             example.append_temp_avg(records[d][5])
 
         self._sufficient_weather_records.inc()
-        yield example
+
+        yield pvalue.TaggedOutput(
+            example.date_string(), example)
