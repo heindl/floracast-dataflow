@@ -1,5 +1,7 @@
-from example import Example
+# from __future__ import absolute_import
 import apache_beam as beam
+from example import Example
+
 
 @beam.typehints.with_input_types(Example)
 @beam.typehints.with_output_types(Example)

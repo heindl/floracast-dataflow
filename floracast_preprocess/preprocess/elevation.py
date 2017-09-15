@@ -1,3 +1,4 @@
+# from __future__ import absolute_import
 import apache_beam as beam
 from example import Example
 

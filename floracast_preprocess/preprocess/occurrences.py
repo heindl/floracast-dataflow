@@ -1,17 +1,73 @@
 # from __future__ import absolute_import
 import apache_beam as beam
-from google.cloud.proto.datastore.v1 import entity_pb2
 from example import Example
+from google.cloud.proto.datastore.v1 import entity_pb2
 
+
+def fetch_occurrences(
+        pipeline_options,
+        output_path,
+):
+    import apache_beam as beam
+    import weather as weather
+    import example as example
+    import elevation as elevation
+    from apache_beam.io import WriteToText
+    import utils as utils
+    from tensorflow_transform.beam import impl as tft
+
+    options = pipeline_options.get_all_options()
+
+    with beam.Pipeline(options['runner'], options=pipeline_options) as pipeline:
+        with tft.Context(temp_dir=options['temp_location']):
+
+            data = pipeline \
+                   | _ReadDatastoreOccurrences(project=options['project']) \
+                   | 'ConvertEntitiesToExamples' >> beam.ParDo(_OccurrenceEntityToExample(options['occurrence_taxa'])) \
+                   | 'RemoveOccurrenceExampleLocationDuplicates' >> _RemoveOccurrenceExampleLocationDuplicates() \
+                   | 'RemoveScantTaxa' >> _RemoveScantTaxa(options['minimum_occurrences_within_taxon'])
+
+            if options['add_random_train_point'] is True:
+                data = data | 'AddRandomTrainPoint' >> beam.FlatMap(lambda e: [e, example.RandomExample()])
+
+            data = data \
+                   | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(options['project'])) \
+                   | 'DefuseOne' >> beam.FlatMap(lambda e: [e]) \
+                   | 'DefuseTwo' >> beam.FlatMap(lambda e: [e]) \
+                   | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(options['project'], options['weather_station_distance'])) \
+                   | 'ShuffleOccurrences' >> utils.Shuffle() \
+                   | 'ProtoForWrite' >> beam.Map(lambda e: e.encode())
+
+            # schema = example.make_input_schema(mode)
+            # proto_coder = coders.ExampleProtoCoder(schema)
+            #
+            # data = data | 'EncodeForWrite' >> beam.Map(proto_coder.encode)
+
+            _ = data \
+                | 'Write' >> beam.io.WriteToTFRecord(output_path, file_name_suffix='.tfrecord.gz')
+
+            _ = data \
+                | 'EncodePredictAsB64Json' >> beam.Map(utils.encode_as_b64_json) \
+                | 'WritePredictDataAsText' >> beam.io.WriteToText(output_path, file_name_suffix='.txt')
+
+
+            # Write metadata
+            _ = beam.Create([{
+                'taxa': options['occurrence_taxa'],
+                'weather_station_distance': options['weather_station_distance'],
+                'minimum_occurrences_within_taxon': options['minimum_occurrences_within_taxon'],
+                'random_train_points': options['add_random_train_point']
+            }]) \
+                | 'WriteToMetadataFile' >> WriteToText(output_path, file_name_suffix=".meta")
 
 # Filter and prepare for duplicate sort.
 @beam.typehints.with_input_types(entity_pb2.Entity)
 @beam.typehints.with_output_types(Example)
-class OccurrenceEntityToExample(beam.DoFn):
+class _OccurrenceEntityToExample(beam.DoFn):
 
     def __init__(self, taxon=0):
         from apache_beam.metrics import Metrics
-        super(OccurrenceEntityToExample, self).__init__()
+        super(_OccurrenceEntityToExample, self).__init__()
         self.new_occurrence_counter = Metrics.counter('main', 'new_occurrences')
         self.invalid_occurrence_date = Metrics.counter('main', 'invalid_occurrence_date')
         self.invalid_occurrence_elevation = Metrics.counter('main', 'invalid_occurrence_elevation')
@@ -68,7 +124,7 @@ class OccurrenceEntityToExample(beam.DoFn):
         ex.set_longitude(lng)
         ex.set_elevation(elevation)
         ex.set_taxon(e.key.parent.parent.id)
-        ex.set_occurrence_id(e.key.id)
+        ex.set_occurrence_id(str(e.key.id))
 
         yield ex
 
@@ -77,13 +133,14 @@ class Counter(beam.DoFn):
     def __init__(self, which):
         self._which = which
         self._counter = 0
+
     def process(self, element):
         self._counter += 1
-        print(self._which, self._counter, element)
+        print(self._which, self._counter, element.occurrence_id())
         yield element
 
 
-class RemoveScantTaxa(beam.PTransform):
+class _RemoveScantTaxa(beam.PTransform):
     """Count as a subclass of PTransform, with an apply method."""
 
     def __init__(self, minimum_occurrences_within_taxon):
@@ -98,18 +155,18 @@ class RemoveScantTaxa(beam.PTransform):
 
 
 @beam.ptransform_fn
-def RemoveOccurrenceExampleLocationDuplicates(pcoll):  # pylint: disable=invalid-name
+def _RemoveOccurrenceExampleLocationDuplicates(pcoll):  # pylint: disable=invalid-name
     """Produces a PCollection containing the unique elements of a PCollection."""
-    return (pcoll
+    return pcoll \
             | 'ToPairs' >> beam.Map(lambda e: (e.equality_key(), e)) \
             | 'GroupByKey' >> beam.GroupByKey() \
-            | 'Combine' >> beam.Map(lambda (key, examples): examples[0]))
+            | 'Combine' >> beam.Map(lambda (key, examples): list(examples)[0])
 
 
-class ReadDatastoreOccurrences(beam.PTransform):
+class _ReadDatastoreOccurrences(beam.PTransform):
 
     def __init__(self, project):
-        super(ReadDatastoreOccurrences, self).__init__()
+        super(_ReadDatastoreOccurrences, self).__init__()
         self._project = project
 
     def expand(self, pvalue):

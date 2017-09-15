@@ -2,11 +2,22 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d5d946e7-fd45-4ccd-884b-e8aec6a492d9" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/preprocess/elevation.py" afterPath="$PROJECT_DIR$/preprocess/elevation.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/preprocess/example.py" afterPath="$PROJECT_DIR$/preprocess/example.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/preprocess/main.py" afterPath="$PROJECT_DIR$/preprocess/main.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/preprocess/preprocess.py" afterPath="$PROJECT_DIR$/preprocess/preprocess.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/trainer/main.py" afterPath="$PROJECT_DIR$/trainer/main.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/floracast_preprocess/main.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/floracast_preprocess/preprocess/options.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/floracast_preprocess/preprocess/train.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/floracast_preprocess/preprocess/utils.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trainer/test.py" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/preprocess/main.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/preprocess/preprocess.py" afterPath="" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/__init__.py" afterPath="$PROJECT_DIR$/floracast_preprocess/__init__.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/preprocess/__init__.py" afterPath="$PROJECT_DIR$/floracast_preprocess/preprocess/__init__.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/preprocess/elevation.py" afterPath="$PROJECT_DIR$/floracast_preprocess/preprocess/elevation.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/preprocess/example.py" afterPath="$PROJECT_DIR$/floracast_preprocess/preprocess/example.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/preprocess/forests.py" afterPath="$PROJECT_DIR$/floracast_preprocess/preprocess/forests.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/preprocess/occurrences.py" afterPath="$PROJECT_DIR$/floracast_preprocess/preprocess/occurrences.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/preprocess/weather.py" afterPath="$PROJECT_DIR$/floracast_preprocess/preprocess/weather.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/setup.py" afterPath="$PROJECT_DIR$/floracast_preprocess/setup.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/trainer/task.py" afterPath="$PROJECT_DIR$/trainer/task.py" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
@@ -22,49 +33,50 @@
     <SUITE FILE_PATH="coverage/dataflow$task.coverage" NAME="task Coverage Results" MODIFIED="1504404944926" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tensors/movielens/trainer" />
     <SUITE FILE_PATH="coverage/dataflow$occurrences.coverage" NAME="occurrences Coverage Results" MODIFIED="1503454078278" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/dataflow$example.coverage" NAME="example Coverage Results" MODIFIED="1504974378224" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pipeline/preprocess" />
+    <SUITE FILE_PATH="coverage/dataflow$task__1_.coverage" NAME="task (1) Coverage Results" MODIFIED="1505244087549" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/trainer" />
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file leaf-file-name="occurrences.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/floracast_preprocess/preprocess/occurrences.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="319">
+              <caret line="34" column="60" lean-forward="false" selection-start-line="34" selection-start-column="60" selection-end-line="34" selection-end-column="60" />
+              <folding>
+                <element signature="e#41#67#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="core.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/apache_beam/transforms/core.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="154">
+              <caret line="697" column="4" lean-forward="false" selection-start-line="697" selection-start-column="4" selection-end-line="697" selection-end-column="4" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="options.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/floracast_preprocess/preprocess/options.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/preprocess/main.py">
+        <entry file="file://$PROJECT_DIR$/floracast_preprocess/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="339">
-              <caret line="151" column="20" lean-forward="false" selection-start-line="151" selection-start-column="20" selection-end-line="151" selection-end-column="20" />
+            <state relative-caret-position="285">
+              <caret line="55" column="34" lean-forward="false" selection-start-line="55" selection-start-column="34" selection-end-line="55" selection-end-column="34" />
               <folding>
-                <element signature="e#42#56#0" expanded="true" />
+                <element signature="e#41#72#0" expanded="true" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="preprocess.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/preprocess/preprocess.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="390">
-              <caret line="26" column="6" lean-forward="true" selection-start-line="26" selection-start-column="6" selection-end-line="26" selection-end-column="6" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="elevation.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/preprocess/elevation.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="240">
-              <caret line="16" column="44" lean-forward="false" selection-start-line="16" selection-start-column="44" selection-end-line="16" selection-end-column="44" />
-              <folding>
-                <element signature="e#0#26#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="blob.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/google/cloud/storage/blob.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="218">
-              <caret line="144" column="8" lean-forward="false" selection-start-line="144" selection-start-column="8" selection-end-line="144" selection-end-column="8" />
-              <folding />
             </state>
           </provider>
         </entry>
@@ -72,38 +84,42 @@
       <file leaf-file-name="run.sh" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/run.sh">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="120">
-              <caret line="32" column="33" lean-forward="false" selection-start-line="32" selection-start-column="33" selection-end-line="32" selection-end-column="33" />
+            <state relative-caret-position="301">
+              <caret line="60" column="31" lean-forward="false" selection-start-line="60" selection-start-column="31" selection-end-line="60" selection-end-column="31" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="train_count-00000-of-00001.txt" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/gs/train_data/1505182928/train_count-00000-of-00001.txt">
+      <file leaf-file-name="setup.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/floracast_preprocess/setup.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="15">
-              <caret line="1" column="0" lean-forward="false" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="eval_count-00000-of-00001.txt" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/gs/train_data/1505182928/eval_count-00000-of-00001.txt">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="15">
-              <caret line="1" column="0" lean-forward="false" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
-              <folding />
+            <state relative-caret-position="504">
+              <caret line="49" column="21" lean-forward="true" selection-start-line="49" selection-start-column="21" selection-end-line="49" selection-end-column="21" />
+              <folding>
+                <element signature="e#1185#1236#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file leaf-file-name="forests.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/preprocess/forests.py">
+        <entry file="file://$PROJECT_DIR$/floracast_preprocess/preprocess/forests.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+            <state relative-caret-position="105">
+              <caret line="7" column="18" lean-forward="false" selection-start-line="7" selection-start-column="18" selection-end-line="7" selection-end-column="18" />
+              <folding>
+                <element signature="e#41#67#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="elevation.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/floracast_preprocess/preprocess/elevation.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="105">
+              <caret line="7" column="8" lean-forward="false" selection-start-line="7" selection-start-column="8" selection-end-line="7" selection-end-column="8" />
               <folding>
                 <element signature="e#41#67#0" expanded="true" />
               </folding>
@@ -112,23 +128,21 @@
         </entry>
       </file>
       <file leaf-file-name="example.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/preprocess/example.py">
+        <entry file="file://$PROJECT_DIR$/floracast_preprocess/preprocess/example.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+            <state relative-caret-position="233">
+              <caret line="51" column="27" lean-forward="false" selection-start-line="51" selection-start-column="27" selection-end-line="51" selection-end-column="27" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="task.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/trainer/task.py">
+      <file leaf-file-name="train.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/floracast_preprocess/preprocess/train.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="316">
-              <caret line="148" column="16" lean-forward="false" selection-start-line="148" selection-start-column="16" selection-end-line="148" selection-end-column="16" />
-              <folding>
-                <element signature="e#672#710#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -144,46 +158,51 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>datetime</find>
-      <find>invalid_occ</find>
-      <find>int32</find>
-      <find>taxon(</find>
-      <find>ComputeAnalyzerInputs</find>
-      <find>_ComputeTensorPcollMappingUpdate</find>
-      <find>print(</find>
-      <find>MODEL_DIR</find>
-      <find>model_type</find>
-      <find>dataset</find>
-      <find>raw_metadata</find>
-      <find>l2_regularization</find>
-      <find>ignore_crosses</find>
-      <find>batch_size</find>
-      <find>train_set_size</find>
-      <find>counter</find>
-      <find>return</find>
-      <find>intermediate_data_prefix</find>
-      <find>lambda</find>
-      <find>num</find>
+      <find>utils</find>
+      <find>staging</find>
+      <find>add_random</find>
+      <find>action</find>
+      <find>setup_</find>
+      <find>standard_options.p</find>
+      <find>mode</find>
+      <find>temp_data</find>
+      <find>temp</find>
+      <find>default</find>
+      <find>default_</find>
+      <find>pandas</find>
+      <find>import</find>
+      <find>process_pipeline_op</find>
+      <find>temp_location</find>
+      <find>train</find>
+      <find>setup</find>
       <find>print</find>
-      <find>as_dtype</find>
-      <find>SerializeTr</find>
-      <find>taxon</find>
-      <find>bool</find>
-      <find>train_set</find>
-      <find>num_e</find>
-      <find>path</find>
-      <find>serializeEva</find>
-      <find>eval</find>
+      <find>astral</find>
+      <find>temp_</find>
+      <find>preprocess.</find>
+      <find>options</find>
+      <find>preproce</find>
+      <find>example</find>
+      <find>preprocess</find>
+      <find>unwindo</find>
+      <find>pardo</find>
+      <find>window</find>
+      <find>floracast_preprocess</find>
+      <find>unwindow</find>
     </findStrings>
+    <replaceStrings>
+      <replace />
+    </replaceStrings>
     <dirStrings>
       <dir>$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages</dir>
       <dir>$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow</dir>
       <dir>$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/python</dir>
       <dir>$PROJECT_DIR$/tensors/movielens</dir>
       <dir>$PROJECT_DIR$/pipeline/preprocess</dir>
+      <dir>$PROJECT_DIR$/trainer</dir>
       <dir>$PROJECT_DIR$</dir>
       <dir>$PROJECT_DIR$/preprocess</dir>
-      <dir>$PROJECT_DIR$/trainer</dir>
+      <dir>$PROJECT_DIR$/preprocess/preprocess</dir>
+      <dir>$PROJECT_DIR$/floracast_preprocess</dir>
     </dirStrings>
   </component>
   <component name="Git.Settings">
@@ -197,30 +216,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/tensors/movielens/trainer/task.py" />
-        <option value="$PROJECT_DIR$/pipeline/weather.py" />
-        <option value="$PROJECT_DIR$/pipeline/random.py" />
-        <option value="$PROJECT_DIR$/pipeline/encode.py" />
-        <option value="$PROJECT_DIR$/pipeline/schema.py" />
-        <option value="$PROJECT_DIR$/pipeline/constants.py" />
-        <option value="$PROJECT_DIR$/pipeline/transform.py" />
-        <option value="$PROJECT_DIR$/pipeline/partition.py" />
-        <option value="$PROJECT_DIR$/tensors/main.py" />
-        <option value="$PROJECT_DIR$/pipeline/features.py" />
-        <option value="$PROJECT_DIR$/pipeline/elevation.py" />
-        <option value="$PROJECT_DIR$/pipeline/random_location.py" />
-        <option value="$PROJECT_DIR$/tensors/movielens/preprocess.py" />
-        <option value="$PROJECT_DIR$/pipeline/forests.py" />
-        <option value="$PROJECT_DIR$/pipeline/occurrences.py" />
-        <option value="$PROJECT_DIR$/pipeline/path_constants.py" />
-        <option value="$PROJECT_DIR$/tensors/test/test.py" />
-        <option value="$PROJECT_DIR$/pipeline/main.py" />
-        <option value="$PROJECT_DIR$/pipeline/data/example.py" />
-        <option value="$PROJECT_DIR$/pipeline/data/random_location.py" />
-        <option value="$PROJECT_DIR$/pipeline/preprocess.py" />
-        <option value="$PROJECT_DIR$/pipeline/data_sources/example.py" />
-        <option value="$PROJECT_DIR$/pipeline/trainer/task.py" />
-        <option value="$PROJECT_DIR$/pipeline/data_sources/elevation.py" />
         <option value="$PROJECT_DIR$/pipeline/data_sources/weather.py" />
         <option value="$PROJECT_DIR$/pipeline/data_sources/forests.py" />
         <option value="$PROJECT_DIR$/pipeline/data_sources/occurrences.py" />
@@ -237,17 +232,41 @@
         <option value="$PROJECT_DIR$/reddit/path_contants.py" />
         <option value="$PROJECT_DIR$/reddit/preprocess.py" />
         <option value="$PROJECT_DIR$/reddit/reddit.py" />
-        <option value="$PROJECT_DIR$/preprocess/occurrences.py" />
         <option value="$PROJECT_DIR$/census/run.sh" />
         <option value="$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow_transform/beam/impl.py" />
         <option value="$PROJECT_DIR$/census/census.py" />
         <option value="$PROJECT_DIR$/trainer/main.py" />
-        <option value="$PROJECT_DIR$/preprocess/preprocess.py" />
+        <option value="$PROJECT_DIR$/preprocess/elevation.py" />
         <option value="$PROJECT_DIR$/preprocess/example.py" />
         <option value="$PROJECT_DIR$/trainer/task.py" />
+        <option value="$PROJECT_DIR$/trainer/test.py" />
+        <option value="$PROJECT_DIR$/preprocess/utils.py" />
+        <option value="$PROJECT_DIR$/preprocess/setup.py" />
+        <option value="$PROJECT_DIR$/preprocess/options.py" />
+        <option value="$PROJECT_DIR$/preprocess/forests.py" />
+        <option value="$PROJECT_DIR$/preprocess/preprocess.py" />
+        <option value="$PROJECT_DIR$/preprocess/occurrences.py" />
+        <option value="$PROJECT_DIR$/preprocess/preprocess/occurrences.py" />
+        <option value="$PROJECT_DIR$/preprocess/preprocess/elevation.py" />
+        <option value="$PROJECT_DIR$/preprocess/preprocess/example.py" />
+        <option value="$PROJECT_DIR$/preprocess/preprocess/forests.py" />
+        <option value="$PROJECT_DIR$/preprocess/preprocess/options.py" />
+        <option value="$PROJECT_DIR$/preprocess/preprocess/preprocess.py" />
+        <option value="$PROJECT_DIR$/preprocess/preprocess/utils.py" />
+        <option value="$PROJECT_DIR$/preprocess/preprocess/weather.py" />
         <option value="$PROJECT_DIR$/preprocess/main.py" />
-        <option value="$PROJECT_DIR$/preprocess/elevation.py" />
+        <option value="$PROJECT_DIR$/floracast_preprocess/preprocess/main.py" />
         <option value="$PROJECT_DIR$/run.sh" />
+        <option value="$PROJECT_DIR$/floracast_preprocess/preprocess/elevation.py" />
+        <option value="$PROJECT_DIR$/floracast_preprocess/preprocess/weather.py" />
+        <option value="$PROJECT_DIR$/floracast_preprocess/preprocess/utils.py" />
+        <option value="$PROJECT_DIR$/floracast_preprocess/preprocess/options.py" />
+        <option value="$PROJECT_DIR$/floracast_preprocess/main.py" />
+        <option value="$PROJECT_DIR$/floracast_preprocess/preprocess/forests.py" />
+        <option value="$PROJECT_DIR$/floracast_preprocess/preprocess/train.py" />
+        <option value="$PROJECT_DIR$/floracast_preprocess/preprocess/example.py" />
+        <option value="$PROJECT_DIR$/floracast_preprocess/preprocess/occurrences.py" />
+        <option value="$PROJECT_DIR$/floracast_preprocess/setup.py" />
       </list>
     </option>
   </component>
@@ -340,48 +359,18 @@
             <path>
               <item name="Root" type="cbb8eebc:String" user="Root" />
               <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
-              <item name="gs" type="cbb8eebc:String" user="gs" />
+              <item name="floracast_preprocess" type="cbb8eebc:String" user="floracast_preprocess" />
             </path>
             <path>
               <item name="Root" type="cbb8eebc:String" user="Root" />
               <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
-              <item name="gs" type="cbb8eebc:String" user="gs" />
-              <item name="intermediate_tfrecords" type="cbb8eebc:String" user="intermediate_tfrecords" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
-              <item name="gs" type="cbb8eebc:String" user="gs" />
-              <item name="models" type="cbb8eebc:String" user="models" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
-              <item name="gs" type="cbb8eebc:String" user="gs" />
-              <item name="temp_data/tftransform_tmp" type="cbb8eebc:String" user="temp_data/tftransform_tmp" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
-              <item name="gs" type="cbb8eebc:String" user="gs" />
-              <item name="train_data" type="cbb8eebc:String" user="train_data" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
-              <item name="gs" type="cbb8eebc:String" user="gs" />
-              <item name="train_data" type="cbb8eebc:String" user="train_data" />
-              <item name="1505182928" type="cbb8eebc:String" user="1505182928" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
+              <item name="floracast_preprocess" type="cbb8eebc:String" user="floracast_preprocess" />
               <item name="preprocess" type="cbb8eebc:String" user="preprocess" />
             </path>
             <path>
               <item name="Root" type="cbb8eebc:String" user="Root" />
               <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
-              <item name="trainer" type="cbb8eebc:String" user="trainer" />
+              <item name="gs" type="cbb8eebc:String" user="gs" />
             </path>
           </expand>
           <select />
@@ -400,12 +389,15 @@
     <property name="add_unversioned_files" value="$PROJECT_DIR$/run.sh" />
   </component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/preprocess/preprocess" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/floracast_preprocess" />
+      <recent name="$PROJECT_DIR$/floracast_preprocess/preprocess" />
+      <recent name="$PROJECT_DIR$/preprocess/preprocess" />
+      <recent name="$PROJECT_DIR$/preprocess" />
       <recent name="$PROJECT_DIR$" />
-      <recent name="$PROJECT_DIR$/pipeline/trainer" />
-      <recent name="$PROJECT_DIR$/pipeline/data_sources" />
-      <recent name="$PROJECT_DIR$/pipeline/data" />
-      <recent name="$PROJECT_DIR$/pipeline/utils" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -420,7 +412,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.example">
+  <component name="RunManager" selected="Python.task (1)">
     <configuration default="true" type="Applet" factoryName="Applet">
       <option name="WIDTH" value="400" />
       <option name="HEIGHT" value="300" />
@@ -537,20 +529,38 @@
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
     </configuration>
-    <configuration name="occurrences" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="occurrences (1)" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/preprocess" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="dataflow" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/pipeline/utils/occurrences.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/preprocess/preprocess/occurrences.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+    </configuration>
+    <configuration name="task (1)" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/trainer" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="dataflow" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/trainer/task.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -573,18 +583,20 @@
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
     </configuration>
-    <list size="4">
-      <item index="0" class="java.lang.String" itemvalue="Python.occurrences" />
-      <item index="1" class="java.lang.String" itemvalue="Python.task" />
-      <item index="2" class="java.lang.String" itemvalue="Python.main" />
-      <item index="3" class="java.lang.String" itemvalue="Python.example" />
+    <list size="5">
+      <item index="0" class="java.lang.String" itemvalue="Python.task" />
+      <item index="1" class="java.lang.String" itemvalue="Python.main" />
+      <item index="2" class="java.lang.String" itemvalue="Python.example" />
+      <item index="3" class="java.lang.String" itemvalue="Python.occurrences (1)" />
+      <item index="4" class="java.lang.String" itemvalue="Python.task (1)" />
     </list>
     <recent_temporary>
-      <list size="4">
-        <item index="0" class="java.lang.String" itemvalue="Python.example" />
-        <item index="1" class="java.lang.String" itemvalue="Python.main" />
-        <item index="2" class="java.lang.String" itemvalue="Python.task" />
-        <item index="3" class="java.lang.String" itemvalue="Python.occurrences" />
+      <list size="5">
+        <item index="0" class="java.lang.String" itemvalue="Python.task (1)" />
+        <item index="1" class="java.lang.String" itemvalue="Python.occurrences (1)" />
+        <item index="2" class="java.lang.String" itemvalue="Python.example" />
+        <item index="3" class="java.lang.String" itemvalue="Python.main" />
+        <item index="4" class="java.lang.String" itemvalue="Python.task" />
       </list>
     </recent_temporary>
   </component>
@@ -620,12 +632,12 @@
       <workItem from="1504621425043" duration="42981000" />
       <workItem from="1504808770170" duration="33690000" />
       <workItem from="1504925846375" duration="37452000" />
-      <workItem from="1505079468259" duration="26917000" />
+      <workItem from="1505079468259" duration="57633000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="604526000" />
+    <option name="totallyTimeSpent" value="635242000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1280" height="800" extended-state="0" />
@@ -643,9 +655,9 @@
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.27705976" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25201938" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32723576" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32670453" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.16397415" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.37883684" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
@@ -678,121 +690,6 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow_transform/coders/example_proto_coder.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="311">
-          <caret line="283" column="6" lean-forward="false" selection-start-line="283" selection-start-column="6" selection-end-line="283" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/reddit/path_contants.py" />
-    <entry file="file://$PROJECT_DIR$/reddit/preprocess.py" />
-    <entry file="file://$PROJECT_DIR$/reddit/reddit.py" />
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/apache_beam/transforms/ptransform.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="511">
-          <caret line="707" column="6" lean-forward="false" selection-start-line="707" selection-start-column="6" selection-end-line="707" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow_transform/beam/impl_test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="219">
-          <caret line="1409" column="4" lean-forward="false" selection-start-line="1409" selection-start-column="4" selection-end-line="1431" selection-end-column="72" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/gs/train_data/1505064494/raw_metadata/v1-json/schema.json" />
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/python/ops/parsing_ops.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="318">
-          <caret line="128" column="6" lean-forward="false" selection-start-line="128" selection-start-column="6" selection-end-line="128" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow_transform/tf_metadata/dataset_metadata.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="270">
-          <caret line="28" column="6" lean-forward="false" selection-start-line="28" selection-start-column="6" selection-end-line="28" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow_transform/tf_metadata/dataset_schema.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4755">
-          <caret line="325" column="6" lean-forward="false" selection-start-line="325" selection-start-column="6" selection-end-line="325" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/local/Cellar/python/2.7.13_1/Frameworks/Python.framework/Versions/2.7/lib/python2.7/argparse.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="18825">
-          <caret line="1262" column="8" lean-forward="false" selection-start-line="1262" selection-start-column="8" selection-end-line="1262" selection-end-column="8" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/census/run.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="75">
-          <caret line="5" column="0" lean-forward="false" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow_transform/beam/impl.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="8010">
-          <caret line="561" column="6" lean-forward="false" selection-start-line="561" selection-start-column="6" selection-end-line="561" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/census/census.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="503">
-          <caret line="144" column="57" lean-forward="false" selection-start-line="144" selection-start-column="57" selection-end-line="144" selection-end-column="57" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/apache_beam/transforms/core.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="218">
-          <caret line="1177" column="6" lean-forward="false" selection-start-line="1177" selection-start-column="6" selection-end-line="1177" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/gs/train_data/1505090889/raw_metadata/v1-json/schema.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
-          <caret line="14" column="10" lean-forward="false" selection-start-line="14" selection-start-column="10" selection-end-line="14" selection-end-column="10" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow_transform/tf_metadata/metadata_io.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="220">
-          <caret line="33" column="4" lean-forward="false" selection-start-line="33" selection-start-column="4" selection-end-line="33" selection-end-column="4" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/dataflow.iml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/gs/train_data/1505104012/raw_metadata/v1-json/schema.json">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-1848">
@@ -881,14 +778,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow_transform/saved/input_fn_maker.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="218">
-          <caret line="200" column="4" lean-forward="false" selection-start-line="200" selection-start-column="4" selection-end-line="200" selection-end-column="4" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/ntpath.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="225">
@@ -937,39 +826,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/preprocess/occurrences.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="790">
-          <caret line="106" column="0" lean-forward="false" selection-start-line="106" selection-start-column="0" selection-end-line="106" selection-end-column="0" />
-          <folding>
-            <element signature="e#41#67#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/preprocess/weather.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1101">
-          <caret line="32" column="0" lean-forward="false" selection-start-line="32" selection-start-column="0" selection-end-line="32" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#27#0" expanded="true" />
-            <marker date="1504930312000" expanded="true" signature="2027:2777" ph="SELECT lat, " />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/gs/train_data/1505159976/transformed_metadata/v1-json/schema.json">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="357">
           <caret line="165" column="8" lean-forward="false" selection-start-line="165" selection-start-column="8" selection-end-line="165" selection-end-column="8" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/trainer/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="345">
-          <caret line="23" column="9" lean-forward="false" selection-start-line="23" selection-start-column="9" selection-end-line="23" selection-end-column="9" />
           <folding />
         </state>
       </provider>
@@ -982,44 +842,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/preprocess/example.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/trainer/task.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="316">
-          <caret line="148" column="16" lean-forward="false" selection-start-line="148" selection-start-column="16" selection-end-line="148" selection-end-column="16" />
-          <folding>
-            <element signature="e#672#710#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/preprocess/forests.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#41#67#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/preprocess/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="339">
-          <caret line="151" column="20" lean-forward="false" selection-start-line="151" selection-start-column="20" selection-end-line="151" selection-end-column="20" />
-          <folding>
-            <element signature="e#42#56#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/google/cloud/storage/blob.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="218">
@@ -1028,25 +850,173 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/preprocess/elevation.py">
+    <entry file="file://$PROJECT_DIR$/gs/models/1505183774/graph.pbtxt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="240">
-          <caret line="16" column="44" lean-forward="false" selection-start-line="16" selection-start-column="44" selection-end-line="16" selection-end-column="44" />
-          <folding>
-            <element signature="e#0#26#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="206">
+          <caret line="2037" column="21" lean-forward="false" selection-start-line="2037" selection-start-column="21" selection-end-line="2037" selection-end-column="21" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/python/estimator/run_config.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-910">
+          <caret line="108" column="6" lean-forward="false" selection-start-line="108" selection-start-column="6" selection-end-line="108" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/contrib/learn/python/learn/learn_runner.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-9">
+          <caret line="92" column="4" lean-forward="false" selection-start-line="92" selection-start-column="4" selection-end-line="92" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/python/estimator/canned/dnn.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-266">
+          <caret line="200" column="6" lean-forward="false" selection-start-line="200" selection-start-column="6" selection-end-line="200" selection-end-column="6" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/gs/train_data/1505182928/train_count-00000-of-00001.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15">
-          <caret line="1" column="0" lean-forward="false" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/gs/train_data/1505182928/eval_count-00000-of-00001.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/gs/train_data/1505182928/transformed_metadata/v1-json/schema.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="209">
+          <caret line="51" column="24" lean-forward="false" selection-start-line="51" selection-start-column="15" selection-end-line="51" selection-end-column="24" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow_transform/saved/input_fn_maker.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="218">
+          <caret line="197" column="4" lean-forward="false" selection-start-line="197" selection-start-column="4" selection-end-line="197" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/trainer/utils/count.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="360">
+          <caret line="24" column="53" lean-forward="false" selection-start-line="24" selection-start-column="53" selection-end-line="24" selection-end-column="53" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/trainer/utils/split.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="445">
+          <caret line="30" column="20" lean-forward="false" selection-start-line="30" selection-start-column="20" selection-end-line="30" selection-end-column="20" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/trainer/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-355">
+          <caret line="31" column="23" lean-forward="false" selection-start-line="31" selection-start-column="23" selection-end-line="31" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/trainer/test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="240">
+          <caret line="16" column="8" lean-forward="false" selection-start-line="16" selection-start-column="8" selection-end-line="16" selection-end-column="8" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/trainer/task.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1053">
+          <caret line="30" column="24" lean-forward="false" selection-start-line="30" selection-start-column="24" selection-end-line="30" selection-end-column="24" />
+          <folding>
+            <element signature="e#672#710#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/floracast_preprocess/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/apache_beam/pipeline.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="218">
+          <caret line="84" column="6" lean-forward="false" selection-start-line="84" selection-start-column="6" selection-end-line="84" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/apache_beam/options/pipeline_options.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="208">
+          <caret line="225" column="6" lean-forward="false" selection-start-line="225" selection-start-column="6" selection-end-line="225" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/floracast_preprocess/preprocess/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/local/Cellar/python/2.7.13_1/Frameworks/Python.framework/Versions/2.7/lib/python2.7/__future__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="361">
+          <caret line="113" column="0" lean-forward="false" selection-start-line="113" selection-start-column="0" selection-end-line="113" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/setuptools/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="192">
+          <caret line="111" column="0" lean-forward="false" selection-start-line="111" selection-start-column="0" selection-end-line="111" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/floracast_preprocess/preprocess/weather.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="15">
+          <caret line="1" column="26" lean-forward="true" selection-start-line="1" selection-start-column="26" selection-end-line="1" selection-end-column="26" />
+          <folding>
+            <marker date="1505435135000" expanded="true" signature="2069:2819" ph="SELECT lat, " />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/floracast_preprocess/preprocess/utils.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="15">
           <caret line="1" column="0" lean-forward="false" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
@@ -1056,17 +1026,91 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/run.sh">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="120">
-          <caret line="32" column="33" lean-forward="false" selection-start-line="32" selection-start-column="33" selection-end-line="32" selection-end-column="33" />
+        <state relative-caret-position="301">
+          <caret line="60" column="31" lean-forward="false" selection-start-line="60" selection-start-column="31" selection-end-line="60" selection-end-column="31" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/preprocess/preprocess.py">
+    <entry file="file://$PROJECT_DIR$/floracast_preprocess/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="390">
-          <caret line="26" column="6" lean-forward="true" selection-start-line="26" selection-start-column="6" selection-end-line="26" selection-end-column="6" />
+        <state relative-caret-position="285">
+          <caret line="55" column="34" lean-forward="false" selection-start-line="55" selection-start-column="34" selection-end-line="55" selection-end-column="34" />
+          <folding>
+            <element signature="e#41#72#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/floracast_preprocess/preprocess/forests.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="105">
+          <caret line="7" column="18" lean-forward="false" selection-start-line="7" selection-start-column="18" selection-end-line="7" selection-end-column="18" />
+          <folding>
+            <element signature="e#41#67#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/apache_beam/transforms/core.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="154">
+          <caret line="697" column="4" lean-forward="false" selection-start-line="697" selection-start-column="4" selection-end-line="697" selection-end-column="4" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/floracast_preprocess/preprocess/elevation.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="105">
+          <caret line="7" column="8" lean-forward="false" selection-start-line="7" selection-start-column="8" selection-end-line="7" selection-end-column="8" />
+          <folding>
+            <element signature="e#41#67#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/floracast_preprocess/preprocess/example.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="233">
+          <caret line="51" column="27" lean-forward="false" selection-start-line="51" selection-start-column="27" selection-end-line="51" selection-end-column="27" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/floracast_preprocess/preprocess/train.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/floracast_preprocess/preprocess/options.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/floracast_preprocess/preprocess/occurrences.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="319">
+          <caret line="34" column="60" lean-forward="false" selection-start-line="34" selection-start-column="60" selection-end-line="34" selection-end-column="60" />
+          <folding>
+            <element signature="e#41#67#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/floracast_preprocess/setup.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="504">
+          <caret line="49" column="21" lean-forward="true" selection-start-line="49" selection-start-column="21" selection-end-line="49" selection-end-column="21" />
+          <folding>
+            <element signature="e#1185#1236#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

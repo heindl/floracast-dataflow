@@ -1,3 +1,4 @@
+# from __future__ import absolute_import
 import apache_beam as beam
 
 KEY_OCCURRENCE_ID = 'occurrence_id'
@@ -41,9 +42,6 @@ class Example:
             self._example = example
         else:
             self._example = example_pb2.Example()
-
-    def __getitem__(self, key):
-        return self._example.features.feature[key]
 
     def _append_value(self, feature, typer, value):
         if typer == LIST_TYPE_INT64:
@@ -110,10 +108,10 @@ class Example:
         return v
 
     def occurrence_id(self):
-        return self._get_value(KEY_OCCURRENCE_ID, LIST_TYPE_INT64)
+        return self._get_value(KEY_OCCURRENCE_ID, LIST_TYPE_BYTES)
 
     def set_occurrence_id(self, occurrence_id):
-        self._set_value(KEY_OCCURRENCE_ID, LIST_TYPE_INT64, occurrence_id)
+        self._set_value(KEY_OCCURRENCE_ID, LIST_TYPE_BYTES, occurrence_id)
 
     def taxon(self):
         t = self._get_value(KEY_TAXON, LIST_TYPE_INT64)
@@ -196,7 +194,7 @@ class Example:
         )
 
         self.set_taxon(0)
-        self.set_occurrence_id(random.randint(100000,900000))
+        self.set_occurrence_id(str(random.randint(100000,900000)))
         self.set_longitude(round(random.uniform(EASTERNMOST, WESTERNMOST), 6))
         self.set_latitude(round(random.uniform(SOUTHERNMOST, NORTHERNMOST), 6))
         self.set_date(int(date.strftime("%s")))
@@ -233,6 +231,7 @@ class Example:
     def append_daylight(self, value):
         self._append_value(KEY_DAYLIGHT, LIST_TYPE_FLOAT, value)
 
+
 def make_input_schema(mode):
     from tensorflow_transform.tf_metadata import dataset_schema
     from tensorflow import FixedLenFeature, float32, string, int64, VarLenFeature
@@ -248,7 +247,7 @@ def make_input_schema(mode):
         KEY_TAXON: FixedLenFeature(shape=[1], dtype=int64)
     })
     result.update({
-        KEY_OCCURRENCE_ID: FixedLenFeature(shape=[1], dtype=int64),
+        KEY_OCCURRENCE_ID: FixedLenFeature(shape=[1], dtype=string),
         KEY_ELEVATION: FixedLenFeature(shape=[1], dtype=float32),
         KEY_GRID_ZONE: FixedLenFeature(shape=[1], dtype=string),
         KEY_MAX_TEMP: FixedLenFeature(shape=[45], dtype=float32),
@@ -276,15 +275,18 @@ def make_input_schema(mode):
     #
     # x = tf.concat([tmax, prcp, daylight, features['elevation']], 0)
 
+
 def RandomExample():
     e = Example()
     e.set_random_location_values()
     return e
 
+
 def FromSerialized(serialized):
     e = Example()
     e.decode_from_string(serialized)
     return e
+
 
 def make_preprocessing_fn(num_classes):
     import tensorflow_transform as tt
