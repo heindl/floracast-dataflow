@@ -149,7 +149,7 @@ class Example:
     def date_string(self):
         from datetime import datetime
         d = datetime.fromtimestamp(self.date())
-        return "%d %d %d" % d.year, d.month, d.day
+        return d.strftime("%y%m%d")
 
 
     def set_date(self, date):
@@ -250,7 +250,7 @@ def make_input_schema(mode):
       A `Schema` object.
     """
     result = ({} if mode == ModeKeys.INFER else {
-        KEY_TAXON: FixedLenFeature(shape=[1], dtype=int64)
+        KEY_TAXON: FixedLenFeature(shape=[], dtype=int64)
     })
     result.update({
         KEY_OCCURRENCE_ID: FixedLenFeature(shape=[1], dtype=string),
@@ -320,9 +320,17 @@ def make_preprocessing_fn(num_classes):
             # KEY_TAXON: tf.cast(i[KEY_TAXON], tf.bool)
         }
 
+        def relable_fn(v):
+            print("called", v[0])
+            if v == 0:
+                return [0]
+            else:
+                return [1]
+
         if num_classes == 2:
-            m[KEY_TAXON] = tt.apply_function((lambda l: [0] if l[0] == 0 else [1]), i[KEY_TAXON])
-            m[KEY_TAXON] = tf.cast(i[KEY_TAXON], tf.int64)
+            # m[KEY_TAXON] = tt.apply_function(relable_fn, i[KEY_TAXON])
+            m[KEY_TAXON] = tf.cast(i[KEY_TAXON], tf.bool)
+            m[KEY_TAXON] = tf.cast(m[KEY_TAXON], tf.int64)
         else:
             m[KEY_TAXON] = i[KEY_TAXON]
 

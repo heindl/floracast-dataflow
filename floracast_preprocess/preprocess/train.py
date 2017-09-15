@@ -48,6 +48,8 @@ def preprocess_train(
             (records_dataset, records_metadata), transform_fn = (
                 (records, metadata) | tft.AnalyzeAndTransformDataset(preprocessing_fn))
 
+            print("schema", records_metadata.schema.as_feature_spec())
+
             _ = (transform_fn
                  | 'WriteTransformFn' >> tft_beam_io.WriteTransformFn(output_path))
 
@@ -63,14 +65,14 @@ def preprocess_train(
                 | 'SerializeTrainExamples' >> beam.Map(coder.encode) \
                 | 'ShuffleTraining' >> utils.Shuffle() \
                 | 'WriteTraining' >> beam.io.WriteToTFRecord(
-                        os.path.join(output_path, "/train_data/", TRANSFORMED_TRAIN_DATA_FILE_PREFIX),
+                        os.path.join(output_path+"/train_data/", TRANSFORMED_TRAIN_DATA_FILE_PREFIX),
                         file_name_suffix='.tfrecord.gz')
 
             _ = eval_dataset \
                 | 'SerializeEvalExamples' >> beam.Map(coder.encode) \
                 | 'ShuffleEval' >> utils.Shuffle() \
                 | 'WriteEval' >> beam.io.WriteToTFRecord(
-                        os.path.join(output_path, "/eval_data/", TRANSFORMED_EVAL_DATA_FILE_PREFIX),
+                        os.path.join(output_path+"/eval_data/", TRANSFORMED_EVAL_DATA_FILE_PREFIX),
                         file_name_suffix='.tfrecord.gz')
 
             _ = train_dataset \

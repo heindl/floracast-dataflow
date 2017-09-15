@@ -5,6 +5,15 @@ from google.cloud.proto.datastore.v1 import entity_pb2
 from example import Example
 
 
+class SplitPCollsByDate(beam.DoFn):
+    def __init__(self):
+        super(SplitPCollsByDate, self).__init__()
+
+    def process(self, example):
+        from apache_beam import pvalue
+        yield pvalue.TaggedOutput(
+            example.date_string(), example)
+
 def fetch_forests(
         pipeline_options,
         output_path,
@@ -12,15 +21,9 @@ def fetch_forests(
     import elevation as elevation
     import weather as weather
     import occurrences as occurrences
-    import utils as utils
     from tensorflow_transform.beam import impl as tft
-    from apache_beam.options.pipeline_options import GoogleCloudOptions
-    from options import ProcessPipelineOptions
     from datetime import datetime, timedelta
     from pandas import date_range
-
-    google_cloud_options = pipeline_options.vew_as(GoogleCloudOptions)
-    process_pipeline_options = pipeline_options.view_as(ProcessPipelineOptions)
 
     options = pipeline_options.get_all_options()
 
@@ -32,28 +35,22 @@ def fetch_forests(
             friday = today + timedelta((4 - today.weekday()) % 7)
             dates = []
             unix = []
-            for d in date_range(end=friday, periods=process_pipeline_options.weeks_before, freq='W').tolist():
-                dates.append(d.strftime("%d%m%y"))
+            for d in date_range(end=friday, periods=options['weeks_before'], freq='W').tolist():
+                dates.append(d.strftime("%y%m%d"))
                 unix.append(int(d.strftime('%s')))
 
             examples = pipeline \
-                                  | _ReadDatastoreForests(project=google_cloud_options.project) \
-                                  | 'ConvertForestEntityToExample' >> beam.ParDo(_ForestEntityToExample(dates)) \
-                                  | 'Count' >> beam.ParDo(occurrences.Counter("main")) \
-                                  | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(google_cloud_options.project)) \
-                                  | 'FetchWeather' >> beam.ParDo(
-                                        weather.FetchWeatherDoFn(
-                                                google_cloud_options.project,
-                                                process_pipeline_options.weather_station_distance)
-                                    ).with_outputs(dates) \
-                                  | 'ExtractDateKeyForGrouping' >> beam.Map(lambda e: (e.date_string(), e)) \
-                                  | 'GroupByKey' >> beam.GroupByKey()
+                  | _ReadDatastoreForests(project=options['project']) \
+                  | 'ConvertForestEntityToExample' >> beam.ParDo(_ForestEntityToExample(unix)) \
+                  | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(options['project'])) \
+                  | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(options['project'], options['weather_station_distance'])) \
+                  | 'SplitPCollsByDate' >> beam.ParDo(SplitPCollsByDate()).with_outputs(*dates)
 
             for d in dates:
                 path = output_path+"-"+d
                 _ = examples[d] \
-                    | 'ProtoForWrite' >> beam.Map(lambda e: e.encode()) \
-                    | 'WritePredictDataAsTFRecord' >> beam.io.WriteToTFRecord(path, file_name_suffix='.tfrecord.gz')
+                    | ("ProtoForWrite-%s" % d) >> beam.Map(lambda e: e.encode()) \
+                    | ("WritePredictDataAsTFRecord-%s" % d) >> beam.io.WriteToTFRecord(path, file_name_suffix='.tfrecord.gz')
 
 
 # Filter and prepare for duplicate sort.

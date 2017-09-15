@@ -59,6 +59,9 @@ def create_parser():
         default=60 * 1e6)
     parser.add_argument(
         '--num_epochs', help='Number of epochs', default=5, type=int)
+
+    parser.add_argument(
+        '--num_classes', help='Number of classes', required=True, type=int)
     return parser
 
 
@@ -96,7 +99,6 @@ def feature_columns():
         tf.contrib.layers.real_valued_column("daylight", dimension=45, dtype=tf.float32)
     ]
 
-
 def gzip_reader_fn():
     import tensorflow as tf
     return tf.TFRecordReader(options=tf.python_io.TFRecordOptions(
@@ -126,79 +128,120 @@ def get_transformed_reader_input_fn(transformed_metadata,
         num_epochs=(1 if mode == estimator.ModeKeys.EVAL else None))
 
 
-def get_experiment_fn(args):
+def get_serving_input_fn(
+        raw_metadata,
+        transform_savedmodel_dir,
+        raw_label_keys,
+        raw_feature_keys=None
+):
+    import tensorflow as tf
+    from tensorflow_transform.saved import saved_transform_io
+    raw_feature_spec = raw_metadata.schema.as_feature_spec()
+    raw_feature_keys = _prepare_feature_keys(raw_metadata,
+                                             raw_label_keys,
+                                             raw_feature_keys)
+    raw_serving_feature_spec = {key: raw_feature_spec[key]
+                                for key in raw_feature_keys}
+
+    def parsing_transforming_serving_input_fn():
+        """Serving input_fn that applies transforms to raw data in tf.Examples."""
+        raw_input_fn = tf.estimator.export.build_parsing_serving_input_receiver_fn(raw_serving_feature_spec)
+        reciever = raw_input_fn()
+        _, transformed_features = (
+            saved_transform_io.partially_apply_saved_transform(
+                transform_savedmodel_dir, reciever.features))
+
+        return tf.estimator.export.ServingInputReceiver(transformed_features, reciever.receiver_tensors)
+
+    return parsing_transforming_serving_input_fn
+
+
+def _prepare_feature_keys(metadata, label_keys, feature_keys=None):
+    import six
+    """Infer feature keys if needed, and sanity-check label and feature keys."""
+    if label_keys is None:
+        raise ValueError("label_keys must be specified.")
+    if feature_keys is None:
+        feature_keys = list(
+            set(six.iterkeys(metadata.schema.column_schemas)) - set(label_keys))
+    overlap_keys = set(label_keys) & set(feature_keys)
+    if overlap_keys:
+        raise ValueError("Keys cannot be used as both a feature and a "
+                         "label: {}".format(overlap_keys))
+
+    return feature_keys
+
+def get_experiment_fn(run_config, args):
     """Wrap the get experiment function to provide the runtime arguments."""
 
-    def get_experiment(run_config, params):
-        import tensorflow as tf
-        from tensorflow_transform.tf_metadata import metadata_io
-        from tensorflow_transform.saved import input_fn_maker
-        import os
-        """Function that creates an experiment http://goo.gl/HcKHlT.
-        Args:
-          output_dir: The directory where the training output should be written.
-        Returns:
-          A `tf.contrib.learn.Experiment`.
-        """
+    # def get_experiment(run_config, params):
+    import tensorflow as tf
+    from tensorflow_transform.tf_metadata import metadata_io
+    import os
+    """Function that creates an experiment http://goo.gl/HcKHlT.
+    Args:
+      output_dir: The directory where the training output should be written.
+    Returns:
+      A `tf.contrib.learn.Experiment`.
+    """
 
-        # min_eval_frequency=500
+    # min_eval_frequency=500
 
-        cluster = run_config.cluster_spec
-        num_table_shards = max(1, run_config.num_ps_replicas * 3)
-        num_partitions = max(1, 1 + cluster.num_tasks('worker') if cluster and
-                                                                   'worker' in cluster.jobs else 0)
+    cluster = run_config.cluster_spec
+    num_table_shards = max(1, run_config.num_ps_replicas * 3)
+    num_partitions = max(1, 1 + cluster.num_tasks('worker') if cluster and
+                                                               'worker' in cluster.jobs else 0)
 
-        classifier = tf.estimator.DNNClassifier(
-            feature_columns=feature_columns(),
-            hidden_units=args.hidden_units,
-            n_classes=2,
-            optimizer=tf.train.ProximalAdagradOptimizer(
-                learning_rate=0.01,
-                l1_regularization_strength=0.001
-            ),
-            config=run_config,
+    classifier = tf.estimator.DNNClassifier(
+        feature_columns=feature_columns(),
+        hidden_units=args.hidden_units,
+        n_classes=args.num_classes,
+        optimizer=tf.train.ProximalAdagradOptimizer(
+            learning_rate=0.01,
+            l1_regularization_strength=0.001
+        ),
+        config=run_config,
+    )
+
+    transformed_metadata = metadata_io.read_metadata(
+        os.path.join(args.train_data_path, "transformed_metadata"))
+
+    raw_metadata = metadata_io.read_metadata(
+        os.path.join(args.train_data_path, "raw_metadata"))
+    print(os.path.join(args.train_data_path, "raw_metadata"))
+    print(os.path.join(args.train_data_path, "transform_fn"))
+    serving_input_fn = get_serving_input_fn(
+            raw_metadata=raw_metadata,
+            transform_savedmodel_dir=os.path.join(args.train_data_path, "transform_fn"),
+            raw_label_keys=['occurrence_id']
         )
+    export_strategy = tf.contrib.learn.utils.make_export_strategy(
+        serving_input_fn,
+        exports_to_keep=5,
+    )
 
-        transformed_metadata = metadata_io.read_metadata(
-            os.path.join(args.train_data_path, "transformed_metadata"))
+    train_input_fn = get_transformed_reader_input_fn(
+        transformed_metadata,
+        args.train_data_path + "/train_data/*.gz",
+        args.batch_size,
+        tf.estimator.ModeKeys.TRAIN)
 
-        raw_metadata = metadata_io.read_metadata(
-            os.path.join(args.train_data_path, "raw_metadata"))
+    eval_input_fn = get_transformed_reader_input_fn(
+        transformed_metadata,
+        args.train_data_path + "/eval_data/*.gz",
+        args.batch_size,
+        tf.estimator.ModeKeys.EVAL)
 
-        serving_input_fn = (
-            input_fn_maker.build_parsing_transforming_serving_input_fn(
-                raw_metadata=raw_metadata,
-                transform_savedmodel_dir=os.path.join(args.train_data_path, "transform_fn"),
-                raw_label_keys=['taxon'])
-        )
-        export_strategy = tf.contrib.learn.utils.make_export_strategy(
-            serving_input_fn,
-            exports_to_keep=5,
-            default_output_alternative_key=None
-        )
-
-        train_input_fn = get_transformed_reader_input_fn(
-            transformed_metadata,
-            args.train_data_path + "/train_data/*.gz",
-            args.batch_size,
-            tf.estimator.ModeKeys.TRAIN)
-
-        eval_input_fn = get_transformed_reader_input_fn(
-            transformed_metadata,
-            args.train_data_path + "/eval_data/*.gz",
-            args.batch_size,
-            tf.estimator.ModeKeys.EVAL)
-
-        return tf.contrib.learn.Experiment(
-            estimator=classifier,
-            train_steps=(args.num_epochs * args.train_set_size // args.batch_size),
-            eval_steps=args.eval_steps,
-            train_input_fn=train_input_fn,
-            eval_input_fn=eval_input_fn,
-            export_strategies=export_strategy)
+    return tf.contrib.learn.Experiment(
+        estimator=classifier,
+        train_steps=(args.num_epochs * args.train_set_size // args.batch_size),
+        eval_steps=args.eval_steps,
+        train_input_fn=train_input_fn,
+        eval_input_fn=eval_input_fn,
+        export_strategies=export_strategy)
 
     # Return a function to create an Experiment.
-    return get_experiment
+    # return get_experiment
 
 
 def main(argv=None):
@@ -224,13 +267,22 @@ def main(argv=None):
     else:
         output_dir = output_path
 
+    # run_config = tf.estimator.RunConfig()
     run_config = tf.contrib.learn.RunConfig()
     run_config = run_config.replace(model_dir=output_dir)
 
-    # run_config = run_config.replace(save_checkpoints_steps=params.min_eval_frequency)
+    experiment = get_experiment_fn(run_config, args)
 
-    learn_runner.run(experiment_fn=get_experiment_fn(args),
-                     run_config=run_config)
+    eval = experiment.train_and_evaluate()
+
+    print(eval)
+
+
+    # run_config = run_config.replace(save_checkpoints_steps=params.min_eval_frequency)
+    # learn_runner.run(experiment_fn=get_experiment_fn(args),
+    #                  run_config=run_config)
+
+
 
 
 if __name__ == '__main__':
