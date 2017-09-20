@@ -253,7 +253,7 @@ def make_input_schema(mode):
         KEY_TAXON: FixedLenFeature(shape=[], dtype=int64)
     })
     result.update({
-        KEY_OCCURRENCE_ID: FixedLenFeature(shape=[1], dtype=string),
+        KEY_OCCURRENCE_ID: FixedLenFeature(shape=[], dtype=string),
         KEY_ELEVATION: FixedLenFeature(shape=[1], dtype=float32),
         KEY_GRID_ZONE: FixedLenFeature(shape=[1], dtype=string),
         KEY_MAX_TEMP: FixedLenFeature(shape=[45], dtype=float32),

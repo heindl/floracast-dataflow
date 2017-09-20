@@ -20,10 +20,10 @@ def fetch_forests(
     ):
     import elevation as elevation
     import weather as weather
-    import occurrences as occurrences
     from tensorflow_transform.beam import impl as tft
     from datetime import datetime, timedelta
     from pandas import date_range
+    import utils
 
     options = pipeline_options.get_all_options()
 
@@ -47,10 +47,14 @@ def fetch_forests(
                   | 'SplitPCollsByDate' >> beam.ParDo(SplitPCollsByDate()).with_outputs(*dates)
 
             for d in dates:
-                path = output_path+"-"+d
+                path = output_path+"/"+d+"/"
                 _ = examples[d] \
                     | ("ProtoForWrite-%s" % d) >> beam.Map(lambda e: e.encode()) \
                     | ("WritePredictDataAsTFRecord-%s" % d) >> beam.io.WriteToTFRecord(path, file_name_suffix='.tfrecord.gz')
+
+                _ = examples[d] \
+                    | ("EncodePredictAsB64Json-%s" % d) >> beam.Map(utils.encode_as_b64_json) \
+                    | ("WritePredictDataAsText-%s" % d) >> beam.io.WriteToText(path, file_name_suffix='.txt')
 
 
 # Filter and prepare for duplicate sort.
@@ -86,7 +90,7 @@ class _ForestEntityToExample(beam.DoFn):
         centre = self._parse_point(e['Centre'])
         for d in self._dates:
             ex = Example()
-            ex.set_occurrence_id("%d|||%d" % (e.key.id, d))
+            ex.set_occurrence_id("%.6f|%.6f|%s" % (centre.latitude, centre.longitude, d.strftime("%y%m%d")))
             ex.set_longitude(centre.longitude)
             ex.set_latitude(centre.latitude)
             ex.set_date(d)

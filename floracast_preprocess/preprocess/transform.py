@@ -90,6 +90,6 @@ def preprocess_train(
 # I hope taxon_id will provide wide enough variation between results.
 def partition_fn(ex, partition_random_seed, percent_eval):
     import hashlib
-    m = hashlib.md5(str(ex["occurrence_id"][0]) + str(partition_random_seed))
+    m = hashlib.md5(str(ex["occurrence_id"]) + str(partition_random_seed))
     hash_value = int(m.hexdigest(), 16) % 100
     return 0 if hash_value >= percent_eval else 1

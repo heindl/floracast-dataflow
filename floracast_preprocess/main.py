@@ -17,10 +17,11 @@ def _default_project():
 
 def main(argv=None):
     from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions, StandardOptions, SetupOptions
+    # pip install six==1.10.0
     import tensorflow as tf
     import datetime
     import os
-    from preprocess import options, train, occurrences, forests
+    from preprocess import options, transform, occurrences, forests
 
     pipeline_options = PipelineOptions(flags=argv)
     # ['--setup_file', os.path.abspath(os.path.join(os.path.dirname(__file__), 'setup.py'))],
@@ -58,7 +59,7 @@ def main(argv=None):
 
         train_directory_path = os.path.join(process_pipeline_options.train_location, datetime.datetime.now().strftime("%s"))
 
-        train.preprocess_train(
+        transform.preprocess_train(
             pipeline_options=pipeline_options,
             intermediate_records=intermediate_records,
             output_path=train_directory_path,
