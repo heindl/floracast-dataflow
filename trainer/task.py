@@ -87,14 +87,12 @@ def get_experiment_fn(run_config, args):
     num_table_shards = max(1, run_config.num_ps_replicas * 3)
     num_partitions = max(1, 1 + cluster.num_tasks('worker') if cluster and 'worker' in cluster.jobs else 0)
 
-
-    classifier = model.get_estimator(run_config=run_config)
-
+    classifier = model.get_estimator(args=args, run_config=run_config)
 
     serving_input_fn = input_fn.get_serving_input_fn(
             args=args,
-            raw_label_keys=['taxon']
-        )
+            raw_label_keys=['taxon'])
+
     export_strategy = tf.contrib.learn.utils.make_export_strategy(
         serving_input_fn,
         exports_to_keep=1,
@@ -161,42 +159,45 @@ def main(argv=None):
     eval, export = experiment.train_and_evaluate()
 
     print(eval)
-
-    """Wrap the get input features function to provide the runtime arguments."""
-
-    for p in experiment.estimator.predict(
-        input_fn=input_fn.get_test_prediction_data_fn(args, "/Users/m/Downloads/forests-data.tfrecords"),
-        # as_iterable=False
-    ):
-        print(p)
+    print(export)
 
     return
 
-    if len(export) == 0:
-        return
-
-    dirs = export[0].split('/')
-    n = len(dirs) - 4
-
-    local_model_path = '/'.join(dirs[:len(dirs) - 3])
-
-    print("gsutil cp -r %s gs://floracast-models/models/" % local_model_path)
-
-    gs_model_path = ("gs://floracast-models/models/%s" % '/'.join(dirs[n:]))
-
-    version = randint(0, 100)
-    print("gcloud ml-engine versions create 'v%d' \
-        --model 'occurrences' \
-        --origin %s" % (version, gs_model_path))
-
-    job_id = randint(0, 1000000)
-    print(("gcloud ml-engine jobs submit prediction 'occurrences_%d' \
-        --version 'v%d' \
-        --model 'occurrences' \
-        --input-paths gs://floracast-models/forests/data.tfrecords \
-        --output-path gs://floracast-models/predictions/%d/ \
-        --region us-east1 \
-        --data-format TF_RECORD") % (job_id, version, job_id))
+    # """Wrap the get input features function to provide the runtime arguments."""
+    #
+    # for p in experiment.estimator.predict(
+    #     input_fn=input_fn.get_test_prediction_data_fn(args),
+    #     # as_iterable=False
+    # ):
+    #     print(p)
+    #
+    # return
+    #
+    # if len(export) == 0:
+    #     return
+    #
+    # dirs = export[0].split('/')
+    # n = len(dirs) - 4
+    #
+    # local_model_path = '/'.join(dirs[:len(dirs) - 3])
+    #
+    # print("gsutil cp -r %s gs://floracast-models/models/" % local_model_path)
+    #
+    # gs_model_path = ("gs://floracast-models/models/%s" % '/'.join(dirs[n:]))
+    #
+    # version = randint(0, 100)
+    # print("gcloud ml-engine versions create 'v%d' \
+    #     --model 'occurrences' \
+    #     --origin %s" % (version, gs_model_path))
+    #
+    # job_id = randint(0, 1000000)
+    # print(("gcloud ml-engine jobs submit prediction 'occurrences_%d' \
+    #     --version 'v%d' \
+    #     --model 'occurrences' \
+    #     --input-paths gs://floracast-models/forests/data.tfrecords \
+    #     --output-path gs://floracast-models/predictions/%d/ \
+    #     --region us-east1 \
+    #     --data-format TF_RECORD") % (job_id, version, job_id))
 
 
     # run_config = run_config.replace(save_checkpoints_steps=params.min_eval_frequency)

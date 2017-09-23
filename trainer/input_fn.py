@@ -4,38 +4,80 @@ def gzip_reader_fn():
     return tf.TFRecordReader(options=tf.python_io.TFRecordOptions(
         compression_type=tf.python_io.TFRecordCompressionType.GZIP))
 
-def get_test_prediction_data_fn(
-        args,
-        raw_data_file_pattern,
-):
-    from tensorflow_transform.saved import input_fn_maker
+
+def get_test_prediction_data_fn(args):
+    import tensorflow as tf
+    from tensorflow_transform.saved import saved_transform_io
+    import six
     import os
     from tensorflow_transform.tf_metadata import metadata_io
 
-    train_data_path = args['train_data_path']
-
     transformed_metadata = metadata_io.read_metadata(
-        os.path.join(train_data_path, "transformed_metadata"))
+        os.path.join(args.train_data_path, "transformed_metadata"))
 
     raw_metadata = metadata_io.read_metadata(
-        os.path.join(train_data_path, "raw_metadata"))
+        os.path.join(args.train_data_path, "raw_metadata"))
 
-    tranform_model = os.path.join(train_data_path, "transform_fn")
+    transform_savedmodel_dir = os.path.join(args.train_data_path, "transform_fn")
 
-    return input_fn_maker.build_transforming_training_input_fn(
-        raw_metadata=raw_metadata,
-        transformed_metadata=transformed_metadata,
-        transform_savedmodel_dir=tranform_model,
-        raw_data_file_pattern=raw_data_file_pattern,
-        training_batch_size=1,
-        raw_label_keys=['taxon'],
-        transformed_label_keys=['taxon'],
-        # raw_feature_keys=feature_keys(),
-        # transformed_feature_keys=feature_keys(),
-        # key_feature_name='occurrence_id',
-        convert_scalars_to_vectors=False,
-        num_epochs=1,
-    )
+    raw_data_file_pattern=args.raw_data_file_pattern
+
+    raw_feature_spec = raw_metadata.schema.as_feature_spec()
+    raw_feature_keys = _prepare_feature_keys(raw_metadata, ["taxon"])
+    raw_training_feature_spec = {
+        key: raw_feature_spec[key]
+        for key in raw_feature_keys} # + raw_label_keys}
+
+    transformed_feature_keys = _prepare_feature_keys(transformed_metadata, ["taxon"])
+
+    def raw_training_input_fn():
+        """Training input function that reads raw data and applies transforms."""
+
+        raw_data = tf.contrib.learn.io.read_batch_features(
+            file_pattern=raw_data_file_pattern,
+            batch_size=30,
+            features=raw_training_feature_spec,
+            reader=gzip_reader_fn,
+            num_epochs=1)
+
+        _, transformed_features = saved_transform_io.partially_apply_saved_transform(
+            transform_savedmodel_dir, raw_data)
+
+        # transformed_features = {
+        #     k: v for k, v in six.iteritems(transformed_data)
+        #     if k in transformed_feature_keys}
+
+        # if convert_scalars_to_vectors:
+        #     transformed_features = _convert_scalars_to_vectors(transformed_features)
+
+        # if key_feature_name is not None:
+        #     transformed_features[key_feature_name] = keys
+
+        # if len(transformed_labels) == 1:
+        #     (_, transformed_labels), = transformed_labels.items()
+        return transformed_features #, transformed_labels
+
+    return raw_training_input_fn
+
+
+# def get_test_prediction_data_fn(args):
+#     import tensorflow as tf
+#     from tensorflow.python.lib.io import tf_record
+#     import glob
+#     TFRecordCompressionType = tf_record.TFRecordCompressionType
+#
+#     serving_input_fn = get_serving_input_fn(args, ['taxon'])
+#     reciever = serving_input_fn()
+#
+#     filename_queue = tf.train.string_input_producer(
+#         glob.glob(args.raw_data_file_pattern), num_epochs=1)
+#
+#     options = tf_record.TFRecordOptions(TFRecordCompressionType.GZIP)
+#
+#     reader = tf.TFRecordReader(options=options)
+#     _, serialized_example = reader.read(filename_queue)
+#     features = tf.parse_single_example(serialized_example, reciever.features)
+#     return features
 
 
 def get_transformed_reader_input_fn(transformed_metadata,
@@ -92,9 +134,11 @@ def get_serving_input_fn(
         raw_input_fn = tf.estimator.export.build_parsing_serving_input_receiver_fn(raw_serving_feature_spec)
         # features, _, inputs = raw_input_fn()
         features, receiver_tensors = raw_input_fn()
+
         _, transformed_features = (
             saved_transform_io.partially_apply_saved_transform(
                 os.path.join(train_data_path, "transform_fn"), features))
+
         # inputs['occurrence_id'] = tf.placeholder(dtype=tf.string, shape=[None])
         # print("inputs", inputs)
 

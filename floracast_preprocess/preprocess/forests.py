@@ -36,13 +36,15 @@ def fetch_forests(
             dates = []
             unix = []
             for d in date_range(end=friday, periods=options['weeks_before'], freq='W').tolist():
-                dates.append(d.strftime("%y%m%d"))
+                dates.append(d.strftime("%Y%m%d"))
                 unix.append(int(d.strftime('%s')))
 
             examples = pipeline \
                   | _ReadDatastoreForests(project=options['project']) \
                   | 'ConvertForestEntityToExample' >> beam.ParDo(_ForestEntityToExample(unix)) \
                   | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(options['project'])) \
+                  | 'NoOp1' >> beam.ParDo(utils.NoOperation()) \
+                  | 'NoOp2' >> beam.ParDo(utils.NoOperation()) \
                   | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(options['project'], options['weather_station_distance'])) \
                   | 'SplitPCollsByDate' >> beam.ParDo(SplitPCollsByDate()).with_outputs(*dates)
 
@@ -52,9 +54,9 @@ def fetch_forests(
                     | ("ProtoForWrite-%s" % d) >> beam.Map(lambda e: e.encode()) \
                     | ("WritePredictDataAsTFRecord-%s" % d) >> beam.io.WriteToTFRecord(path, file_name_suffix='.tfrecord.gz')
 
-                _ = examples[d] \
-                    | ("EncodePredictAsB64Json-%s" % d) >> beam.Map(utils.encode_as_b64_json) \
-                    | ("WritePredictDataAsText-%s" % d) >> beam.io.WriteToText(path, file_name_suffix='.txt')
+                # _ = examples[d] \
+                #     | ("EncodePredictAsB64Json-%s" % d) >> beam.Map(utils.encode_as_b64_json) \
+                #     | ("WritePredictDataAsText-%s" % d) >> beam.io.WriteToText(path, file_name_suffix='.txt')
 
 
 # Filter and prepare for duplicate sort.
@@ -82,6 +84,7 @@ class _ForestEntityToExample(beam.DoFn):
     def process(self, element):
         from google.cloud.datastore.helpers import entity_from_protobuf
         from example import Example
+        from datetime import datetime
         """
             Element should be an occurrence entity.
             The key has should be a sufficient key.
@@ -90,7 +93,7 @@ class _ForestEntityToExample(beam.DoFn):
         centre = self._parse_point(e['Centre'])
         for d in self._dates:
             ex = Example()
-            ex.set_occurrence_id("%.6f|%.6f|%s" % (centre.latitude, centre.longitude, d.strftime("%y%m%d")))
+            ex.set_occurrence_id("%.6f|%.6f|%s" % (centre.latitude, centre.longitude, datetime.fromtimestamp(d).strftime("%Y%m%d")))
             ex.set_longitude(centre.longitude)
             ex.set_latitude(centre.latitude)
             ex.set_date(d)

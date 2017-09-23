@@ -2,7 +2,7 @@
 
 import apache_beam as beam
 
-def preprocess_train(
+def preprocess_transform(
         pipeline_options,
         intermediate_records,
         output_path,
@@ -48,7 +48,10 @@ def preprocess_train(
             (records_dataset, records_metadata), transform_fn = (
                 (records, metadata) | tft.AnalyzeAndTransformDataset(preprocessing_fn))
 
-            print("schema", records_metadata.schema.as_feature_spec())
+            _ = records_dataset \
+                | 'ProjectLabels' >> beam.Map(lambda e: e["taxon"]) \
+                | 'RemoveLabelDuplicates' >> beam.RemoveDuplicates() \
+                | 'WriteLabels' >> beam.io.WriteToText(output_path+"/labels", file_name_suffix='.txt')
 
             _ = (transform_fn
                  | 'WriteTransformFn' >> tft_beam_io.WriteTransformFn(output_path))

@@ -114,13 +114,13 @@ class Example:
         self._set_value(KEY_OCCURRENCE_ID, LIST_TYPE_BYTES, occurrence_id)
 
     def taxon(self):
-        t = self._get_value(KEY_TAXON, LIST_TYPE_INT64)
+        t = self._get_value(KEY_TAXON, LIST_TYPE_BYTES)
         if t is None:
-            return 0
+            return "0"
         return t
 
     def set_taxon(self, taxon):
-        self._set_value(KEY_TAXON, LIST_TYPE_INT64, taxon)
+        self._set_value(KEY_TAXON, LIST_TYPE_BYTES, str(taxon))
 
     def latitude(self):
         return self._get_value(KEY_LATITUDE, LIST_TYPE_FLOAT)
@@ -149,7 +149,7 @@ class Example:
     def date_string(self):
         from datetime import datetime
         d = datetime.fromtimestamp(self.date())
-        return d.strftime("%y%m%d")
+        return d.strftime("%Y%m%d")
 
 
     def set_date(self, date):
@@ -250,7 +250,7 @@ def make_input_schema(mode):
       A `Schema` object.
     """
     result = ({} if mode == ModeKeys.INFER else {
-        KEY_TAXON: FixedLenFeature(shape=[], dtype=int64)
+        KEY_TAXON: FixedLenFeature(shape=[], dtype=string)
     })
     result.update({
         KEY_OCCURRENCE_ID: FixedLenFeature(shape=[], dtype=string),
@@ -317,22 +317,24 @@ def make_preprocessing_fn(num_classes):
             KEY_DAYLIGHT: tt.scale_to_0_1(i[KEY_DAYLIGHT]),
             # KEY_GRID_ZONE: tt.hash_strings(i[KEY_GRID_ZONE], 1000)
             KEY_GRID_ZONE: i[KEY_GRID_ZONE],
-            # KEY_TAXON: tf.cast(i[KEY_TAXON], tf.bool)
+            KEY_TAXON: i[KEY_TAXON]
         }
 
-        def relable_fn(v):
-            print("called", v[0])
-            if v == 0:
-                return [0]
-            else:
-                return [1]
+        # def relable_fn(v):
+        #     print("called", v[0])
+        #     if v == 0:
+        #         return [0]
+        #     else:
+        #         return [1]
 
-        if num_classes == 2:
-            # m[KEY_TAXON] = tt.apply_function(relable_fn, i[KEY_TAXON])
-            m[KEY_TAXON] = tf.cast(i[KEY_TAXON], tf.bool)
-            m[KEY_TAXON] = tf.cast(m[KEY_TAXON], tf.int64)
-        else:
-            m[KEY_TAXON] = i[KEY_TAXON]
+        # m[KEY_TAXON] = tf.cast(i[KEY_TAXON], tf.string)
+
+        # if num_classes == 2:
+        #     # m[KEY_TAXON] = tt.apply_function(relable_fn, i[KEY_TAXON])
+        #     m[KEY_TAXON] = tf.cast(i[KEY_TAXON], tf.bool)
+        #     m[KEY_TAXON] = tf.cast(m[KEY_TAXON], tf.int64)
+        # else:
+        #     m[KEY_TAXON] = i[KEY_TAXON]
 
         return m
         # m = {}

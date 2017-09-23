@@ -2,6 +2,8 @@ import task
 import tensorflow as tf
 from tensorflow_transform.tf_metadata import metadata_io
 import base64, io, json  # pylint: disable=g-import-not-at-top
+from tensorflow.python.lib.io import tf_record
+TFRecordCompressionType = tf_record.TFRecordCompressionType
 
 
 # raw_metadata = metadata_io.read_metadata(
@@ -23,23 +25,24 @@ import base64, io, json  # pylint: disable=g-import-not-at-top
 # y = tf.contrib.learn.run_n({'x': x})
 # print(y)
 
-serving_input_func = task.get_serving_input_fn(args={
-            "train_data_path": "/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/train/1505856591"
-        },
-        raw_label_keys=['taxon'])
+# serving_input_func = task.get_serving_input_fn(args={
+#             "train_data_path": "/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/train/1505856591"
+#         },
+#         raw_label_keys=['taxon'])
+#
+# print(serving_input_func())
 
-print(serving_input_func())
-
-# writer = tf.python_io.TFRecordWriter("data.tfrecords")
-
-
-
+options = tf_record.TFRecordOptions(TFRecordCompressionType.GZIP)
+writer = tf.python_io.TFRecordWriter("/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/occurrences/1505437167/2.tfrecord.gz", options=options)
 
 
 # with io.open('./data.txt', 'w', encoding='utf-8') as f:
-# for example in tf.python_io.tf_record_iterator("/Users/m/Downloads/forests-data.tfrecords"):
-#     e = tf.train.Example.FromString(example)
-#     print(e.features.feature["occurrence_id"])
-    # e.features.feature["taxon"].int64_list.value.append(0)
-    # writer.write(e.SerializeToString())
+for example in tf.python_io.tf_record_iterator("/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/occurrences/1505437167/1505437167-00002-of-00003.tfrecord.gz", options=options):
+    e = tf.train.Example.FromString(example)
+    val = str(e.features.feature["taxon"].int64_list.value[0])
+    _ = e.features.feature.pop("taxon")
+    e.features.feature["taxon"].bytes_list.value.append(val)
+    writer.write(e.SerializeToString())
+
+writer.close()
         # f.write(unicode(json.dumps({'b64': base64.b64encode(example)}, ensure_ascii=False)))

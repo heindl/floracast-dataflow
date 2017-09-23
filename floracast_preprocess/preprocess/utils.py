@@ -15,3 +15,11 @@ def Shuffle(pcoll):  # pylint: disable=invalid-name
             | 'PairWithRandom' >> beam.Map(lambda x: (random.random(), x))
             | 'GroupByRandom' >> beam.GroupByKey()
             | 'DropRandom' >> beam.FlatMap(lambda (k, vs): vs))
+
+
+
+class NoOperation(beam.DoFn):
+    def __init__(self):
+        return
+    def process(self, element):
+        yield element

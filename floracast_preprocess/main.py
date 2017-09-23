@@ -59,7 +59,7 @@ def main(argv=None):
 
         train_directory_path = os.path.join(process_pipeline_options.train_location, datetime.datetime.now().strftime("%s"))
 
-        transform.preprocess_train(
+        transform.preprocess_transform(
             pipeline_options=pipeline_options,
             intermediate_records=intermediate_records,
             output_path=train_directory_path,

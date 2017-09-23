@@ -58,7 +58,7 @@ def fetch_occurrences(
                 'minimum_occurrences_within_taxon': options['minimum_occurrences_within_taxon'],
                 'random_train_points': options['add_random_train_point']
             }]) \
-                | 'WriteToMetadataFile' >> WriteToText(output_path+"/"+"metadata", file_name_suffix=".meta")
+                | 'WriteToMetadataFile' >> WriteToText(output_path, file_name_suffix="query.meta", num_shards=1)
 
 # Filter and prepare for duplicate sort.
 @beam.typehints.with_input_types(entity_pb2.Entity)
@@ -151,7 +151,7 @@ class _RemoveScantTaxa(beam.PTransform):
                 | 'ExamplesToTaxonTuples' >> beam.Map(lambda e: (e.taxon(), e)) \
                 | 'GroupByTaxon' >> beam.GroupByKey() \
                 | 'FilterAndUnwindOccurrences' >> beam.FlatMap(
-            lambda (taxon, occurrences): occurrences if len(list(occurrences)) >= self._minimum_occurrences_within_taxon else [])
+                    lambda (taxon, occurrences): occurrences if len(list(occurrences)) >= self._minimum_occurrences_within_taxon else [])
 
 
 @beam.ptransform_fn

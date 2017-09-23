@@ -1,5 +1,3 @@
-import tensorflow as tf
-
 
 def feature_columns():
     import tensorflow as tf
@@ -38,7 +36,13 @@ def feature_columns():
 def feature_keys():
     return ["elevation", "max_temp", "precipitation", "daylight"]
 
-def get_estimator(run_config):
+def get_label_vocabularly(train_data_path):
+    import os
+    with open(os.path.join(train_data_path, "labels-00000-of-00001.txt"), 'r') as label_file:
+        return label_file.read().splitlines()
+
+def get_estimator(args, run_config):
+    import tensorflow as tf
 
     def _get_model_fn(estimator):
         # def _model_fn(features, labels, mode):
@@ -55,14 +59,17 @@ def get_estimator(run_config):
             return model_fn_ops
         return _model_fn
 
+    label_vocabulary = get_label_vocabularly(args.train_data_path)
+
         # classifier = tf.contrib.learn.Estimator(
     return tf.estimator.Estimator(
         model_fn=_get_model_fn(
             # tf.contrib.learn.DNNClassifier(
             tf.estimator.DNNClassifier(
                 feature_columns=feature_columns(),
-                hidden_units=[60, 120, 60],
-                n_classes=2,
+                hidden_units=args.hidden_units,
+                n_classes=len(label_vocabulary),
+                label_vocabulary=label_vocabulary,
                 optimizer=tf.train.ProximalAdagradOptimizer(
                     learning_rate=0.01,
                     l1_regularization_strength=0.001
