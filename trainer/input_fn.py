@@ -5,7 +5,7 @@ def gzip_reader_fn():
         compression_type=tf.python_io.TFRecordCompressionType.GZIP))
 
 
-def get_test_prediction_data_fn(args):
+def get_test_prediction_data_fn(args, raw_data_file_pattern):
     import tensorflow as tf
     from tensorflow_transform.saved import saved_transform_io
     import six
@@ -20,7 +20,7 @@ def get_test_prediction_data_fn(args):
 
     transform_savedmodel_dir = os.path.join(args.train_data_path, "transform_fn")
 
-    raw_data_file_pattern=args.raw_data_file_pattern
+    raw_data_file_pattern=raw_data_file_pattern
 
     raw_feature_spec = raw_metadata.schema.as_feature_spec()
     raw_feature_keys = _prepare_feature_keys(raw_metadata, ["taxon"])

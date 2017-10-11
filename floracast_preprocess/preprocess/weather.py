@@ -16,41 +16,74 @@ class FetchWeatherDoFn(beam.DoFn):
         self._weather_station_distance = weather_station_distance
 
     def process(self, example):
-        from geopy import Point, distance
-        from google.cloud import bigquery
         import astral
         import logging
-        from pandas import date_range
         from datetime import datetime
-
-        client = bigquery.Client(project=self._project)
-
-        location = Point(example.latitude(), example.longitude())
-
-        # Calculate bounding box.
-        nw = distance.VincentyDistance(miles=self._weather_station_distance).destination(location, 315)
-        se = distance.VincentyDistance(miles=self._weather_station_distance).destination(location, 135)
 
         records = {}
 
-        yearmonths = {}
-        date = datetime.fromtimestamp(example.date())
-        range = date_range(end=datetime(date.year, date.month, date.day), periods=45, freq='D')
-        for d in range.tolist():
-            if str(d.year) not in yearmonths:
-                yearmonths[str(d.year)] = set()
-            yearmonths[str(d.year)].add('{:02d}'.format(d.month))
+        for max_station_distance in [20, 40, 60]:
+            records = self.fetch(example.latitude(), example.longitude(), datetime.fromtimestamp(example.date()), max_station_distance)
+            if len(records) == 0:
+                continue
+            else:
+                break
 
-        for year, months in yearmonths.iteritems():
-            month_query = ""
-            for m in months:
-                if month_query == "":
-                    month_query = "(mo = '%s'" % m
+        if len(records) == 0:
+            self._insufficient_weather_records.inc()
+            return
+
+        for date in records:
+
+            daylength = 0
+            try:
+                a = astral.Astral()
+                a.solar_depression = 'civil'
+                astro = a.sun_utc(date, example.latitude(), example.longitude())
+                daylength = (astro['sunset'] - astro['sunrise']).seconds
+            except astral.AstralError as err:
+                if "Sun never reaches 6 degrees below the horizon" in err.message:
+                    daylength = 86400
                 else:
-                    month_query += " OR mo = '%s'" % m
-            month_query += ")"
+                    logging.error("Error parsing day[%s] length at [%.6f,%.6f]: %s", date, example.latitude(), example.longitude(), err)
+                    return
 
-            q = """
+            example.append_daylight(daylength)
+            example.append_precipitation(records[date][2])
+            example.append_temp_min(records[date][3])
+            example.append_temp_max(records[date][4])
+            example.append_temp_avg(records[date][5])
+
+        self._sufficient_weather_records.inc()
+
+        yield example
+
+    # year_dictionary provides {2016: ["01"], 2015: [12]}
+    def year_dictionary(self, range):
+        res = {}
+        for d in range.tolist():
+            if str(d.year) not in res:
+                res[str(d.year)] = set()
+            res[str(d.year)].add('{:02d}'.format(d.month))
+        return res
+
+    def bounding_box(self, lat, lng, max_station_distance):
+        from geopy import Point, distance
+        location = Point(lat, lng)
+        nw = distance.VincentyDistance(miles=max_station_distance).destination(location, 315)
+        se = distance.VincentyDistance(miles=max_station_distance).destination(location, 135)
+        return (nw, se)
+
+    def form_query(self, q_year, q_months, nw_point, se_point):
+        month_query = ""
+        for m in q_months:
+            if month_query == "":
+                month_query = "(a.mo = '%s'" % m
+            else:
+                month_query += " OR a.mo = '%s'" % m
+        month_query += ")"
+
+        q = """
                   SELECT
                     lat,
                     lon,
@@ -63,38 +96,60 @@ class FetchWeatherDoFn(beam.DoFn):
                     year,
                     elev
                   FROM
-                    [bigquery-public-data:noaa_gsod.gsod{year}] a
+                    [bigquery-public-data:noaa_gsod.gsod{q_year}] a
                   JOIN
                     [bigquery-public-data:noaa_gsod.stations] b
                   ON
                     a.stn=b.usaf
                     AND a.wban=b.wban
                   WHERE
-                     lat <= {nLat} AND lat >= {sLat}
-                    AND lon >= {wLon} AND lon <= {eLon}
-                    AND {monthQuery}
+                     b.lat <= {q_n_lat} AND b.lat >= {q_s_lat}
+                    AND b.lon >= {q_w_lon} AND b.lon <= {q_e_lon}
+                    AND {q_month}
                   ORDER BY
-                    da DESC
+                    a.da DESC
             """
-            values = {
-                'nLat': str(nw.latitude),
-                'wLon': str(nw.longitude),
-                'sLat': str(se.latitude),
-                'eLon': str(se.longitude),
-                'year': year,
-                'monthQuery': month_query
-            }
+        values = {
+            'q_n_lat': str(nw_point.latitude),
+            'q_w_lon': str(nw_point.longitude),
+            'q_s_lat': str(se_point.latitude),
+            'q_e_lon': str(se_point.longitude),
+            'q_year': q_year,
+            'q_month': month_query
+        }
+
+        return q.format(**values)
+
+    def fetch(self, lat, lng, date, max_station_distance):
+        from datetime import datetime, timedelta
+        from pandas import date_range
+        from geopy import Point, distance
+        from google.cloud import bigquery
+
+        occurrence_location = Point(lat, lng)
+        nw, se = self.bounding_box(lat, lng, max_station_distance)
+
+        _client = bigquery.Client(project=self._project)
+
+        # It appears that most weather updates are a few days behind. In leu of using forecast values
+        # from another datasource for now, let's use a few days behind the date for all values.
+        today = datetime(date.year, date.month, date.day)
+        end = today - timedelta(days=1)
+        range = date_range(end=end, periods=45, freq='D')
+        records = {}
+        for year, months in self.year_dictionary(range).iteritems():
+
+            query = self.form_query(year, months, nw, se)
 
             # Had some trouble with conflicting versions of this package between local runner and remote.
             #  pip install --upgrade google-cloud-bigquery
-            sync_query = client.run_sync_query(q.format(**values))
+            sync_query = _client.run_sync_query(query)
             sync_query.timeout_ms = 30000
             sync_query.run()
 
             page_token=None
             while True:
                 iterator = sync_query.fetch_data(
-                    max_results=1000,
                     page_token=page_token
                 )
                 for row in iterator:
@@ -103,8 +158,8 @@ class FetchWeatherDoFn(beam.DoFn):
                     if d > range.max() or d < range.min():
                         continue
                     if d in records:
-                        previous = distance.vincenty().measure(Point(records[d][0], records[d][1]), location)
-                        current = distance.vincenty().measure(Point(row[0], row[1]), location)
+                        previous = distance.vincenty().measure(Point(records[d][0], records[d][1]), occurrence_location)
+                        current = distance.vincenty().measure(Point(row[0], row[1]), occurrence_location)
                         if current < previous:
                             records[d] = row
                     else:
@@ -115,33 +170,9 @@ class FetchWeatherDoFn(beam.DoFn):
 
         dates = records.keys()
         dates.sort()
-
         if len(dates) != len(range):
             # logging.info("range: %.8f, %.8f, %s, %s", lat, lng, year, months)
-            self._insufficient_weather_records.inc()
-            return
+            return {}
+        else:
+            return records
 
-        for d in dates:
-
-            daylength = 0
-            try:
-                a = astral.Astral()
-                a.solar_depression = 'civil'
-                astro = a.sun_utc(d, example.latitude(), example.longitude())
-                daylength = (astro['sunset'] - astro['sunrise']).seconds
-            except astral.AstralError as err:
-                if "Sun never reaches 6 degrees below the horizon" in err.message:
-                    daylength = 86400
-                else:
-                    logging.error("Error parsing day[%s] length at [%.6f,%.6f]: %s", date, example.latitude(), example.longitude(), err)
-                    return
-
-            example.append_daylight(daylength)
-            example.append_precipitation(records[d][2])
-            example.append_temp_min(records[d][3])
-            example.append_temp_max(records[d][4])
-            example.append_temp_avg(records[d][5])
-
-        self._sufficient_weather_records.inc()
-
-        yield example

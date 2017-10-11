@@ -17,11 +17,12 @@ def _default_project():
 
 def main(argv=None):
     from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions, StandardOptions, SetupOptions
-    # pip install six==1.10.0
+    # If error after upgradeing apache beam: metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases
+    # then: pip install six==1.10.0
     import tensorflow as tf
     import datetime
     import os
-    from preprocess import options, transform, occurrences, forests
+    from preprocess import options, transform, occurrences, protected_areas
 
     pipeline_options = PipelineOptions(flags=argv)
     # ['--setup_file', os.path.abspath(os.path.join(os.path.dirname(__file__), 'setup.py'))],
@@ -67,7 +68,7 @@ def main(argv=None):
 
     elif process_pipeline_options.mode == tf.contrib.learn.ModeKeys.INFER:
 
-        forests.fetch_forests(
+        protected_areas.fetch_forests(
             pipeline_options=pipeline_options,
             output_path=os.path.join(process_pipeline_options.infer_location, datetime.datetime.now().strftime("%s"))
         )

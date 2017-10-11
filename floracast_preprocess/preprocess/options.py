@@ -23,7 +23,7 @@ class ProcessPipelineOptions(PipelineOptions):
         # The metadata lists how many records, how many of each taxon label.
         parser.add_argument(
             '--intermediate_location',
-            required=True,
+            required=False,
             help='The intermediate TFRecords file that contains downloaded features from BigQuery'
         )
 
@@ -46,6 +46,7 @@ class ProcessPipelineOptions(PipelineOptions):
             '--occurrence_taxa',
             required=False,
             default=None,
+            type=list,
             help='Restrict occurrence fetch to this taxa')
 
         parser.add_argument(
@@ -66,7 +67,7 @@ class ProcessPipelineOptions(PipelineOptions):
 
         parser.add_argument(
             '--train_location',
-            required=True,
+            required=False,
             help='Directory that contains timestamped files for each training iteration')
 
 
@@ -83,7 +84,7 @@ class ProcessPipelineOptions(PipelineOptions):
 
         parser.add_argument(
             '--num_classes',
-            required=True,
+            required=False,
             type=int,
             help='Number of training classes')
 
@@ -93,7 +94,7 @@ class ProcessPipelineOptions(PipelineOptions):
 
         parser.add_argument(
             '--infer_location',
-            required=True,
+            required=False,
             help='Directory that contains timestamped files for collected infer data. Should be similar meta to fetched format.')
 
         parser.add_argument(
@@ -102,6 +103,16 @@ class ProcessPipelineOptions(PipelineOptions):
             default=1,
             type=int,
             help='The number of weeks in the past to generate prediction data for each forest'
+            # If the model changes, we can expect this to be 52 weeks in the past. If not, just this week,
+            # calculated every Friday.
+        )
+
+        parser.add_argument(
+            '--protected_area_count',
+            required=False,
+            default=0,
+            type=int,
+            help='The number of locations to generate data for'
             # If the model changes, we can expect this to be 52 weeks in the past. If not, just this week,
             # calculated every Friday.
         )

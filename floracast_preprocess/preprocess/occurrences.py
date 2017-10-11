@@ -1,7 +1,9 @@
 # from __future__ import absolute_import
 import apache_beam as beam
 from example import Example
-from google.cloud.proto.datastore.v1 import entity_pb2
+# from google.cloud.proto.datastore.v1 import entity_pb2
+from apache_beam.transforms.core import PTransform
+from apache_beam.io import iobase
 
 
 def fetch_occurrences(
@@ -10,9 +12,9 @@ def fetch_occurrences(
 ):
     import apache_beam as beam
     import weather as weather
-    import example as example
     import elevation as elevation
     from apache_beam.io import WriteToText
+    from apache_beam import pvalue
     import utils as utils
     from tensorflow_transform.beam import impl as tft
 
@@ -22,18 +24,22 @@ def fetch_occurrences(
         with tft.Context(temp_dir=options['temp_location']):
 
             data = pipeline \
-                   | _ReadDatastoreOccurrences(project=options['project']) \
-                   | 'ConvertEntitiesToExamples' >> beam.ParDo(_OccurrenceEntityToExample(options['occurrence_taxa'])) \
-                   | 'RemoveOccurrenceExampleLocationDuplicates' >> _RemoveOccurrenceExampleLocationDuplicates() \
-                   | 'RemoveScantTaxa' >> _RemoveScantTaxa(options['minimum_occurrences_within_taxon'])
+                   | _ReadOccurrences(
+                        project=options['project'],
+                        taxa=options['occurrence_taxa'],
+                        ecoregion=options['ecoregion'],
+                        minimum_occurrences_within_taxon=options['minimum_occurrences_within_taxon']
+                    ) \
+                    | 'FetchOccurrences' | beam.ParDo(_FetchOccurrences(options['project'])) \
+                   | 'RemoveOccurrenceExampleLocationDuplicates' >> _RemoveOccurrenceExampleLocationDuplicates()
+
 
             if options['add_random_train_point'] is True:
-                data = data | 'AddRandomTrainPoint' >> beam.FlatMap(lambda e: [e, example.RandomExample()])
+                total_occurrence_count = data | beam.combiners.Count.PerElement()
+                data = data | 'AddRandomTrainPoint' >> beam.ParDo(AddRandomTrainPoints, pvalue.AsSingleton(total_occurrence_count))
 
             data = data \
                    | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(options['project'])) \
-                   | 'DefuseOne' >> beam.FlatMap(lambda e: [e]) \
-                   | 'DefuseTwo' >> beam.FlatMap(lambda e: [e]) \
                    | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(options['project'], options['weather_station_distance'])) \
                    | 'ShuffleOccurrences' >> utils.Shuffle() \
                    | 'ProtoForWrite' >> beam.Map(lambda e: e.encode())
@@ -60,8 +66,25 @@ def fetch_occurrences(
             }]) \
                 | 'WriteToMetadataFile' >> WriteToText(output_path, file_name_suffix="query.meta", num_shards=1)
 
+
+@beam.typehints.with_input_types(Example)
+@beam.typehints.with_output_types(Example)
+class AddRandomTrainPoints(beam.DoFn):
+    def __init__(self):
+        super(AddRandomTrainPoints, self).__init__()
+
+    def process(self, total_occurrence_count):
+        import example as example
+        if total_occurrence_count == 0:
+            return
+        random_example_count = total_occurrence_count * 0.05
+        if random_example_count < 1000:
+            random_example_count = 1000
+        for _ in range(0, random_example_count):
+            yield example.RandomExample()
+
 # Filter and prepare for duplicate sort.
-@beam.typehints.with_input_types(entity_pb2.Entity)
+@beam.typehints.with_input_types(dict)
 @beam.typehints.with_output_types(Example)
 class _OccurrenceEntityToExample(beam.DoFn):
 
@@ -72,21 +95,16 @@ class _OccurrenceEntityToExample(beam.DoFn):
         self.invalid_occurrence_date = Metrics.counter('main', 'invalid_occurrence_date')
         self.invalid_occurrence_elevation = Metrics.counter('main', 'invalid_occurrence_elevation')
         self.invalid_occurrence_location = Metrics.counter('main', 'invalid_occurrence_location')
-        self._taxa = [int(taxon)]
 
-    def process(self, element):
-        from google.cloud.datastore.helpers import entity_from_protobuf, GeoPoint
-        from google.cloud.datastore import Entity
+    def process(self, e):
+        # from google.cloud.datastore.helpers import entity_from_protobuf, GeoPoint
+        # from google.cloud.datastore import Entity
         import logging
         """
             Element should be an occurrence entity.
             The key has should be a sufficient key.
         """
-        e = entity_from_protobuf(element)
-
-        if self._taxa is not None:
-            if e.key.parent.parent.id not in self._taxa:
-                return
+        # e = entity_from_protobuf(element)
 
         self.new_occurrence_counter.inc()
 
@@ -99,19 +117,20 @@ class _OccurrenceEntityToExample(beam.DoFn):
             self.invalid_occurrence_elevation.inc()
             return
 
-        loc = e['Location']
+        lat = e['Location']['Latitude']
+        lng = e['Location']['Longitude']
         elevation = e['Elevation']
 
-        (lat, lng) = (0.0, 0.0)
-        if type(loc) is GeoPoint:
-            lat = loc.latitude
-            lng = loc.longitude
-        elif type(loc) is Entity:
-            lat = loc['Lat']
-            lng = loc['Lng']
-        else:
-            logging.error("invalid type: %s", type(loc))
-            return
+        # (lat, lng) = (0.0, 0.0)
+        # if type(loc) is GeoPoint:
+        #     lat = loc.latitude
+        #     lng = loc.longitude
+        # elif type(loc) is Entity:
+        #     lat = loc['Lat']
+        #     lng = loc['Lng']
+        # else:
+        #     logging.error("invalid type: %s", type(loc))
+        #     return
 
         if lng > -52.2330:
             logging.info("%.6f && %.6f", lat, lng)
@@ -129,29 +148,29 @@ class _OccurrenceEntityToExample(beam.DoFn):
         yield ex
 
 
-class Counter(beam.DoFn):
-    def __init__(self, which):
-        self._which = which
-        self._counter = 0
+# class Counter(beam.DoFn):
+#     def __init__(self, which):
+#         self._which = which
+#         self._counter = 0
+#
+#     def process(self, element):
+#         self._counter += 1
+#         yield element
 
-    def process(self, element):
-        self._counter += 1
-        print(self._which, self._counter, element.occurrence_id())
-        yield element
-
-
-class _RemoveScantTaxa(beam.PTransform):
-    """Count as a subclass of PTransform, with an apply method."""
-
-    def __init__(self, minimum_occurrences_within_taxon):
-        self._minimum_occurrences_within_taxon = minimum_occurrences_within_taxon
-
-    def expand(self, pcoll):
-        return pcoll \
-                | 'ExamplesToTaxonTuples' >> beam.Map(lambda e: (e.taxon(), e)) \
-                | 'GroupByTaxon' >> beam.GroupByKey() \
-                | 'FilterAndUnwindOccurrences' >> beam.FlatMap(
-                    lambda (taxon, occurrences): occurrences if len(list(occurrences)) >= self._minimum_occurrences_within_taxon else [])
+# @beam.typehints.with_input_types(Example)
+# @beam.typehints.with_output_types(Example)
+# class _RemoveScantTaxa(beam.PTransform):
+#     """Count as a subclass of PTransform, with an apply method."""
+#
+#     def __init__(self, minimum_occurrences_within_taxon):
+#         self._minimum_occurrences_within_taxon = minimum_occurrences_within_taxon
+#
+#     def expand(self, pcoll):
+#         return pcoll \
+#                 | 'ExamplesToTaxonTuples' >> beam.Map(lambda e: (e.taxon(), e)) \
+#                 | 'GroupByTaxon' >> beam.GroupByKey() \
+#                 | 'FilterAndUnwindOccurrences' >> beam.FlatMap(
+#                     lambda (taxon, occurrences): occurrences if len(list(occurrences)) >= self._minimum_occurrences_within_taxon else [])
 
 
 @beam.ptransform_fn
@@ -163,43 +182,169 @@ def _RemoveOccurrenceExampleLocationDuplicates(pcoll):  # pylint: disable=invali
             | 'Combine' >> beam.Map(lambda (key, examples): list(examples)[0])
 
 
-class _ReadDatastoreOccurrences(beam.PTransform):
-
+@beam.typehints.with_input_types(str)
+@beam.typehints.with_output_types(Example)
+# Unsure if this is the right model rather than a BoundedSource, but as my source is already
+# Unsplittable, I think it should be fine to fetch occurrences individually for each given TaxonID.
+# We can even convert to Example here to save a step.
+class _FetchOccurrences(beam.DoFn):
     def __init__(self, project):
-        super(_ReadDatastoreOccurrences, self).__init__()
+        super(_FetchOccurrences, self).__init__()
         self._project = project
 
-    def expand(self, pvalue):
-        from apache_beam.io.gcp.datastore.v1.datastoreio import ReadFromDatastore
-        from google.cloud.proto.datastore.v1 import query_pb2
-        # from googledatastore import helper
-        # from google.cloud.datastore import Filter
-        # q = query.Query(kind='Occurrence', project=project)
-        # q.fetch()
-        q = query_pb2.Query()
-        q.kind.add().name='Occurrence'
-        # datastore_helper.set_kind(q, 'Occurrence')
-        # q.limit.name = 100
+    def process(self, taxon_id):
+        from google.cloud import firestore
+        db = firestore.Client(project=self._project)
+        q = db.collection(u'Occurrences')
+        for o in q.where(u'TaxonID', u'==', taxon_id).get():
+            # self.records_read.inc()
+            taxon = o.to_dict()
 
-        # Need to index this in google.
+            # This is a hack to avoid indexing the 'Date' property in Go.
+            if taxon['Date'].year < 1970:
+                continue
 
-        # helper.set_property_filter(
-        #     Filter(),
-        #     '__key__', datastore.PropertyFilter.HAS_ANCESTOR,
-        #     default_todo_list.key))
+            if 'Elevation' not in taxon:
+                continue
 
-        # datastore_helper.set_composite_filter(q.filter, CompositeFilter.AND,
-        # datastore_helper.set_property_filter(ds.Filter(), 'Location.Lat', PropertyFilter.GREATER_THAN_OR_EQUAL, 5.4995),
-        # datastore_helper.set_property_filter(ds.Filter(), 'Location.Lat', PropertyFilter.LESS_THAN_OR_EQUAL, 83.1621),
-        # datastore_helper.set_property_filter(ds.Filter(), 'Location.Lng', PropertyFilter.GREATER_THAN_OR_EQUAL, -167.2764),
-        # https://stackoverflow.com/questions/41705870/geospatial-query-at-google-app-engine-datastore
-        # The query index may not be implemented at this point.
-        # datastore_helper.set_property_filter(datastore.Filter(), 'Location.longitude', PropertyFilter.LESS_THAN_OR_EQUAL, -52.2330)
-        # )
+            lat = taxon['Location']['Latitude']
+            lng = taxon['Location']['Longitude']
+            elevation = taxon['Elevation']
 
-        return (pvalue.pipeline
-                | 'ReadDatastoreOccurrences' >> ReadFromDatastore(
-                        project=self._project,
-                        query=q
-                  )
-                )
+            # (lat, lng) = (0.0, 0.0)
+            # if type(loc) is GeoPoint:
+            #     lat = loc.latitude
+            #     lng = loc.longitude
+            # elif type(loc) is Entity:
+            #     lat = loc['Lat']
+            #     lng = loc['Lng']
+            # else:
+            #     logging.error("invalid type: %s", type(loc))
+            #     return
+
+            ex = Example()
+            ex.set_date(int(taxon['Date'].strftime("%s")))
+            ex.set_latitude(lat)
+            ex.set_longitude(lng)
+            ex.set_elevation(elevation)
+            ex.set_taxon(taxon_id)
+            ex.set_occurrence_id(taxon['DataSourceID']+"|"+taxon['TargetID'])
+
+            yield ex
+
+class OccurrenceSource(iobase.BoundedSource):
+
+    def __init__(self, project, taxa="", ecoregion="", minimum_occurrences_within_taxon=50):
+        # from apache_beam.metrics import Metrics
+        # self.records_read = Metrics.counter(self.__class__, 'recordsRead')
+        self._project = project
+        self._taxa = taxa.split(",")
+        self._ecoregion = ecoregion
+        self._minimum_occurrences_within_taxon = minimum_occurrences_within_taxon
+
+    def estimate_size(self):
+        return 500
+
+    def get_range_tracker(self, start_position, stop_position):
+        from apache_beam.io import range_trackers
+        if start_position is None:
+            start_position = 0
+        if stop_position is None:
+            stop_position = range_trackers.OffsetRangeTracker.OFFSET_INFINITY
+
+        # Use an unsplittable range tracker. This means that a collection can
+        # only be read sequentially for now.
+        range_tracker = range_trackers.OffsetRangeTracker(start_position, stop_position)
+        range_tracker = range_trackers.UnsplittableRangeTracker(range_tracker)
+
+        return range_tracker
+
+    def read(self, range_tracker):
+        from google.cloud import firestore
+
+        # One of the two are required.
+        if self._ecoregion == "" and len(self._taxa) == 0:
+            return
+
+        db = firestore.Client(project=self._project)
+
+        if self._ecoregion != "":
+
+            taxa = dict()
+            for o in db.collection(u'Taxa').where("EcoRegions.%s" % self._ecoregion, ">", 0).get():
+                d = o.to_dict()
+
+                total_occurrences = 0
+                total_ecoregions = 0
+                occurrences_in_this_ecoregion = 0
+
+                for k, v in d["EcoRegions"]:
+                    if k == self._ecoregion:
+                        occurrences_in_this_ecoregion = int(v)
+                    total_ecoregions = total_ecoregions + 1
+                    total_occurrences = total_occurrences + int(v)
+
+                if total_occurrences < self._minimum_occurrences_within_taxon:
+                    continue
+
+                taxa[d["TaxonID"]] = ((occurrences_in_this_ecoregion/total_occurrences)/total_ecoregions)
+
+            # Sort descending
+            count = 0
+            for key, value in sorted(taxa.iteritems(), key=lambda (k,v): (v,k)):
+                yield key
+                count = count + 1
+                # Limit each model to 1000 taxa.
+                if count >= 1000:
+                    return
+
+            return
+
+        for t in self._taxa:
+            yield self._taxa
+            # q = db.collection(u'Occurrences')
+            # for o in q.where(u'TaxonID', u'==', t).get():
+            #     # self.records_read.inc()
+            #     yield o.to_dict()
+
+    def split(self, desired_bundle_size, start_position=None, stop_position=None):
+        """Implements :class:`~apache_beam.io.iobase.BoundedSource.split`
+        This function will currently not be called, because the range tracker
+        is unsplittable
+        """
+        from apache_beam.io import range_trackers
+
+        if start_position is None:
+            start_position = 0
+        if stop_position is None:
+            stop_position = range_trackers.OffsetRangeTracker.OFFSET_INFINITY
+
+        # Because the source is unsplittable (for now), only a single source is
+        # returned.
+        yield iobase.SourceBundle(
+            weight=1,
+            source=self,
+            start_position=start_position,
+            stop_position=stop_position)
+
+class _ReadOccurrences(PTransform):
+    """A :class:`~apache_beam.transforms.ptransform.PTransform` for reading
+    from MongoDB.
+    """
+    def __init__(self, project, taxa, ecoregion, minimum_occurrences_within_taxon):
+        """Initializes :class:`ReadFromMongo`
+        Uses source :class:`_MongoSource`
+        """
+        super(_ReadOccurrences, self).__init__()
+        self._source = OccurrenceSource(
+            project=project,
+            taxa=taxa,
+            ecoregion=ecoregion,
+            minimum_occurrences_within_taxon=minimum_occurrences_within_taxon)
+
+    def expand(self, pcoll):
+        """Implements :class:`~apache_beam.transforms.ptransform.PTransform.expand`"""
+        return pcoll | iobase.Read(self._source)
+
+    # def display_data(self):
+    #     return {'source_dd': self._source}

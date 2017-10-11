@@ -4,6 +4,7 @@ from tensorflow_transform.tf_metadata import metadata_io
 import base64, io, json  # pylint: disable=g-import-not-at-top
 from tensorflow.python.lib.io import tf_record
 TFRecordCompressionType = tf_record.TFRecordCompressionType
+from glob import iglob
 
 
 # raw_metadata = metadata_io.read_metadata(
@@ -33,16 +34,20 @@ TFRecordCompressionType = tf_record.TFRecordCompressionType
 # print(serving_input_func())
 
 options = tf_record.TFRecordOptions(TFRecordCompressionType.GZIP)
-writer = tf.python_io.TFRecordWriter("/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/occurrences/1505437167/2.tfrecord.gz", options=options)
+# writer = tf.python_io.TFRecordWriter("/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/occurrences/1505437167/2.tfrecord.gz", options=options)
 
 
 # with io.open('./data.txt', 'w', encoding='utf-8') as f:
-for example in tf.python_io.tf_record_iterator("/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/occurrences/1505437167/1505437167-00002-of-00003.tfrecord.gz", options=options):
-    e = tf.train.Example.FromString(example)
-    val = str(e.features.feature["taxon"].int64_list.value[0])
-    _ = e.features.feature.pop("taxon")
-    e.features.feature["taxon"].bytes_list.value.append(val)
-    writer.write(e.SerializeToString())
+for filename in iglob('/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/forests/1506910204/**/*.gz'):
+    print(filename)
+    for example in tf.python_io.tf_record_iterator(filename, options=options):
+        e = tf.train.Example.FromString(example)
+        print(e)
+        continue
+    # val = str(e.features.feature["taxon"].int64_list.value[0])
+    # _ = e.features.feature.pop("taxon")
+    # e.features.feature["taxon"].bytes_list.value.append(val)
+    # writer.write(e.SerializeToString())
 
-writer.close()
+# writer.close()
         # f.write(unicode(json.dumps({'b64': base64.b64encode(example)}, ensure_ascii=False)))

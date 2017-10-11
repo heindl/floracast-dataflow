@@ -24,7 +24,7 @@ def create_parser():
         type=str,
         required=True
     )
-    parser.add_argument("--raw_data_file_pattern", type=str, required=True)
+    parser.add_argument("--raw_data_path", type=str, required=True)
     return parser
 
 
@@ -41,24 +41,42 @@ def main(argv=None):
 
     estimator = model.get_estimator(args, run_config)
 
-    date = os.path.basename(args.raw_data_file_pattern)
-
     label_vocabulary = model.get_label_vocabularly(args.train_data_path)
 
-    a = []
-    for p in estimator.predict(input_fn=input_fn.get_test_prediction_data_fn(args)):
 
-        probabilities = []
+    map = dict()
+    for _, _, files in os.walk(args.raw_data_path):
+        for file in files:
 
-        for prob in p['probabilities']:
-            probabilities.append(float(prob))
+            # print(file)
+            date = file.split("-")[0]
+            print(date)
+            if date not in map:
+                map[date] = []
+        # date = dir
+        # print(file)
 
-        a.append({'probabilities': probabilities, 'classes': label_vocabulary, 'key': p['occurrence_id']})
+            for p in estimator.predict(input_fn=input_fn.get_test_prediction_data_fn(args, os.path.join(args.raw_data_path, file))):
 
-    output_path = os.path.join(args.output_path, ("%s.json" % date))
+                # print("p", p)
 
-    with io.open(output_path, 'w', encoding='utf-8') as f:
-        f.write(unicode(json.dumps(a, f, ensure_ascii=False)))
+                probabilities = []
+
+                for prob in p['probabilities']:
+                    probabilities.append(float(prob))
+
+                map[date].append({'probabilities': probabilities, 'classes': label_vocabulary, 'key': p['occurrence_id']})
+
+
+    for key in map:
+
+        if len(map[key]) == 0:
+            continue
+
+        output_path = os.path.join(args.output_path, ("%s.json" % key))
+
+        with io.open(output_path, 'w', encoding='utf-8') as f:
+            f.write(unicode(json.dumps(map[key], f, ensure_ascii=False)))
 
 
 if __name__ == '__main__':

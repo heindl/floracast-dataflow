@@ -2,10 +2,10 @@
 
 import apache_beam as beam
 
-def encode_as_b64_json(serialized_example):
-    import base64  # pylint: disable=g-import-not-at-top
-    import json  # pylint: disable=g-import-not-at-top
-    return json.dumps({'b64': base64.b64encode(serialized_example)})
+# def encode_as_b64_json(serialized_example):
+#     import base64  # pylint: disable=g-import-not-at-top
+#     import json  # pylint: disable=g-import-not-at-top
+#     return json.dumps({'b64': base64.b64encode(serialized_example)})
 
 # # TODO: Perhaps use Reshuffle (https://issues.apache.org/jira/browse/BEAM-1872)?
 @beam.ptransform_fn
@@ -18,8 +18,8 @@ def Shuffle(pcoll):  # pylint: disable=invalid-name
 
 
 
-class NoOperation(beam.DoFn):
-    def __init__(self):
-        return
-    def process(self, element):
-        yield element
+# class NoOperation(beam.DoFn):
+#     def __init__(self):
+#         return
+#     def process(self, element):
+#         yield element

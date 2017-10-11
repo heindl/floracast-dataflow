@@ -8,12 +8,10 @@ class ElevationBundleDoFn(beam.DoFn):
     def __init__(self, project):
         super(ElevationBundleDoFn, self).__init__()
         from google.cloud import storage
-        print("project", project)
         client = storage.Client(project=project)
         bucket = client.get_bucket('floracast-conf')
         blob = storage.Blob('dataflow.sh', bucket)
         content=blob.download_as_string()
-        print("content", content)
         for line in content.split(b'\n'):
             if "FLORACAST_GOOGLE_MAPS_API_KEY" in line.decode("utf-8"):
                 self.FLORACAST_GOOGLE_MAPS_API_KEY = line.decode("utf-8").split("=")[1]
