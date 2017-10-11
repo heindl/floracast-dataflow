@@ -30,7 +30,7 @@ import setuptools
 
 if __name__ == '__main__':
     setuptools.setup(
-        name='floracast_preprocess',
+        name='floracast_fetcher',
         version='0.0.1',
         description='Floracast dataflow pipeline.',
         packages=setuptools.find_packages(),
@@ -43,13 +43,14 @@ if __name__ == '__main__':
             "geopy==1.11.0",
             "google-cloud==0.27.0",
             "google-cloud-bigquery==0.26.0",
-            "google-cloud-firestore==0.27.0",
+            "google-cloud-firestore==0.29.0",
+            "google-cloud-datastore==1.3.0",
             "googlemaps==2.5.1",
             "mgrs==1.3.5",
             "numpy==1.13.3",
             "pandas==0.20.3",
-            "six==1.10.0",
             "tensorflow==1.3.0",
-            "tensorflow-transform==0.1.10"
+            "tensorflow-transform==0.3.0",
+            "six==1.10.0"
         ]
     )

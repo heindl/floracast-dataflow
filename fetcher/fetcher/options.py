@@ -6,18 +6,12 @@ class ProcessPipelineOptions(PipelineOptions):
     @classmethod
     def _add_argparse_args(cls, parser):
 
-
-        #### GENERAL ####
-
-
         parser.add_argument(
             '--mode',
             required=True,
             help='eval, train, or infer which defines the pipeline to run.')
 
-
         #### FETCH ####
-
 
         # Intermediate TFRecords are stored in their own directory, each with a corresponding metadata file.
         # The metadata lists how many records, how many of each taxon label.
@@ -25,15 +19,6 @@ class ProcessPipelineOptions(PipelineOptions):
             '--intermediate_location',
             required=False,
             help='The intermediate TFRecords file that contains downloaded features from BigQuery'
-        )
-
-        # The intermediate filenames are unix timestamps.
-        # If not specified new occurrence data will be fetched and a new timestamp given.
-        parser.add_argument(
-            '--intermediate_location_prefix',
-            required=False,
-            default=None,
-            help='A unix timestamp representing the fetched time of occurrences, the directory in which tfrecords are stored.'
         )
 
         parser.add_argument(
@@ -55,16 +40,12 @@ class ProcessPipelineOptions(PipelineOptions):
             default=75,
             help='Maximum distance a weather station can be from an occurrence when fetching weather.')
 
+        parser.add_argument(
+            '--infer_location',
+            required=False,
+            help='Directory that contains timestamped files for protected areas')
 
         #### TRAIN ####
-
-        parser.add_argument(
-            '--percent_eval',
-            required=False,
-            default=10,
-            type=int,
-            help='Directory that contains timestamped files for each training iteration')
-
         parser.add_argument(
             '--train_location',
             required=False,
@@ -91,11 +72,6 @@ class ProcessPipelineOptions(PipelineOptions):
 
         #### INFER ####
 
-
-        parser.add_argument(
-            '--infer_location',
-            required=False,
-            help='Directory that contains timestamped files for collected infer data. Should be similar meta to fetched format.')
 
         parser.add_argument(
             '--weeks_before',

@@ -16,6 +16,7 @@ if [ $1 == "local" ]; then
          --protected_area_count 3 \
          --job_name floracast-fetch-wilderness \
          --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/floracast_preprocess/setup.py
+#         --requirements_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/floracast_preprocess/requirements.txt
 fi
 
 if [ $1 == "remote" ]; then
@@ -28,8 +29,9 @@ if [ $1 == "remote" ]; then
         --infer_location="gs://floracast-datamining/wilderness_areas" \
         --weeks_before 3 \
         --protected_area_count 3 \
-        --job_name floracast-fetch-protected-areass \
+        --job_name floracast-fetch-protected-areassss \
         --mode "infer" \
-        --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/floracast_preprocess/setup.py
-
+        --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/floracast_preprocess/setup.py \
+        --workerLogLevelOverrides=com.google.cloud.dataflow#DEBUG
+#        --requirements_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/floracast_preprocess/requirements.txt
 fi

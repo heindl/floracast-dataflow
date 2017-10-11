@@ -44,11 +44,6 @@ def fetch_occurrences(
                    | 'ShuffleOccurrences' >> utils.Shuffle() \
                    | 'ProtoForWrite' >> beam.Map(lambda e: e.encode())
 
-            # schema = example.make_input_schema(mode)
-            # proto_coder = coders.ExampleProtoCoder(schema)
-            #
-            # data = data | 'EncodeForWrite' >> beam.Map(proto_coder.encode)
-
             _ = data \
                 | 'Write' >> beam.io.WriteToTFRecord(output_path, file_name_suffix='.tfrecord.gz')
 

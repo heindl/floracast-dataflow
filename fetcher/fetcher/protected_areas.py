@@ -28,12 +28,12 @@ def fetch_forests(
         pipeline_options,
         output_path,
     ):
-    import elevation as elevation
-    import weather as weather
+    # import elevation as elevation
+    # import weather as weather
     from tensorflow_transform.beam import impl as tft
     from datetime import datetime, timedelta
     from pandas import date_range
-    import utils
+    # import utils
 
     options = pipeline_options.get_all_options()
 
