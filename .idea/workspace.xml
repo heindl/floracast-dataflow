@@ -2,25 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d5d946e7-fd45-4ccd-884b-e8aec6a492d9" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/train.sh" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/transform.sh" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/transformer/__init__.py" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/floracast_preprocess/preprocess/transform.py" afterPath="" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/fetch-forest.sh" afterPath="$PROJECT_DIR$/fetch-protected.sh" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/floracast_preprocess/README.md" afterPath="$PROJECT_DIR$/fetcher/README.md" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/floracast_preprocess/__init__.py" afterPath="$PROJECT_DIR$/fetcher/__init__.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/floracast_preprocess/main.py" afterPath="$PROJECT_DIR$/fetcher/main.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/floracast_preprocess/preprocess/__init__.py" afterPath="$PROJECT_DIR$/fetcher/fetcher/__init__.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/floracast_preprocess/preprocess/elevation.py" afterPath="$PROJECT_DIR$/fetcher/fetcher/elevation.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/floracast_preprocess/preprocess/example.py" afterPath="$PROJECT_DIR$/fetcher/fetcher/example.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/floracast_preprocess/preprocess/occurrences.py" afterPath="$PROJECT_DIR$/fetcher/fetcher/occurrences.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/floracast_preprocess/preprocess/options.py" afterPath="$PROJECT_DIR$/fetcher/fetcher/options.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/floracast_preprocess/preprocess/protected_areas.py" afterPath="$PROJECT_DIR$/fetcher/fetcher/protected_areas.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/floracast_preprocess/preprocess/utils.py" afterPath="$PROJECT_DIR$/fetcher/fetcher/utils.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/floracast_preprocess/preprocess/weather.py" afterPath="$PROJECT_DIR$/fetcher/fetcher/weather.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/floracast_preprocess/setup.py" afterPath="$PROJECT_DIR$/fetcher/setup.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fetch-protected.sh" afterPath="$PROJECT_DIR$/fetch-protected.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fetcher/fetcher/elevation.py" afterPath="$PROJECT_DIR$/fetcher/fetcher/elevation.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fetcher/fetcher/protected_areas.py" afterPath="$PROJECT_DIR$/fetcher/fetcher/protected_areas.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fetcher/main.py" afterPath="$PROJECT_DIR$/fetcher/main.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/trainer/test.py" afterPath="$PROJECT_DIR$/trainer/test.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/transform.sh" afterPath="$PROJECT_DIR$/transform.sh" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -40,41 +28,29 @@
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/transformer/main.py">
+        <entry file="file://$PROJECT_DIR$/fetcher/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="208">
-              <caret line="302" column="50" lean-forward="false" selection-start-line="302" selection-start-column="50" selection-end-line="302" selection-end-column="50" />
-              <folding>
-                <element signature="e#41#72#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="setup.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/transformer/setup.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="560">
-              <caret line="43" column="33" lean-forward="false" selection-start-line="43" selection-start-column="33" selection-end-line="43" selection-end-column="33" />
+            <state relative-caret-position="-365">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="setup.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/fetcher/setup.py">
+      <file leaf-file-name="protected_areas.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/fetcher/fetcher/protected_areas.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="244">
-              <caret line="31" column="21" lean-forward="false" selection-start-line="31" selection-start-column="21" selection-end-line="31" selection-end-column="21" />
+            <state relative-caret-position="278">
+              <caret line="64" column="40" lean-forward="false" selection-start-line="64" selection-start-column="40" selection-end-line="64" selection-end-column="40" />
               <folding>
-                <element signature="e#1185#1236#0" expanded="true" />
+                <element signature="e#41#67#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="train.sh" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/train.sh">
+      <file leaf-file-name="utils.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/fetcher/fetcher/utils.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="0">
               <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
@@ -83,42 +59,61 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="transform.sh" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/transform.sh">
+      <file leaf-file-name="test.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/trainer/test.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="197">
-              <caret line="17" column="27" lean-forward="true" selection-start-line="17" selection-start-column="27" selection-end-line="17" selection-end-column="27" />
+            <state relative-caret-position="435">
+              <caret line="42" column="78" lean-forward="true" selection-start-line="42" selection-start-column="78" selection-end-line="42" selection-end-column="78" />
+              <folding>
+                <element signature="e#0#11#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="task.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/trainer/task.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-2215">
+              <caret line="23" column="12" lean-forward="true" selection-start-line="23" selection-start-column="12" selection-end-line="23" selection-end-column="12" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/fetcher/main.py">
+      <file leaf-file-name="elevation.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/fetcher/fetcher/elevation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="149">
-              <caret line="32" column="64" lean-forward="false" selection-start-line="32" selection-start-column="64" selection-end-line="32" selection-end-column="64" />
-              <folding />
+            <state relative-caret-position="300">
+              <caret line="20" column="31" lean-forward="false" selection-start-line="20" selection-start-column="31" selection-end-line="20" selection-end-column="31" />
+              <folding>
+                <element signature="e#41#67#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="fetch-protected.sh" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/fetch-protected.sh">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="375">
-              <caret line="25" column="21" lean-forward="false" selection-start-line="25" selection-start-column="21" selection-end-line="25" selection-end-column="21" />
-              <folding />
+      <file leaf-file-name="README.md" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/fetcher/README.md">
+          <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+            <state split_layout="SPLIT">
+              <first_editor relative-caret-position="0">
+                <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+                <folding />
+              </first_editor>
+              <second_editor />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="options.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/fetcher/fetcher/options.py">
+      <file leaf-file-name="setup.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/fetcher/setup.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="750">
-              <caret line="50" column="27" lean-forward="false" selection-start-line="50" selection-start-column="27" selection-end-line="50" selection-end-column="27" />
-              <folding />
+            <state relative-caret-position="-238">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding>
+                <element signature="e#1185#1236#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -128,6 +123,16 @@
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="0">
               <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="fetch-protected.sh" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/fetch-protected.sh">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="255">
+              <caret line="17" column="29" lean-forward="false" selection-start-line="17" selection-start-column="29" selection-end-line="17" selection-end-column="29" />
               <folding />
             </state>
           </provider>
@@ -144,10 +149,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>cloud</find>
-      <find>^</find>
-      <find>wilderness</find>
-      <find>firestore</find>
       <find>python-date</find>
       <find>print</find>
       <find>pygeocod</find>
@@ -174,6 +175,10 @@
       <find>dateti</find>
       <find>utils</find>
       <find>train_location</find>
+      <find>transform</find>
+      <find>PTransform</find>
+      <find>iterator</find>
+      <find>core</find>
     </findStrings>
     <replaceStrings>
       <replace />
@@ -207,9 +212,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/preprocess/setup.py" />
-        <option value="$PROJECT_DIR$/preprocess/options.py" />
-        <option value="$PROJECT_DIR$/preprocess/forests.py" />
         <option value="$PROJECT_DIR$/preprocess/preprocess.py" />
         <option value="$PROJECT_DIR$/preprocess/occurrences.py" />
         <option value="$PROJECT_DIR$/preprocess/preprocess/occurrences.py" />
@@ -227,7 +229,6 @@
         <option value="$PROJECT_DIR$/data.txt" />
         <option value="$PROJECT_DIR$/floracast_preprocess/preprocess/train.py" />
         <option value="$PROJECT_DIR$/floracast_preprocess/preprocess/example.py" />
-        <option value="$PROJECT_DIR$/trainer/test.py" />
         <option value="$PROJECT_DIR$/trainer/compile_tensorflow_serving.sh" />
         <option value="$PROJECT_DIR$/trainer/server.py" />
         <option value="$PROJECT_DIR$/trainer/task.py" />
@@ -253,11 +254,15 @@
         <option value="$PROJECT_DIR$/run.sh" />
         <option value="$PROJECT_DIR$/fetcher/fetcher/occurrences.py" />
         <option value="$PROJECT_DIR$/fetcher/fetcher/options.py" />
-        <option value="$PROJECT_DIR$/fetcher/main.py" />
         <option value="$PROJECT_DIR$/fetcher/setup.py" />
         <option value="$PROJECT_DIR$/transformer/main.py" />
         <option value="$PROJECT_DIR$/transformer/setup.py" />
         <option value="$PROJECT_DIR$/transform.sh" />
+        <option value="$PROJECT_DIR$/fetch-protected.sh" />
+        <option value="$PROJECT_DIR$/fetcher/main.py" />
+        <option value="$PROJECT_DIR$/fetcher/fetcher/elevation.py" />
+        <option value="$PROJECT_DIR$/fetcher/fetcher/protected_areas.py" />
+        <option value="$PROJECT_DIR$/trainer/test.py" />
       </list>
     </option>
   </component>
@@ -312,8 +317,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="AndroidView" />
-      <pane id="PackagesPane" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -339,6 +342,8 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scratches" />
+      <pane id="PackagesPane" />
       <pane id="Scope">
         <subPane subId="Project Files">
           <expand>
@@ -346,11 +351,37 @@
               <item name="Root" type="cbb8eebc:String" user="Root" />
               <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
             </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
+              <item name="fetcher" type="cbb8eebc:String" user="fetcher" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
+              <item name="gs/floracast-models" type="cbb8eebc:String" user="gs/floracast-models" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
+              <item name="gs/floracast-models" type="cbb8eebc:String" user="gs/floracast-models" />
+              <item name="forests/1508366261" type="cbb8eebc:String" user="forests/1508366261" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
+              <item name="trainer" type="cbb8eebc:String" user="trainer" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
+              <item name="transformer" type="cbb8eebc:String" user="transformer" />
+            </path>
           </expand>
           <select />
         </subPane>
       </pane>
-      <pane id="Scratches" />
+      <pane id="AndroidView" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -614,12 +645,13 @@
       <workItem from="1505856460269" duration="12207000" />
       <workItem from="1507547689983" duration="27716000" />
       <workItem from="1507732442016" duration="208000" />
-      <workItem from="1507732990960" duration="9599000" />
+      <workItem from="1507732990960" duration="11261000" />
+      <workItem from="1508355196031" duration="3244000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="738417000" />
+    <option name="totallyTimeSpent" value="743323000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1280" height="800" extended-state="0" />
@@ -636,9 +668,8 @@
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.24232633" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2463651" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3252841" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.16397415" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.37883684" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
@@ -651,6 +682,7 @@
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3252841" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Concurrent Activities Diagram" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3292683" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
@@ -678,13 +710,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/trainer/test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/python/estimator/canned/dnn.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="225">
@@ -704,13 +729,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="429">
           <caret line="57" column="32" lean-forward="false" selection-start-line="57" selection-start-column="32" selection-end-line="57" selection-end-column="32" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/trainer/task.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="141" column="13" lean-forward="false" selection-start-line="141" selection-start-column="13" selection-end-line="141" selection-end-column="13" />
         </state>
       </provider>
     </entry>
@@ -808,13 +826,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/trainer/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1634">
-          <caret line="27" column="20" lean-forward="false" selection-start-line="27" selection-start-column="20" selection-end-line="27" selection-end-column="20" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/data.txt">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -844,13 +855,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/fetcher/floracast_preprocess.egg-info/requires.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="195">
-          <caret line="13" column="0" lean-forward="true" selection-start-line="13" selection-start-column="0" selection-end-line="13" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/fetcher/floracast_preprocess.egg-info/requires.txt" />
     <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/setuptools/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1980">
@@ -870,46 +875,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/fetcher/fetcher/elevation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="45">
-          <caret line="4" column="0" lean-forward="false" selection-start-line="4" selection-start-column="0" selection-end-line="86" selection-end-column="29" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetcher/fetcher/protected_areas.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/floracast_preprocess/requirements.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-419">
-          <caret line="21" column="13" lean-forward="true" selection-start-line="21" selection-start-column="13" selection-end-line="21" selection-end-column="13" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetcher/README.md">
-      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
-        <state split_layout="SPLIT">
-          <first_editor relative-caret-position="0">
-            <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-            <folding />
-          </first_editor>
-          <second_editor />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/floracast_preprocess/requirements.txt" />
     <entry file="file://$PROJECT_DIR$/transformer/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -917,15 +887,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="45">
           <caret line="3" column="2" lean-forward="true" selection-start-line="3" selection-start-column="2" selection-end-line="3" selection-end-column="2" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetcher/fetcher/utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="10" column="0" lean-forward="false" selection-start-line="10" selection-start-column="0" selection-end-line="19" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -953,78 +914,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/transformer/transformer/schema.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/transformer/transformer/transform.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-381">
-          <caret line="34" column="41" lean-forward="true" selection-start-line="34" selection-start-column="41" selection-end-line="34" selection-end-column="41" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetcher/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="149">
-          <caret line="32" column="64" lean-forward="false" selection-start-line="32" selection-start-column="64" selection-end-line="32" selection-end-column="64" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetcher/setup.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="244">
-          <caret line="31" column="21" lean-forward="false" selection-start-line="31" selection-start-column="21" selection-end-line="31" selection-end-column="21" />
-          <folding>
-            <element signature="e#1185#1236#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/transformer/transformer/schema.py" />
+    <entry file="file://$PROJECT_DIR$/transformer/transformer/transform.py" />
     <entry file="file://$PROJECT_DIR$/transform.sh">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="19" lean-forward="true" selection-start-line="0" selection-start-column="19" selection-end-line="0" selection-end-column="19" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetch-protected.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="375">
-          <caret line="25" column="21" lean-forward="false" selection-start-line="25" selection-start-column="21" selection-end-line="25" selection-end-column="21" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/predict.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/transformer/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="208">
-          <caret line="302" column="50" lean-forward="false" selection-start-line="302" selection-start-column="50" selection-end-line="302" selection-end-column="50" />
-          <folding>
-            <element signature="e#41#72#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/transformer/setup.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="560">
-          <caret line="43" column="33" lean-forward="false" selection-start-line="43" selection-start-column="33" selection-end-line="43" selection-end-column="33" />
           <folding />
         </state>
       </provider>
@@ -1037,10 +932,127 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/transformer/setup.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="354">
+          <caret line="32" column="30" lean-forward="false" selection-start-line="32" selection-start-column="30" selection-end-line="32" selection-end-column="30" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/trainer/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="258">
+          <caret line="194" column="27" lean-forward="false" selection-start-line="194" selection-start-column="27" selection-end-line="194" selection-end-column="27" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/transform.sh">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="197">
-          <caret line="17" column="27" lean-forward="true" selection-start-line="17" selection-start-column="27" selection-end-line="17" selection-end-column="27" />
+        <state relative-caret-position="361">
+          <caret line="26" column="25" lean-forward="false" selection-start-line="26" selection-start-column="25" selection-end-line="26" selection-end-column="25" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/transformer/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="375">
+          <caret line="25" column="0" lean-forward="false" selection-start-line="25" selection-start-column="0" selection-end-line="25" selection-end-column="0" />
+          <folding>
+            <element signature="e#41#72#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/predict.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetch-protected.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="255">
+          <caret line="17" column="29" lean-forward="false" selection-start-line="17" selection-start-column="29" selection-end-line="17" selection-end-column="29" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetcher/fetcher/elevation.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="300">
+          <caret line="20" column="31" lean-forward="false" selection-start-line="20" selection-start-column="31" selection-end-line="20" selection-end-column="31" />
+          <folding>
+            <element signature="e#41#67#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetcher/README.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="0">
+            <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+            <folding />
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetcher/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-365">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetcher/setup.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-238">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#1185#1236#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetcher/fetcher/protected_areas.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="278">
+          <caret line="64" column="40" lean-forward="false" selection-start-line="64" selection-start-column="40" selection-end-line="64" selection-end-column="40" />
+          <folding>
+            <element signature="e#41#67#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetcher/fetcher/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/trainer/test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="435">
+          <caret line="42" column="78" lean-forward="true" selection-start-line="42" selection-start-column="78" selection-end-line="42" selection-end-column="78" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/trainer/task.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-2215">
+          <caret line="23" column="12" lean-forward="true" selection-start-line="23" selection-start-column="12" selection-end-line="23" selection-end-column="12" />
           <folding />
         </state>
       </provider>

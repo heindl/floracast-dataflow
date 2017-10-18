@@ -1,7 +1,7 @@
 # from __future__ import absolute_import
 import apache_beam as beam
 # from google.cloud.proto.datastore.v1 import entity_pb2
-from apache_beam.transforms.core import PTransform
+# from apache_beam.transforms.core import PTransform
 from apache_beam.io import iobase
 
 from example import Example
@@ -28,12 +28,12 @@ def fetch_forests(
         pipeline_options,
         output_path,
     ):
-    # import elevation as elevation
-    # import weather as weather
+    import elevation as elevation
+    import weather as weather
     from tensorflow_transform.beam import impl as tft
     from datetime import datetime, timedelta
     from pandas import date_range
-    # import utils
+    import utils
 
     options = pipeline_options.get_all_options()
 
@@ -52,17 +52,17 @@ def fetch_forests(
 
             examples = pipeline \
                   | _ReadProtectedAreas(project=options['project'], protected_area_count=options['protected_area_count']) \
-                  | 'ConvertProtectedAreaDictToExample' >> beam.ParDo(_ProtectedAreaDictToExample(unix))
-                  # | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(options['project'])) \
-                  # | 'DiffuseByDate' >> DiffuseByDate() \
-                  # | "FetchWeather" >> beam.ParDo(weather.FetchWeatherDoFn(options['project'], options['weather_station_distance'])) \
-                  # | 'SplitPCollsByDate' >> beam.ParDo(SplitPCollsByDate()).with_outputs(*dates)
+                  | 'ConvertProtectedAreaDictToExample' >> beam.ParDo(_ProtectedAreaDictToExample(unix)) \
+                  | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(options['project'])) \
+                  | 'DiffuseByDate' >> DiffuseByDate() \
+                  | "FetchWeather" >> beam.ParDo(weather.FetchWeatherDoFn(options['project'], options['weather_station_distance'])) \
+                  | 'SplitPCollsByDate' >> beam.ParDo(SplitPCollsByDate()).with_outputs(*dates)
 
-            # for d in dates:
-            #     path = output_path+"/"+d
-            #     _ = examples[d] \
-            #         | ("ProtoForWrite-%s" % d) >> beam.Map(lambda e: e.encode()) \
-            #         | ("WritePredictDataAsTFRecord-%s" % d) >> beam.io.WriteToTFRecord(path, file_name_suffix='.tfrecord.gz')
+            for d in dates:
+                path = output_path+"/"+d
+                _ = examples[d] \
+                    | ("ProtoForWrite-%s" % d) >> beam.Map(lambda e: e.encode()) \
+                    | ("WritePredictDataAsTFRecord-%s" % d) >> beam.io.WriteToTFRecord(path, file_name_suffix='.tfrecord.gz')
 
                 # _ = examples[d] \
                 #     | ("EncodePredictAsB64Json-%s" % d) >> beam.Map(utils.encode_as_b64_json) \
@@ -171,7 +171,7 @@ class _ProtectedAreaSource(iobase.BoundedSource):
             stop_position=stop_position)
 
 
-class _ReadProtectedAreas(PTransform):
+class _ReadProtectedAreas(beam.PTransform):
     """A :class:`~apache_beam.transforms.ptransform.PTransform` for reading
     from MongoDB.
     """

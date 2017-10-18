@@ -4,7 +4,7 @@
 
 if [ $1 == "local" ]; then
 
-    python ./floracast_preprocess/main.py \
+    python ./fetcher/main.py \
          --runner DirectRunner \
          --project floracast-firestore \
          --mode "infer" \
@@ -15,23 +15,23 @@ if [ $1 == "local" ]; then
          --weeks_before 3 \
          --protected_area_count 3 \
          --job_name floracast-fetch-wilderness \
-         --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/floracast_preprocess/setup.py
+         --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/fetcher/setup.py
 #         --requirements_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/floracast_preprocess/requirements.txt
 fi
 
 if [ $1 == "remote" ]; then
 
-    python ./floracast_preprocess/main.py \
+    python ./fetcher/main.py \
         --runner=DataflowRunner \
         --temp_location="gs://floracast-datamining/temp" \
         --staging_location="gs://floracast-datamining/staging" \
         --train_location="gs://floracast-datamining/train" \
         --infer_location="gs://floracast-datamining/wilderness_areas" \
-        --weeks_before 3 \
+        --weeks_before 2 \
         --protected_area_count 3 \
-        --job_name floracast-fetch-protected-areassss \
+        --job_name floracast-fetch-protected-areas \
         --mode "infer" \
-        --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/floracast_preprocess/setup.py \
+        --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/fetcher/setup.py \
         --workerLogLevelOverrides=com.google.cloud.dataflow#DEBUG
 #        --requirements_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/floracast_preprocess/requirements.txt
 fi

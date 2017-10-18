@@ -19,7 +19,7 @@ if [ $1 == "remote" ]; then
 
     python ./transformer/main.py \
         --runner=DataflowRunner \
-        --job_name="floracast-transform-2" \
+        --job_name="floracast-transform-1" \
         --temp_location="gs://floracast-datamining/temp" \
         --staging_location="gs://floracast-datamining/staging" \
         --train_location="gs://floracast-datamining/transformed" \

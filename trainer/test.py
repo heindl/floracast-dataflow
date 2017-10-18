@@ -38,12 +38,11 @@ options = tf_record.TFRecordOptions(TFRecordCompressionType.GZIP)
 
 
 # with io.open('./data.txt', 'w', encoding='utf-8') as f:
-for filename in iglob('/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/forests/1506910204/**/*.gz'):
+for filename in iglob('/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/forests/1508366261/*.gz'):
     print(filename)
     for example in tf.python_io.tf_record_iterator(filename, options=options):
         e = tf.train.Example.FromString(example)
         print(e)
-        continue
     # val = str(e.features.feature["taxon"].int64_list.value[0])
     # _ = e.features.feature.pop("taxon")
     # e.features.feature["taxon"].bytes_list.value.append(val)

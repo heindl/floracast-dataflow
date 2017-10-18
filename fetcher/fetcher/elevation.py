@@ -7,9 +7,14 @@ from example import Example
 class ElevationBundleDoFn(beam.DoFn):
     def __init__(self, project):
         super(ElevationBundleDoFn, self).__init__()
-        from google.cloud import storage
-        client = storage.Client(project=project)
-        bucket = client.get_bucket('floracast-conf')
+        from google.cloud import storage, exceptions
+        client = storage.client.Client(project=project)
+        try:
+            bucket = client.get_bucket('floracast-conf')
+        except exceptions.NotFound:
+            print('Sorry, that bucket does not exist!')
+            return
+
         blob = storage.Blob('dataflow.sh', bucket)
         content=blob.download_as_string()
         for line in content.split(b'\n'):
