@@ -146,6 +146,11 @@ class Example:
     def date(self):
         return self._get_value(KEY_DATE, LIST_TYPE_INT64)
 
+    def month_string(self):
+        from datetime import datetime
+        d = datetime.fromtimestamp(self.date())
+        return d.strftime("%Y%m")
+
     def date_string(self):
         from datetime import datetime
         d = datetime.fromtimestamp(self.date())
@@ -177,7 +182,7 @@ class Example:
         self._example.ParseFromString(s)
 
     def equality_key(self):
-        return "%d|||%.8f|||%.8f|||%d" % (
+        return "%s|||%.8f|||%.8f|||%d" % (
             self.taxon(),
             self.latitude(),
             self.longitude(),

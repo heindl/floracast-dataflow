@@ -51,6 +51,11 @@ class ProcessPipelineOptions(PipelineOptions):
             required=False,
             help='Directory that contains timestamped files for each training iteration')
 
+        parser.add_argument(
+            '--ecoregion',
+            required=False,
+            type=str,
+            help='Number of eco regions')
 
         # Google cloud options.
         # parser.add_argument(

@@ -1,6 +1,4 @@
 import tensorflow as tf
-import model
-import input_fn
 
 def create_parser():
     import argparse

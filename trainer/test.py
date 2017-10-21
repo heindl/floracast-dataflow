@@ -5,6 +5,7 @@ import base64, io, json  # pylint: disable=g-import-not-at-top
 from tensorflow.python.lib.io import tf_record
 TFRecordCompressionType = tf_record.TFRecordCompressionType
 from glob import iglob
+from datetime import datetime
 
 
 # raw_metadata = metadata_io.read_metadata(
@@ -36,14 +37,19 @@ from glob import iglob
 options = tf_record.TFRecordOptions(TFRecordCompressionType.GZIP)
 # writer = tf.python_io.TFRecordWriter("/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/occurrences/1505437167/2.tfrecord.gz", options=options)
 
-
+total = 0
 # with io.open('./data.txt', 'w', encoding='utf-8') as f:
-for filename in iglob('/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/forests/1508366261/*.gz'):
-    print(filename)
+for filename in iglob('/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/forests/1508371092/*.gz'):
+    # print(filename)
     for example in tf.python_io.tf_record_iterator(filename, options=options):
         e = tf.train.Example.FromString(example)
-        print(e)
-    # val = str(e.features.feature["taxon"].int64_list.value[0])
+
+        print(e.features.feature["latitude"].float_list.value[0],
+              e.features.feature["longitude"].float_list.value[0],
+              datetime.fromtimestamp(e.features.feature["date"].int64_list.value[0]).strftime("%Y%m%d"))
+
+        total = total + 1
+    print("total", total)
     # _ = e.features.feature.pop("taxon")
     # e.features.feature["taxon"].bytes_list.value.append(val)
     # writer.write(e.SerializeToString())

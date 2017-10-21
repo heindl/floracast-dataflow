@@ -19,7 +19,7 @@ class SplitPCollsByDate(beam.DoFn):
 @beam.ptransform_fn
 def DiffuseByDate(pcoll):  # pylint: disable=invalid-name
     return (pcoll
-            | 'ProjectDateToDefuse' >> beam.Map(lambda e: (e.date_string(), e))
+            | 'ProjectDateToDefuse' >> beam.Map(lambda e: (e.month_string(), e))
             | 'GroupByKeyToDiffuse' >> beam.GroupByKey()
             | 'UngroupToDefuse' >> beam.FlatMap(lambda v: v[1]))
 
@@ -138,9 +138,9 @@ class _ProtectedAreaSource(iobase.BoundedSource):
         return range_tracker
 
     def read(self, range_tracker):
-        from google.cloud import firestore
+        from google.cloud.firestore_v1beta1 import client
 
-        db = firestore.Client(project=self._project)
+        db = client.Client(project=self._project)
         q = db.collection(u'WildernessAreas')
         if self._protected_area_count > 0:
             q = q.limit(self._protected_area_count)
