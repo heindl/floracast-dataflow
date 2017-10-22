@@ -23,45 +23,49 @@ def fetch_occurrences(
     with beam.Pipeline(options['runner'], options=pipeline_options) as pipeline:
         with tft.Context(temp_dir=options['temp_location']):
 
-            data = pipeline \
-                   | 'ReadOccurrences' >> _ReadOccurrences(
-                        project=options['project'],
-                        taxa=options['occurrence_taxa'],
-                        ecoregion=options['ecoregion'],
-                        minimum_occurrences_within_taxon=options['minimum_occurrences_within_taxon']
-                    ) \
+            taxa = pipeline \
+                   | 'ReadTaxa' >> _ReadTaxa(
+                project=options['project'],
+                taxa=options['occurrence_taxa'],
+                ecoregion=options['ecoregion'],
+                minimum_occurrences_within_taxon=options['minimum_occurrences_within_taxon']
+            )
+
+            occurrences = taxa \
                    | 'FetchOccurrences' >> beam.ParDo(_FetchOccurrences(options['project'])) \
                    | 'RemoveOccurrenceExampleLocationDuplicates' >> _RemoveOccurrenceExampleLocationDuplicates()
 
+            occurrence_count = occurrences | beam.combiners.Count.Globally()
+
             if options['add_random_train_point'] is True:
-                random_examples = data \
-                                         | beam.combiners.Count.Globally() \
-                                         | 'AddRandomTrainPoints' >> beam.ParDo(_AddRandomTrainPoints())
-                data = (data, random_examples) | beam.Flatten()
+                random_examples = occurrence_count | 'AddRandomTrainPoints' >> beam.ParDo(_AddRandomTrainPoints())
+                occurrences = (occurrences, random_examples) | beam.Flatten()
 
 
-            data = data \
+            occurrences = occurrences \
                    | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(options['project'])) \
+                   | 'DiffuseByDate' >> utils.DiffuseByDate() \
                    | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(options['project'], options['weather_station_distance'])) \
                    | 'ShuffleOccurrences' >> utils.Shuffle() \
                    | 'ProtoForWrite' >> beam.Map(lambda e: e.encode())
 
-            _ = data \
-                | 'Write' >> beam.io.WriteToTFRecord(output_path, file_name_suffix='.tfrecord.gz')
+            _ = occurrences \
+                | 'WriteOccurrences' >> beam.io.WriteToTFRecord(output_path + "/", file_name_suffix='.tfrecord.gz')
 
             # _ = data \
             #     | 'EncodePredictAsB64Json' >> beam.Map(utils.encode_as_b64_json) \
             #     | 'WritePredictDataAsText' >> beam.io.WriteToText(output_path, file_name_suffix='.txt')
 
 
+            _ = taxa | 'WriteTaxa' >> beam.io.WriteToText(output_path + "/", file_name_suffix='taxa.txt')
+
             # Write metadata
-            _ = beam.Create([{
-                'taxa': options['occurrence_taxa'],
+            _ = pipeline | beam.Create([{
                 'weather_station_distance': options['weather_station_distance'],
                 'minimum_occurrences_within_taxon': options['minimum_occurrences_within_taxon'],
                 'random_train_points': options['add_random_train_point']
             }]) \
-                | 'WriteToMetadataFile' >> WriteToText(output_path, file_name_suffix="query.meta", num_shards=1)
+                | 'WriteToMetadataFile' >> WriteToText(output_path + "/", file_name_suffix="query.meta", num_shards=1)
 
 
 class ComputeWordLengths(beam.PTransform):
@@ -77,13 +81,16 @@ class _AddRandomTrainPoints(beam.DoFn):
 
     def process(self, total_occurrence_count):
         import example as example
-        print("total occurrence count", total_occurrence_count)
+        import math
         if total_occurrence_count == 0:
             return
         random_example_count = total_occurrence_count * 0.10
         if random_example_count < 500:
-            random_example_count = total_occurrence_count
-        for _ in range(0, random_example_count):
+            if total_occurrence_count <= 500:
+                random_example_count = total_occurrence_count
+            else:
+                random_example_count = 500
+        for _ in range(0, int(math.floor(random_example_count))):
             yield example.RandomExample()
 #
 # # Filter and prepare for duplicate sort.
@@ -236,7 +243,7 @@ class _FetchOccurrences(beam.DoFn):
 
             yield ex
 
-class OccurrenceSource(iobase.BoundedSource):
+class TaxaSource(iobase.BoundedSource):
 
     def __init__(self, project, taxa="", ecoregion="", minimum_occurrences_within_taxon=50):
         # from apache_beam.metrics import Metrics
@@ -280,7 +287,6 @@ class OccurrenceSource(iobase.BoundedSource):
             taxa = dict()
             # subfield = ("EcoRegions.%s" % self._ecoregion)
             path = db.field_path("EcoRegions", "_%s" % self._ecoregion)
-            print(path)
             for o in db.collection(u'Taxa').where(path, ">", 0).get():
                 d = o.to_dict()
 
@@ -337,7 +343,7 @@ class OccurrenceSource(iobase.BoundedSource):
             start_position=start_position,
             stop_position=stop_position)
 
-class _ReadOccurrences(PTransform):
+class _ReadTaxa(PTransform):
     """A :class:`~apache_beam.transforms.ptransform.PTransform` for reading
     from MongoDB.
     """
@@ -345,8 +351,8 @@ class _ReadOccurrences(PTransform):
         """Initializes :class:`ReadFromMongo`
         Uses source :class:`_MongoSource`
         """
-        super(_ReadOccurrences, self).__init__()
-        self._source = OccurrenceSource(
+        super(_ReadTaxa, self).__init__()
+        self._source = TaxaSource(
             project=project,
             taxa=taxa,
             ecoregion=ecoregion,

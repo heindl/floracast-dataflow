@@ -26,7 +26,7 @@ if [ $1 == "remote" ]; then
         --staging_location="gs://floracast-datamining/staging" \
         --train_location="gs://floracast-datamining/train" \
         --infer_location="gs://floracast-datamining/wilderness_areas" \
-        --intermediate_location="gs://floracast-datamining/wilderness_areas" \
+        --intermediate_location="gs://floracast-datamining/occurrences" \
         --ecoregion 245 \
         --job_name floracast-fetch-occurrences \
         --mode "train" \

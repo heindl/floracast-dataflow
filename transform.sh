@@ -19,14 +19,16 @@ if [ $1 == "remote" ]; then
 
     python ./transformer/main.py \
         --runner=DataflowRunner \
-        --job_name="floracast-transform-1" \
+        --job_name="floracast-transform" \
         --temp_location="gs://floracast-datamining/temp" \
         --staging_location="gs://floracast-datamining/staging" \
         --train_location="gs://floracast-datamining/transformed" \
-        --raw_data_location="gs://floracast-datamining/occurrences/1505437167" \
+        --raw_data_location="gs://floracast-datamining/occurrences/1508609812" \
         --num_classes 2 \
         --mode "train" \
-        --percent_eval 10
+        --percent_eval 10 \
+        --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/transformer/setup.py \
+        --workerLogLevelOverrides=com.google.cloud.dataflow#DEBUG
 
 fi
 

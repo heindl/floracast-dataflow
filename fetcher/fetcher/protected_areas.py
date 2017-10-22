@@ -16,12 +16,7 @@ class SplitPCollsByDate(beam.DoFn):
             example.date_string(), example)
 
 
-@beam.ptransform_fn
-def DiffuseByDate(pcoll):  # pylint: disable=invalid-name
-    return (pcoll
-            | 'ProjectDateToDefuse' >> beam.Map(lambda e: (e.month_string(), e))
-            | 'GroupByKeyToDiffuse' >> beam.GroupByKey()
-            | 'UngroupToDefuse' >> beam.FlatMap(lambda v: v[1]))
+
 
 
 def fetch_forests(
