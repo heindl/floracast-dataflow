@@ -22,6 +22,20 @@ class ProcessPipelineOptions(PipelineOptions):
         )
 
         parser.add_argument(
+            '--random_location',
+            required=False,
+            help='The TFRecords directory that random occurrences created for classifying the model.'
+        )
+
+        parser.add_argument(
+            '--random_occurrence_count',
+            default=0,
+            type=int,
+            required=False,
+            help='The number of random occurrences to fetcher for testing.'
+        )
+
+        parser.add_argument(
             '--minimum_occurrences_within_taxon',
             required=False,
             default=100,
@@ -37,7 +51,7 @@ class ProcessPipelineOptions(PipelineOptions):
         parser.add_argument(
             '--weather_station_distance',
             required=False,
-            default=75,
+            default=100,
             help='Maximum distance a weather station can be from an occurrence when fetching weather.')
 
         parser.add_argument(

@@ -24,7 +24,7 @@ def main(argv=None):
     import tensorflow as tf
     import datetime
     import os
-    from fetcher import options, occurrences, protected_areas
+    from fetcher import options, occurrences, protected_areas, random_occurrences
 
     pipeline_options = PipelineOptions(flags=argv)
     # ['--setup_file', os.path.abspath(os.path.join(os.path.dirname(__file__), 'setup.py'))],
@@ -36,21 +36,36 @@ def main(argv=None):
     standard_options = pipeline_options.view_as(StandardOptions)
     pipeline_options.view_as(SetupOptions).setup_file = os.path.abspath(os.path.join(os.path.dirname(__file__), 'setup.py'))
 
-    if process_pipeline_options.mode == tf.contrib.learn.ModeKeys.TRAIN:
+    if process_pipeline_options.mode == tf.contrib.learn.ModeKeys.EVAL:
 
-        intermediate_records = os.path.join(
-            process_pipeline_options.intermediate_location,
-            datetime.datetime.now().strftime("%s"),
+        if process_pipeline_options.random_location == "":
+            raise ValueError('random_location not set')
+
+        random_occurrences.fetch_random(
+            pipeline_options=pipeline_options,
+            output_path=os.path.join(
+                process_pipeline_options.random_location,
+                datetime.datetime.now().strftime("%s"),
+            )
         )
+
+    elif process_pipeline_options.mode == tf.contrib.learn.ModeKeys.TRAIN:
+
+        if process_pipeline_options.intermediate_location == "":
+            raise ValueError('intermediate_location not set')
 
         occurrences.fetch_occurrences(
             pipeline_options=pipeline_options,
-            output_path=intermediate_records
+            output_path=os.path.join(
+                process_pipeline_options.intermediate_location,
+                datetime.datetime.now().strftime("%s"),
+            )
         )
 
     elif process_pipeline_options.mode == tf.contrib.learn.ModeKeys.INFER:
 
-        print(os.path.join(process_pipeline_options.infer_location, datetime.datetime.now().strftime("%s")))
+        if process_pipeline_options.infer_location == "":
+            raise ValueError('infer_location not set')
 
         protected_areas.fetch_forests(
             pipeline_options=pipeline_options,

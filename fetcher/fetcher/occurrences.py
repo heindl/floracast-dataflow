@@ -65,7 +65,7 @@ def fetch_occurrences(
                 'minimum_occurrences_within_taxon': options['minimum_occurrences_within_taxon'],
                 'random_train_points': options['add_random_train_point']
             }]) \
-                | 'WriteToMetadataFile' >> WriteToText(output_path + "/", file_name_suffix="query.meta", num_shards=1)
+                | 'WriteToMetadataFile' >> WriteToText(output_path + "/", file_name_suffix=".query.meta", num_shards=1)
 
 
 class ComputeWordLengths(beam.PTransform):

@@ -2,7 +2,7 @@
 import apache_beam as beam
 from example import Example
 
-@beam.typehints.with_input_types(Example)
+@beam.typehints.with_input_types(beam.typehints.Tuple[str, beam.typehints.Iterable[Example]])
 @beam.typehints.with_output_types(Example)
 class FetchWeatherDoFn(beam.DoFn):
     def __init__(self, project, weather_station_distance):
@@ -13,9 +13,8 @@ class FetchWeatherDoFn(beam.DoFn):
         self._insufficient_weather_records = Metrics.counter('main', 'insufficient_weather_records')
         self._sufficient_weather_records = Metrics.counter('main', 'sufficient_weather_records')
         self._weather_station_distance = weather_station_distance
-        self._weather_data = {}
 
-    def process(self, (k, examples)):
+    def process(self, batch):
         import astral
         import logging
         from datetime import datetime
@@ -24,16 +23,16 @@ class FetchWeatherDoFn(beam.DoFn):
         # [33.2398, -85.0795], [34.1448, -83.3327]
         sw, ne = [0, 0], [0, 0]
 
-        for o in examples:
-            if sw[0] == 0 or sw[0] > o.latitude():
-                sw[0] = o.latitude()
-            if sw[1] == 0 or sw[1] > o.longitude():
-                sw[1] = o.longitude()
+        for example in batch[1]:
+            if sw[0] == 0 or sw[0] > example.latitude():
+                sw[0] = example.latitude()
+            if sw[1] == 0 or sw[1] > example.longitude():
+                sw[1] = example.longitude()
 
-            if ne[0] == 0 or ne[0] < o.latitude():
-                ne[0] = o.latitude()
-            if ne[1] == 0 or ne[1] < o.longitude():
-                ne[1] = o.longitude()
+            if ne[0] == 0 or ne[0] < example.latitude():
+                ne[0] = example.latitude()
+            if ne[1] == 0 or ne[1] < example.longitude():
+                ne[1] = example.longitude()
 
         # For each point, ensure we give enough space to get a station for that furthest point.
         sw = self.bounding_box(sw[0], sw[1], self._weather_station_distance)[0]
@@ -42,11 +41,11 @@ class FetchWeatherDoFn(beam.DoFn):
         store = _WeatherLoader(
             project=self._project,
             bbox=[sw.longitude, sw.latitude, ne.longitude, ne.latitude],
-            year=k[0:3],
-            month=k[4:6],
-            weather_station_distance=60)
+            year=batch[0][0:4],
+            month=batch[0][4:6],
+            weather_station_distance=self._weather_station_distance)
 
-        for example in examples:
+        for example in batch[1]:
 
             records = store.read(example.latitude(), example.longitude(), datetime.fromtimestamp(example.date()))
 
@@ -75,7 +74,7 @@ class FetchWeatherDoFn(beam.DoFn):
                 example.append_precipitation(float(records[date_string]['PRCP']))
                 example.append_temp_min(float(records[date_string]['MIN']))
                 example.append_temp_max(float(records[date_string]['MAX']))
-                example.append_temp_avg(float(records[date_string]['TEMP']))
+                example.append_temp_avg(float(records[date_string]['AVG']))
 
             self._sufficient_weather_records.inc()
 
@@ -97,8 +96,8 @@ class _WeatherLoader(beam.DoFn):
         self._dataset = 'bigquery-public-data:noaa_gsod'
         self._weather_station_distance = weather_station_distance
         self._bbox = bbox # swLng, swLat, neLng, neLat
-        self._year = year
-        self._month = month
+        self._year = int(year)
+        self._month = int(month)
         self._temp_directory = tempfile.mkdtemp()
         self._load()
 
@@ -211,8 +210,6 @@ class _WeatherLoader(beam.DoFn):
         import geopy as geopy
         from geopy.distance import vincenty
 
-        print("lat/lng", lat, lng)
-
         records = {}
         polygon = self._polygon(lat, lng)
 
@@ -223,7 +220,6 @@ class _WeatherLoader(beam.DoFn):
             periods=90,
             freq='D'
         ):
-            print("Date", d.strftime("%Y%m%d"))
             weather = pd.read_csv('%s/%s.csv' % (self._temp_directory, d.strftime("%Y%m%d")),
                 header=None,
                 names=['Y','X','PRCP','MIN','MAX','AVG']
@@ -234,7 +230,6 @@ class _WeatherLoader(beam.DoFn):
             weather['Distance'] = weather.apply(lambda z: vincenty(geopy.Point(lat, lng), geopy.Point(float(z.Y), float(z.X))).miles, axis=1)
             weather.sort_values(['Distance'], ascending=[1])
             for index, row in weather.iterrows():
-                print(row)
                 if row['Distance'] > self._weather_station_distance:
                     return {} # Short circuit because we're missing a day and no need to continue
                 records[d.strftime('%Y%m%d')] = row

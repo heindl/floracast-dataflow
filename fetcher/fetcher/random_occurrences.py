@@ -26,29 +26,25 @@ def fetch_random(
             occurrences = pipeline \
                           | 'ReadRandomOccurrences' >> _ReadRandomOccurrences(count=options['random_occurrence_count']) \
                           | 'RemoveOccurrenceExampleLocationDuplicates' >> _RemoveOccurrenceExampleLocationDuplicates() \
-                          | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(options['project'])) \
                           | 'GroupByYearMonth' >> utils.GroupByYearMonth() \
                           | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(options['project'], options['weather_station_distance'])) \
+                          | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(options['project'])) \
                           | 'ShuffleOccurrences' >> utils.Shuffle() \
                           | 'ProtoForWrite' >> beam.Map(lambda e: e.encode())
 
             _ = occurrences \
-                | 'WriteOccurrences' >> beam.io.WriteToTFRecord(output_path + "/", file_name_suffix='.tfrecord.gz')
+                | 'WriteRandomOccurrences' >> beam.io.WriteToTFRecord(output_path + "/", file_name_suffix='.tfrecord.gz')
 
             # _ = data \
             #     | 'EncodePredictAsB64Json' >> beam.Map(utils.encode_as_b64_json) \
             #     | 'WritePredictDataAsText' >> beam.io.WriteToText(output_path, file_name_suffix='.txt')
 
-
-            _ = taxa | 'WriteTaxa' >> beam.io.WriteToText(output_path + "/", file_name_suffix='taxa.txt')
-
             # Write metadata
-            _ = pipeline | beam.Create([{
-                'weather_station_distance': options['weather_station_distance'],
-                'minimum_occurrences_within_taxon': options['minimum_occurrences_within_taxon'],
-                'random_train_points': options['add_random_train_point']
-            }]) \
-                | 'WriteToMetadataFile' >> WriteToText(output_path + "/", file_name_suffix="query.meta", num_shards=1)
+            # _ = pipeline | beam.Create([{
+            #     'weather_station_distance': options['weather_station_distance'],
+            #     'random_occurrence_count': options['random_occurrence_count']
+            # }]) \
+            #     | 'WriteToMetadataFile' >> WriteToText(output_path + "/", file_name_suffix=".query.meta", num_shards=1)
 
 
 class ComputeWordLengths(beam.PTransform):
