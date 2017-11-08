@@ -48,9 +48,9 @@ def fetch_forests(
             examples = pipeline \
                   | _ReadProtectedAreas(project=options['project'], protected_area_count=options['protected_area_count']) \
                   | 'ConvertProtectedAreaDictToExample' >> beam.ParDo(_ProtectedAreaDictToExample(unix)) \
+                  | 'GroupByYearMonth' >> utils.GroupByYearMonth() \
+                  | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(options['project'], options['weather_station_distance'])) \
                   | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(options['project'])) \
-                  | 'DiffuseByDate' >> DiffuseByDate() \
-                  | "FetchWeather" >> beam.ParDo(weather.FetchWeatherDoFn(options['project'], options['weather_station_distance'])) \
                   | 'SplitPCollsByDate' >> beam.ParDo(SplitPCollsByDate()).with_outputs(*dates)
 
             for d in dates:
@@ -140,9 +140,7 @@ class _ProtectedAreaSource(iobase.BoundedSource):
         if self._protected_area_count > 0:
             q = q.limit(self._protected_area_count)
 
-        print("Wilderness Area Query", q)
         for w in q.get():
-            print("Have element", w)
             yield w.to_dict()
 
     def split(self, desired_bundle_size, start_position=None, stop_position=None):

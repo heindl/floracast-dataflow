@@ -36,6 +36,16 @@ def DiffuseByYear(pcoll):  # pylint: disable=invalid-name
             | 'GroupByKeyToDiffuse' >> beam.GroupByKey()
             | 'UngroupToDefuse' >> beam.FlatMap(lambda v: v[1]))
 
+
+@beam.ptransform_fn
+def RemoveOccurrenceExampleLocationDuplicates(pcoll):  # pylint: disable=invalid-name
+    """Produces a PCollection containing the unique elements of a PCollection."""
+    return pcoll \
+           | 'ToPairs' >> beam.Map(lambda e: (e.equality_key(), e)) \
+           | 'GroupByKey' >> beam.GroupByKey() \
+           | 'Combine' >> beam.Map(lambda (key, examples): list(examples)[0])
+
+
 # class NoOperation(beam.DoFn):
 #     def __init__(self):
 #         return

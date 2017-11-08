@@ -8,8 +8,8 @@ if [ $1 == "local" ]; then
          --mode "eval" \
          --random_location /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/random \
          --random_occurrence_count 1 \
-         --job_name floracast-fetch-random \
-         --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/fetcher/setup.py
+         --job_name floracast-fetch-random
+#         --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/fetcher/setup.py
 #         --requirements_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/floracast_preprocess/requirements.txt
 fi
 

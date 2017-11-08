@@ -14,7 +14,7 @@ def fetch_occurrences(
     import weather as weather
     import elevation as elevation
     from apache_beam.io import WriteToText
-    from apache_beam import pvalue
+    # from apache_beam import pvalue
     import utils as utils
     from tensorflow_transform.beam import impl as tft
 
@@ -25,29 +25,28 @@ def fetch_occurrences(
 
             taxa = pipeline \
                    | 'ReadTaxa' >> _ReadTaxa(
-                project=options['project'],
-                taxa=options['occurrence_taxa'],
-                ecoregion=options['ecoregion'],
-                minimum_occurrences_within_taxon=options['minimum_occurrences_within_taxon']
-            )
+                        project=options['project'],
+                        taxa=options['occurrence_taxa'],
+                        ecoregion=options['ecoregion'],
+                        minimum_occurrences_within_taxon=options['minimum_occurrences_within_taxon']
+                   )
 
             occurrences = taxa \
                    | 'FetchOccurrences' >> beam.ParDo(_FetchOccurrences(options['project'])) \
-                   | 'RemoveOccurrenceExampleLocationDuplicates' >> _RemoveOccurrenceExampleLocationDuplicates()
+                   | 'RemoveOccurrenceExampleLocationDuplicates' >> utils.RemoveOccurrenceExampleLocationDuplicates()
 
-            occurrence_count = occurrences | beam.combiners.Count.Globally()
-
-            if options['add_random_train_point'] is True:
-                random_examples = occurrence_count | 'AddRandomTrainPoints' >> beam.ParDo(_AddRandomTrainPoints())
-                occurrences = (occurrences, random_examples) | beam.Flatten()
-
+            # occurrence_count = occurrences | beam.combiners.Count.Globally()
+            #
+            # if options['add_random_train_point'] is True:
+            #     random_examples = occurrence_count | 'AddRandomTrainPoints' >> beam.ParDo(_AddRandomTrainPoints())
+            #     occurrences = (occurrences, random_examples) | beam.Flatten()
 
             occurrences = occurrences \
-                   | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(options['project'])) \
-                   | 'DiffuseByYear' >> utils.DiffuseByYear() \
-                   | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(options['project'], options['weather_station_distance'])) \
-                   | 'ShuffleOccurrences' >> utils.Shuffle() \
-                   | 'ProtoForWrite' >> beam.Map(lambda e: e.encode())
+                 | 'GroupByYearMonth' >> utils.GroupByYearMonth() \
+                 | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(options['project'], options['weather_station_distance'])) \
+                 | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(options['project'])) \
+                 | 'ShuffleOccurrences' >> utils.Shuffle() \
+                 | 'ProtoForWrite' >> beam.Map(lambda e: e.encode())
 
             _ = occurrences \
                 | 'WriteOccurrences' >> beam.io.WriteToTFRecord(output_path + "/", file_name_suffix='.tfrecord.gz')
@@ -181,16 +180,6 @@ class _AddRandomTrainPoints(beam.DoFn):
 #                 | 'GroupByTaxon' >> beam.GroupByKey() \
 #                 | 'FilterAndUnwindOccurrences' >> beam.FlatMap(
 #                     lambda (taxon, occurrences): occurrences if len(list(occurrences)) >= self._minimum_occurrences_within_taxon else [])
-
-
-@beam.ptransform_fn
-def _RemoveOccurrenceExampleLocationDuplicates(pcoll):  # pylint: disable=invalid-name
-    """Produces a PCollection containing the unique elements of a PCollection."""
-    return pcoll \
-            | 'ToPairs' >> beam.Map(lambda e: (e.equality_key(), e)) \
-            | 'GroupByKey' >> beam.GroupByKey() \
-            | 'Combine' >> beam.Map(lambda (key, examples): list(examples)[0])
-
 
 
 # Unsure if this is the right model rather than a BoundedSource, but as my source is already

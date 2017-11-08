@@ -38,6 +38,9 @@ class FetchWeatherDoFn(beam.DoFn):
         sw = self.bounding_box(sw[0], sw[1], self._weather_station_distance)[0]
         ne = self.bounding_box(ne[0], ne[1], self._weather_station_distance)[1]
 
+        print("bounding box", sw.longitude, sw.latitude, ne.longitude, ne.latitude)
+        print("year/month", batch[0][0:4], batch[0][4:6])
+
         store = _WeatherLoader(
             project=self._project,
             bbox=[sw.longitude, sw.latitude, ne.longitude, ne.latitude],
@@ -48,6 +51,8 @@ class FetchWeatherDoFn(beam.DoFn):
         for example in batch[1]:
 
             records = store.read(example.latitude(), example.longitude(), datetime.fromtimestamp(example.date()))
+
+            print("records", example.latitude(), example.longitude(), datetime.fromtimestamp(example.date()), len(records.keys()))
 
             if len(records.keys()) == 0:
                 self._insufficient_weather_records.inc()
@@ -99,6 +104,7 @@ class _WeatherLoader(beam.DoFn):
         self._year = int(year)
         self._month = int(month)
         self._temp_directory = tempfile.mkdtemp()
+        print("temp_directory", self._temp_directory)
         self._load()
 
     # year_dictionary provides {2016: ["01"], 2015: [12]}
@@ -176,7 +182,7 @@ class _WeatherLoader(beam.DoFn):
 
         years = self._year_dictionary(date_range(
             end=datetime(self._year, self._month, monthrange(self._year, self._month)[1]),
-            periods=4,
+            periods=5,
             freq='M'
         ))
 
@@ -228,9 +234,11 @@ class _WeatherLoader(beam.DoFn):
             # Initial filter in order to avoid massive sort.
             # weather = weather[weather.apply(lambda z: geometry.Point(float(z.X), float(z.Y)).within(geometry.Polygon(polygon)), axis=1)]
             weather['Distance'] = weather.apply(lambda z: vincenty(geopy.Point(lat, lng), geopy.Point(float(z.Y), float(z.X))).miles, axis=1)
-            weather.sort_values(['Distance'], ascending=[1])
+            weather = weather[weather.Distance <= self._weather_station_distance]
+            weather = weather.sort_values(['Distance'], ascending=[1])
             for index, row in weather.iterrows():
                 if row['Distance'] > self._weather_station_distance:
+                    print("date, distance/row", d, self._weather_station_distance, row['Distance'])
                     return {} # Short circuit because we're missing a day and no need to continue
                 records[d.strftime('%Y%m%d')] = row
                 break

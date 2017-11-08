@@ -51,7 +51,7 @@ class ProcessPipelineOptions(PipelineOptions):
         parser.add_argument(
             '--weather_station_distance',
             required=False,
-            default=100,
+            default=150,
             help='Maximum distance a weather station can be from an occurrence when fetching weather.')
 
         parser.add_argument(
