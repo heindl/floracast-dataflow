@@ -38,7 +38,7 @@ def create_parser():
     parser.add_argument(
         '--batch_size',
         help='Number of input records used per batch',
-        default=30000,
+        default=100,
         type=int)
     # parser.add_argument(
     #     '--eval_batch_size',
@@ -58,7 +58,7 @@ def create_parser():
         type=int,
         required=True)
     parser.add_argument(
-        '--num_epochs', help='Number of epochs', default=10, type=int)
+        '--num_epochs', help='Number of epochs', default=100, type=int)
 
     parser.add_argument(
         '--num_classes', help='Number of classes', required=True, type=int)

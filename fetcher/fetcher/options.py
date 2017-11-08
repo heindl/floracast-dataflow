@@ -24,7 +24,7 @@ class ProcessPipelineOptions(PipelineOptions):
         parser.add_argument(
             '--minimum_occurrences_within_taxon',
             required=False,
-            default=40,
+            default=100,
             help='The number of occurrence required to process taxon')
 
         parser.add_argument(

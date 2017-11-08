@@ -2,7 +2,6 @@
 import apache_beam as beam
 from example import Example
 
-
 @beam.typehints.with_input_types(Example)
 @beam.typehints.with_output_types(Example)
 class FetchWeatherDoFn(beam.DoFn):
@@ -14,52 +13,97 @@ class FetchWeatherDoFn(beam.DoFn):
         self._insufficient_weather_records = Metrics.counter('main', 'insufficient_weather_records')
         self._sufficient_weather_records = Metrics.counter('main', 'sufficient_weather_records')
         self._weather_station_distance = weather_station_distance
+        self._weather_data = {}
 
-    def process(self, example):
+    def process(self, (k, examples)):
         import astral
         import logging
         from datetime import datetime
 
-        records = {}
+        # First identify a bounding box.
+        # [33.2398, -85.0795], [34.1448, -83.3327]
+        sw, ne = [0, 0], [0, 0]
 
-        for max_station_distance in [20, 40, 60]:
-            records = self.fetch(example.latitude(), example.longitude(), datetime.fromtimestamp(example.date()), max_station_distance)
-            if len(records) == 0:
+        for o in examples:
+            if sw[0] == 0 or sw[0] > o.latitude():
+                sw[0] = o.latitude()
+            if sw[1] == 0 or sw[1] > o.longitude():
+                sw[1] = o.longitude()
+
+            if ne[0] == 0 or ne[0] < o.latitude():
+                ne[0] = o.latitude()
+            if ne[1] == 0 or ne[1] < o.longitude():
+                ne[1] = o.longitude()
+
+        # For each point, ensure we give enough space to get a station for that furthest point.
+        sw = self.bounding_box(sw[0], sw[1], self._weather_station_distance)[0]
+        ne = self.bounding_box(ne[0], ne[1], self._weather_station_distance)[1]
+
+        store = _WeatherLoader(
+            project=self._project,
+            bbox=[sw.longitude, sw.latitude, ne.longitude, ne.latitude],
+            year=k[0:3],
+            month=k[4:6],
+            weather_station_distance=60)
+
+        for example in examples:
+
+            records = store.read(example.latitude(), example.longitude(), datetime.fromtimestamp(example.date()))
+
+            if len(records.keys()) == 0:
+                self._insufficient_weather_records.inc()
                 continue
-            else:
-                break
 
-        if len(records) == 0:
-            self._insufficient_weather_records.inc()
-            return
+            for date_string in sorted(records.keys()):
+                try:
+                    a = astral.Astral()
+                    a.solar_depression = 'civil'
+                    astro = a.sun_utc(
+                        datetime.strptime(date_string, '%Y%m%d').date(),
+                        example.latitude(),
+                        example.longitude()
+                    )
+                    day_length = (astro['sunset'] - astro['sunrise']).seconds
+                except astral.AstralError as err:
+                    if "Sun never reaches 6 degrees below the horizon" in err.message:
+                        day_length = 86400
+                    else:
+                        logging.error("Error parsing day[%s] length at [%.6f,%.6f]: %s", date_string, example.latitude(), example.longitude(), err)
+                        return
 
-        for date in records:
+                example.append_daylight(day_length)
+                example.append_precipitation(float(records[date_string]['PRCP']))
+                example.append_temp_min(float(records[date_string]['MIN']))
+                example.append_temp_max(float(records[date_string]['MAX']))
+                example.append_temp_avg(float(records[date_string]['TEMP']))
 
-            daylength = 0
-            try:
-                a = astral.Astral()
-                a.solar_depression = 'civil'
-                astro = a.sun_utc(date, example.latitude(), example.longitude())
-                daylength = (astro['sunset'] - astro['sunrise']).seconds
-            except astral.AstralError as err:
-                if "Sun never reaches 6 degrees below the horizon" in err.message:
-                    daylength = 86400
-                else:
-                    logging.error("Error parsing day[%s] length at [%.6f,%.6f]: %s", date, example.latitude(), example.longitude(), err)
-                    return
+            self._sufficient_weather_records.inc()
 
-            example.append_daylight(daylength)
-            example.append_precipitation(records[date][2])
-            example.append_temp_min(records[date][3])
-            example.append_temp_max(records[date][4])
-            example.append_temp_avg(records[date][5])
+            yield example
 
-        self._sufficient_weather_records.inc()
+    def bounding_box(self, lat, lng, max_station_distance):
+        from geopy import Point, distance
+        location = Point(lat, lng)
+        sw = distance.VincentyDistance(miles=max_station_distance).destination(location, 225)
+        ne = distance.VincentyDistance(miles=max_station_distance).destination(location, 45)
+        return (sw, ne)
 
-        yield example
+
+class _WeatherLoader(beam.DoFn):
+    def __init__(self, project, bbox, year, month, weather_station_distance):
+        import tempfile
+        super(_WeatherLoader, self).__init__()
+        self._project = project
+        self._dataset = 'bigquery-public-data:noaa_gsod'
+        self._weather_station_distance = weather_station_distance
+        self._bbox = bbox # swLng, swLat, neLng, neLat
+        self._year = year
+        self._month = month
+        self._temp_directory = tempfile.mkdtemp()
+        self._load()
 
     # year_dictionary provides {2016: ["01"], 2015: [12]}
-    def year_dictionary(self, range):
+    def _year_dictionary(self, range):
         res = {}
         for d in range.tolist():
             if str(d.year) not in res:
@@ -67,14 +111,19 @@ class FetchWeatherDoFn(beam.DoFn):
             res[str(d.year)].add('{:02d}'.format(d.month))
         return res
 
-    def bounding_box(self, lat, lng, max_station_distance):
+    def _polygon(self, lat, lng):
         from geopy import Point, distance
         location = Point(lat, lng)
-        nw = distance.VincentyDistance(miles=max_station_distance).destination(location, 315)
-        se = distance.VincentyDistance(miles=max_station_distance).destination(location, 135)
-        return (nw, se)
+        sw = distance.VincentyDistance(miles=self._weather_station_distance).destination(location, 225)
+        ne = distance.VincentyDistance(miles=self._weather_station_distance).destination(location, 45)
+        return [
+            [sw.longitude, sw.latitude],
+            [sw.longitude, ne.latitude],
+            [ne.longitude, ne.latitude],
+            [ne.longitude, sw.latitude]
+        ]
 
-    def form_query(self, q_year, q_months, nw_point, se_point):
+    def _form_query(self, q_year, q_months, bbox):
         month_query = ""
         for m in q_months:
             if month_query == "":
@@ -82,7 +131,6 @@ class FetchWeatherDoFn(beam.DoFn):
             else:
                 month_query += " OR a.mo = '%s'" % m
         month_query += ")"
-
         q = """
                   SELECT
                     lat,
@@ -110,36 +158,31 @@ class FetchWeatherDoFn(beam.DoFn):
                     a.da DESC
             """
         values = {
-            'q_n_lat': str(nw_point.latitude),
-            'q_w_lon': str(nw_point.longitude),
-            'q_s_lat': str(se_point.latitude),
-            'q_e_lon': str(se_point.longitude),
+            'q_n_lat': str(bbox[3]),
+            'q_w_lon': str(bbox[0]),
+            'q_s_lat': str(bbox[1]),
+            'q_e_lon': str(bbox[2]),
             'q_year': q_year,
             'q_month': month_query
         }
 
         return q.format(**values)
 
-    def fetch(self, lat, lng, date, max_station_distance):
+    def _load(self):
         from datetime import datetime, timedelta
         from pandas import date_range
-        from geopy import Point, distance
         from google.cloud import bigquery
-
-        occurrence_location = Point(lat, lng)
-        nw, se = self.bounding_box(lat, lng, max_station_distance)
-
+        from calendar import monthrange
         _client = bigquery.Client(project=self._project)
 
-        # It appears that most weather updates are a few days behind. In leu of using forecast values
-        # from another datasource for now, let's use a few days behind the date for all values.
-        today = datetime(date.year, date.month, date.day)
-        end = today - timedelta(days=1)
-        range = date_range(end=end, periods=45, freq='D')
-        records = {}
-        for year, months in self.year_dictionary(range).iteritems():
+        years = self._year_dictionary(date_range(
+            end=datetime(self._year, self._month, monthrange(self._year, self._month)[1]),
+            periods=4,
+            freq='M'
+        ))
 
-            query = self.form_query(year, months, nw, se)
+        for year, months in years.iteritems():
+            query = self._form_query(year, months, self._bbox)
 
             # Had some trouble with conflicting versions of this package between local runner and remote.
             #  pip install --upgrade google-cloud-bigquery
@@ -153,26 +196,48 @@ class FetchWeatherDoFn(beam.DoFn):
                     page_token=page_token
                 )
                 for row in iterator:
-
-                    d = datetime(int(row[8]), int(row[6]), int(row[7]))
-                    if d > range.max() or d < range.min():
-                        continue
-                    if d in records:
-                        previous = distance.vincenty().measure(Point(records[d][0], records[d][1]), occurrence_location)
-                        current = distance.vincenty().measure(Point(row[0], row[1]), occurrence_location)
-                        if current < previous:
-                            records[d] = row
-                    else:
-                        records[d] = row
+                    with open(self._temp_directory+"/"+row[8]+row[6]+row[7]+".csv", "a") as f:
+                        # location, prcp, min, max, temp
+                        f.write('%.6f, %.6f, %.6f, %.6f, %.6f, %.6f\n' % (row[0], row[1], row[2], row[3], row[4], row[5]))
                 if iterator.next_page_token is None:
                     break
                 page_token = iterator.next_page_token
 
-        dates = records.keys()
-        dates.sort()
-        if len(dates) != len(range):
-            # logging.info("range: %.8f, %.8f, %s, %s", lat, lng, year, months)
-            return {}
-        else:
-            return records
+    def read(self, lat, lng, today):
+        import pandas as pd
+        # import geopandas as gpd
+        # from shapely import geometry
+        from datetime import timedelta
+        import geopy as geopy
+        from geopy.distance import vincenty
 
+        print("lat/lng", lat, lng)
+
+        records = {}
+        polygon = self._polygon(lat, lng)
+
+        for d in pd.date_range(
+            # Set one day in the past to ensure we have all data.
+            # Should only be relevant to when fetching the daily batch.
+            end = today - timedelta(days=1),
+            periods=90,
+            freq='D'
+        ):
+            print("Date", d.strftime("%Y%m%d"))
+            weather = pd.read_csv('%s/%s.csv' % (self._temp_directory, d.strftime("%Y%m%d")),
+                header=None,
+                names=['Y','X','PRCP','MIN','MAX','AVG']
+            )
+            # csv['geometry'] = csv.apply(lambda z: geometry.Point(float(z.X), float(z.Y)), axis=1)
+            # Initial filter in order to avoid massive sort.
+            # weather = weather[weather.apply(lambda z: geometry.Point(float(z.X), float(z.Y)).within(geometry.Polygon(polygon)), axis=1)]
+            weather['Distance'] = weather.apply(lambda z: vincenty(geopy.Point(lat, lng), geopy.Point(float(z.Y), float(z.X))).miles, axis=1)
+            weather.sort_values(['Distance'], ascending=[1])
+            for index, row in weather.iterrows():
+                print(row)
+                if row['Distance'] > self._weather_station_distance:
+                    return {} # Short circuit because we're missing a day and no need to continue
+                records[d.strftime('%Y%m%d')] = row
+                break
+
+        return records

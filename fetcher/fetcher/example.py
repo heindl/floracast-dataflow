@@ -151,6 +151,11 @@ class Example:
         d = datetime.fromtimestamp(self.date())
         return d.strftime("%Y%m")
 
+    def year_string(self):
+        from datetime import datetime
+        d = datetime.fromtimestamp(self.date())
+        return d.strftime("%Y")
+
     def date_string(self):
         from datetime import datetime
         d = datetime.fromtimestamp(self.date())

@@ -17,9 +17,22 @@ def Shuffle(pcoll):  # pylint: disable=invalid-name
             | 'DropRandom' >> beam.FlatMap(lambda (k, vs): vs))
 
 @beam.ptransform_fn
-def DiffuseByDate(pcoll):  # pylint: disable=invalid-name
+def GroupByYearMonth(pcoll):  # pylint: disable=invalid-name
     return (pcoll
             | 'ProjectDateToDefuse' >> beam.Map(lambda e: (e.month_string(), e))
+            | 'GroupByKeyToDiffuse' >> beam.GroupByKey())
+
+@beam.ptransform_fn
+def DiffuseByMonth(pcoll):  # pylint: disable=invalid-name
+    return (pcoll
+            | 'ProjectDateToDefuse' >> beam.Map(lambda e: (e.month_string(), e))
+            | 'GroupByKeyToDiffuse' >> beam.GroupByKey()
+            | 'UngroupToDefuse' >> beam.FlatMap(lambda v: v[1]))
+
+@beam.ptransform_fn
+def DiffuseByYear(pcoll):  # pylint: disable=invalid-name
+    return (pcoll
+            | 'ProjectDateToDefuse' >> beam.Map(lambda e: (e.year_string(), e))
             | 'GroupByKeyToDiffuse' >> beam.GroupByKey()
             | 'UngroupToDefuse' >> beam.FlatMap(lambda v: v[1]))
 

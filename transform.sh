@@ -23,7 +23,7 @@ if [ $1 == "remote" ]; then
         --temp_location="gs://floracast-datamining/temp" \
         --staging_location="gs://floracast-datamining/staging" \
         --train_location="gs://floracast-datamining/transformed" \
-        --raw_data_location="gs://floracast-datamining/occurrences/1508609812" \
+        --raw_data_location="gs://floracast-datamining/occurrences/1509392114" \
         --num_classes 2 \
         --mode "train" \
         --percent_eval 10 \

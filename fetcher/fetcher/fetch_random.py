@@ -6,7 +6,7 @@ from apache_beam.transforms.core import PTransform
 from apache_beam.io import iobase
 
 
-def fetch_occurrences(
+def fetch_random(
         pipeline_options,
         output_path,
 ):
@@ -23,31 +23,14 @@ def fetch_occurrences(
     with beam.Pipeline(options['runner'], options=pipeline_options) as pipeline:
         with tft.Context(temp_dir=options['temp_location']):
 
-            taxa = pipeline \
-                   | 'ReadTaxa' >> _ReadTaxa(
-                project=options['project'],
-                taxa=options['occurrence_taxa'],
-                ecoregion=options['ecoregion'],
-                minimum_occurrences_within_taxon=options['minimum_occurrences_within_taxon']
-            )
-
-            occurrences = taxa \
-                   | 'FetchOccurrences' >> beam.ParDo(_FetchOccurrences(options['project'])) \
-                   | 'RemoveOccurrenceExampleLocationDuplicates' >> _RemoveOccurrenceExampleLocationDuplicates()
-
-            occurrence_count = occurrences | beam.combiners.Count.Globally()
-
-            if options['add_random_train_point'] is True:
-                random_examples = occurrence_count | 'AddRandomTrainPoints' >> beam.ParDo(_AddRandomTrainPoints())
-                occurrences = (occurrences, random_examples) | beam.Flatten()
-
-
-            occurrences = occurrences \
-                   | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(options['project'])) \
-                   | 'DiffuseByYear' >> utils.DiffuseByYear() \
-                   | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(options['project'], options['weather_station_distance'])) \
-                   | 'ShuffleOccurrences' >> utils.Shuffle() \
-                   | 'ProtoForWrite' >> beam.Map(lambda e: e.encode())
+            occurrences = pipeline \
+                          | 'ReadRandomOccurrences' >> _ReadRandomOccurrences(count=options['random_occurrence_count']) \
+                          | 'RemoveOccurrenceExampleLocationDuplicates' >> _RemoveOccurrenceExampleLocationDuplicates() \
+                          | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(options['project'])) \
+                          | 'GroupByYearMonth' >> utils.GroupByYearMonth() \
+                          | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(options['project'], options['weather_station_distance'])) \
+                          | 'ShuffleOccurrences' >> utils.Shuffle() \
+                          | 'ProtoForWrite' >> beam.Map(lambda e: e.encode())
 
             _ = occurrences \
                 | 'WriteOccurrences' >> beam.io.WriteToTFRecord(output_path + "/", file_name_suffix='.tfrecord.gz')
@@ -187,9 +170,9 @@ class _AddRandomTrainPoints(beam.DoFn):
 def _RemoveOccurrenceExampleLocationDuplicates(pcoll):  # pylint: disable=invalid-name
     """Produces a PCollection containing the unique elements of a PCollection."""
     return pcoll \
-            | 'ToPairs' >> beam.Map(lambda e: (e.equality_key(), e)) \
-            | 'GroupByKey' >> beam.GroupByKey() \
-            | 'Combine' >> beam.Map(lambda (key, examples): list(examples)[0])
+           | 'ToPairs' >> beam.Map(lambda e: (e.equality_key(), e)) \
+           | 'GroupByKey' >> beam.GroupByKey() \
+           | 'Combine' >> beam.Map(lambda (key, examples): list(examples)[0])
 
 
 
@@ -243,21 +226,15 @@ class _FetchOccurrences(beam.DoFn):
 
             yield ex
 
-class TaxaSource(iobase.BoundedSource):
+class _RandomOccurrenceSource(iobase.BoundedSource):
 
-    def __init__(self, project, taxa="", ecoregion="", minimum_occurrences_within_taxon=100):
+    def __init__(self, count=0):
         # from apache_beam.metrics import Metrics
         # self.records_read = Metrics.counter(self.__class__, 'recordsRead')
-        self._project = project
-        if taxa != None:
-            self._taxa = taxa.split(",")
-        else:
-            self._taxa = []
-        self._ecoregion = ecoregion
-        self._minimum_occurrences_within_taxon = minimum_occurrences_within_taxon
+        self._count = count
 
     def estimate_size(self):
-        return 500
+        return 0
 
     def get_range_tracker(self, start_position, stop_position):
         from apache_beam.io import range_trackers
@@ -274,54 +251,10 @@ class TaxaSource(iobase.BoundedSource):
         return range_tracker
 
     def read(self, range_tracker):
-        from google.cloud.firestore_v1beta1 import client
+        import example as example
 
-        # One of the two are required.
-        if self._ecoregion == "" and len(self._taxa) == 0:
-            return
-
-        db = client.Client(project=self._project)
-
-        if self._ecoregion != "":
-
-            taxa = dict()
-            # subfield = ("EcoRegions.%s" % self._ecoregion)
-            path = db.field_path("EcoRegions", "_%s" % self._ecoregion)
-            for o in db.collection(u'Taxa').where(path, ">", 0).get():
-                d = o.to_dict()
-
-                total_occurrences = 0
-                total_ecoregions = 0
-                occurrences_in_this_ecoregion = 0
-
-                for k in d["EcoRegions"]:
-                    if k == self._ecoregion:
-                        occurrences_in_this_ecoregion = int(d["EcoRegions"][k])
-                    total_ecoregions = total_ecoregions + 1
-                    total_occurrences = total_occurrences + int(d["EcoRegions"][k])
-
-                if total_occurrences < self._minimum_occurrences_within_taxon:
-                    continue
-
-                taxa[d["ID"]] = ((occurrences_in_this_ecoregion/total_occurrences)/total_ecoregions)
-
-            # Sort descending
-            count = 0
-            for key, value in sorted(taxa.iteritems(), key=lambda (k,v): (v,k)):
-                yield key
-                count = count + 1
-                # Limit each model to 1000 taxa.
-                if count >= 1000:
-                    return
-
-            return
-
-        # for t in self._taxa:
-        #     yield self._taxa
-            # q = db.collection(u'Occurrences')
-            # for o in q.where(u'TaxonID', u'==', t).get():
-            #     # self.records_read.inc()
-            #     yield o.to_dict()
+        for _ in range(0, self._count):
+            yield example.RandomExample()
 
     def split(self, desired_bundle_size, start_position=None, stop_position=None):
         """Implements :class:`~apache_beam.io.iobase.BoundedSource.split`
@@ -343,24 +276,20 @@ class TaxaSource(iobase.BoundedSource):
             start_position=start_position,
             stop_position=stop_position)
 
-class _ReadTaxa(PTransform):
+class _ReadRandomOccurrences(PTransform):
     """A :class:`~apache_beam.transforms.ptransform.PTransform` for reading
     from MongoDB.
     """
-    def __init__(self, project, taxa, ecoregion, minimum_occurrences_within_taxon):
+    def __init__(self, count):
         """Initializes :class:`ReadFromMongo`
         Uses source :class:`_MongoSource`
         """
-        super(_ReadTaxa, self).__init__()
-        self._source = TaxaSource(
-            project=project,
-            taxa=taxa,
-            ecoregion=ecoregion,
-            minimum_occurrences_within_taxon=minimum_occurrences_within_taxon)
+        super(_ReadRandomOccurrences, self).__init__()
+        self._source = _RandomOccurrenceSource(count=count)
 
     def expand(self, pcoll):
         """Implements :class:`~apache_beam.transforms.ptransform.PTransform.expand`"""
         return pcoll | iobase.Read(self._source)
 
-    # def display_data(self):
-    #     return {'source_dd': self._source}
+        # def display_data(self):
+        #     return {'source_dd': self._source}

@@ -38,8 +38,18 @@ def feature_keys():
 
 def get_label_vocabularly(train_data_path):
     import os
-    with open(os.path.join(train_data_path, "labels-00000-of-00001.txt"), 'r') as label_file:
-        return label_file.read().splitlines()
+    import glob
+    labels = []
+    label_files = glob.glob(train_data_path + "/labels*")
+    for file in label_files:
+        print("file", file)
+        with open(file, 'r') as label_file:
+            taxa = label_file.read().splitlines()
+            for t in taxa:
+                labels.append(t)
+
+    print(labels)
+    return labels
 
 def get_estimator(args, run_config):
     import tensorflow as tf
