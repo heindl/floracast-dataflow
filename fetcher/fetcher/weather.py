@@ -13,6 +13,7 @@ class FetchWeatherDoFn(beam.DoFn):
         self._insufficient_weather_records = Metrics.counter('main', 'insufficient_weather_records')
         self._sufficient_weather_records = Metrics.counter('main', 'sufficient_weather_records')
         self._weather_station_distance = weather_station_distance
+        self._weather_days_before = 90
 
     def process(self, batch):
         import astral
@@ -38,23 +39,20 @@ class FetchWeatherDoFn(beam.DoFn):
         sw = self.bounding_box(sw[0], sw[1], self._weather_station_distance)[0]
         ne = self.bounding_box(ne[0], ne[1], self._weather_station_distance)[1]
 
-        print("bounding box", sw.longitude, sw.latitude, ne.longitude, ne.latitude)
-        print("year/month", batch[0][0:4], batch[0][4:6])
-
         store = _WeatherLoader(
             project=self._project,
             bbox=[sw.longitude, sw.latitude, ne.longitude, ne.latitude],
             year=batch[0][0:4],
             month=batch[0][4:6],
-            weather_station_distance=self._weather_station_distance)
+            weather_station_distance=self._weather_station_distance,
+            days_before=self._weather_days_before
+        )
 
         for example in batch[1]:
 
             records = store.read(example.latitude(), example.longitude(), datetime.fromtimestamp(example.date()))
 
-            print("records", example.latitude(), example.longitude(), datetime.fromtimestamp(example.date()), len(records.keys()))
-
-            if len(records.keys()) == 0:
+            if len(records.keys()) < self._weather_days_before:
                 self._insufficient_weather_records.inc()
                 continue
 
@@ -94,7 +92,7 @@ class FetchWeatherDoFn(beam.DoFn):
 
 
 class _WeatherLoader(beam.DoFn):
-    def __init__(self, project, bbox, year, month, weather_station_distance):
+    def __init__(self, project, bbox, year, month, weather_station_distance, days_before):
         import tempfile
         super(_WeatherLoader, self).__init__()
         self._project = project
@@ -104,8 +102,8 @@ class _WeatherLoader(beam.DoFn):
         self._year = int(year)
         self._month = int(month)
         self._temp_directory = tempfile.mkdtemp()
-        print("temp_directory", self._temp_directory)
         self._load()
+        self._days_before = days_before
 
     # year_dictionary provides {2016: ["01"], 2015: [12]}
     def _year_dictionary(self, range):
@@ -149,9 +147,9 @@ class _WeatherLoader(beam.DoFn):
                     year,
                     elev
                   FROM
-                    [bigquery-public-data:noaa_gsod.gsod{q_year}] a
+                    `bigquery-public-data.noaa_gsod.gsod{q_year}` a
                   JOIN
-                    [bigquery-public-data:noaa_gsod.stations] b
+                    `bigquery-public-data.noaa_gsod.stations` b
                   ON
                     a.stn=b.usaf
                     AND a.wban=b.wban
@@ -187,26 +185,28 @@ class _WeatherLoader(beam.DoFn):
         ))
 
         for year, months in years.iteritems():
-            query = self._form_query(year, months, self._bbox)
+            query = _client.query(self._form_query(year, months, self._bbox))
 
             # Had some trouble with conflicting versions of this package between local runner and remote.
             #  pip install --upgrade google-cloud-bigquery
-            sync_query = _client.run_sync_query(query)
-            sync_query.timeout_ms = 30000
-            sync_query.run()
+            # sync_query = _client.run_sync_query(query)
+            # sync_query.timeout_ms = 30000
+            # sync_query.run()
 
-            page_token=None
-            while True:
-                iterator = sync_query.fetch_data(
-                    page_token=page_token
-                )
-                for row in iterator:
+            for row in query.result(timeout=30000):
+
+            # page_token=None
+            # while True:
+            #     iterator = sync_query.fetch_data(
+            #         page_token=page_token
+            #     )
+            #     for row in iterator:
                     with open(self._temp_directory+"/"+row[8]+row[6]+row[7]+".csv", "a") as f:
                         # location, prcp, min, max, temp
                         f.write('%.6f, %.6f, %.6f, %.6f, %.6f, %.6f\n' % (row[0], row[1], row[2], row[3], row[4], row[5]))
-                if iterator.next_page_token is None:
-                    break
-                page_token = iterator.next_page_token
+                # if iterator.next_page_token is None:
+                #     break
+                # page_token = iterator.next_page_token
 
     def read(self, lat, lng, today):
         import pandas as pd
@@ -215,6 +215,7 @@ class _WeatherLoader(beam.DoFn):
         from datetime import timedelta
         import geopy as geopy
         from geopy.distance import vincenty
+        import os
 
         records = {}
         polygon = self._polygon(lat, lng)
@@ -223,13 +224,15 @@ class _WeatherLoader(beam.DoFn):
             # Set one day in the past to ensure we have all data.
             # Should only be relevant to when fetching the daily batch.
             end = today - timedelta(days=1),
-            periods=90,
-            freq='D'
-        ):
-            weather = pd.read_csv('%s/%s.csv' % (self._temp_directory, d.strftime("%Y%m%d")),
-                header=None,
-                names=['Y','X','PRCP','MIN','MAX','AVG']
-            )
+            periods=self._days_before,
+            freq='D'):
+
+            f = ('%s/%s.csv' % (self._temp_directory, d.strftime("%Y%m%d")))
+
+            if os.path.exists(f) is False:
+                return {}
+
+            weather = pd.read_csv(f, header=None, names=['Y','X','PRCP','MIN','MAX','AVG'])
             # csv['geometry'] = csv.apply(lambda z: geometry.Point(float(z.X), float(z.Y)), axis=1)
             # Initial filter in order to avoid massive sort.
             # weather = weather[weather.apply(lambda z: geometry.Point(float(z.X), float(z.Y)).within(geometry.Polygon(polygon)), axis=1)]
@@ -238,7 +241,6 @@ class _WeatherLoader(beam.DoFn):
             weather = weather.sort_values(['Distance'], ascending=[1])
             for index, row in weather.iterrows():
                 if row['Distance'] > self._weather_station_distance:
-                    print("date, distance/row", d, self._weather_station_distance, row['Distance'])
                     return {} # Short circuit because we're missing a day and no need to continue
                 records[d.strftime('%Y%m%d')] = row
                 break

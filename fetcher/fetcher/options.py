@@ -45,7 +45,7 @@ class ProcessPipelineOptions(PipelineOptions):
             '--occurrence_taxa',
             required=False,
             default=None,
-            type=list,
+            type=str,
             help='Restrict occurrence fetch to this taxa')
 
         parser.add_argument(
@@ -65,11 +65,11 @@ class ProcessPipelineOptions(PipelineOptions):
             required=False,
             help='Directory that contains timestamped files for each training iteration')
 
-        parser.add_argument(
-            '--ecoregion',
-            required=False,
-            type=str,
-            help='Number of eco regions')
+        # parser.add_argument(
+        #     '--ecoregion',
+        #     required=False,
+        #     type=str,
+        #     help='Number of eco regions')
 
         # Google cloud options.
         # parser.add_argument(

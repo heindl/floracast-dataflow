@@ -11,23 +11,27 @@ def fetch_occurrences(
         output_path,
 ):
     import apache_beam as beam
-    import weather as weather
+    import datetime
     import elevation as elevation
-    from apache_beam.io import WriteToText
+    # from apache_beam.io import WriteToText
     # from apache_beam import pvalue
     import utils as utils
     from tensorflow_transform.beam import impl as tft
+    import weather as weather
+    import os
 
     options = pipeline_options.get_all_options()
 
     with beam.Pipeline(options['runner'], options=pipeline_options) as pipeline:
         with tft.Context(temp_dir=options['temp_location']):
 
+            taxa_list = options['occurrence_taxa'].split(",")
+
             taxa = pipeline \
                    | 'ReadTaxa' >> _ReadTaxa(
                         project=options['project'],
                         taxa=options['occurrence_taxa'],
-                        ecoregion=options['ecoregion'],
+                        # ecoregion=options['ecoregion'], Have a different process that pulls an array for this.
                         minimum_occurrences_within_taxon=options['minimum_occurrences_within_taxon']
                    )
 
@@ -41,36 +45,54 @@ def fetch_occurrences(
             #     random_examples = occurrence_count | 'AddRandomTrainPoints' >> beam.ParDo(_AddRandomTrainPoints())
             #     occurrences = (occurrences, random_examples) | beam.Flatten()
 
-            occurrences = occurrences \
+            occurrences_by_taxon = occurrences \
                  | 'GroupByYearMonth' >> utils.GroupByYearMonth() \
                  | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(options['project'], options['weather_station_distance'])) \
                  | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(options['project'])) \
-                 | 'ShuffleOccurrences' >> utils.Shuffle() \
-                 | 'ProtoForWrite' >> beam.Map(lambda e: e.encode())
+                 | 'DivideByTaxon' >> beam.ParDo(_DivideByTaxon()).with_outputs(*taxa_list)
 
-            _ = occurrences \
-                | 'WriteOccurrences' >> beam.io.WriteToTFRecord(output_path + "/", file_name_suffix='.tfrecord.gz')
+
+            for taxon in taxa_list:
+
+                path = output_path + "/" + taxon + "/" + datetime.datetime.now().strftime("%s") + "/"
+
+                if options['runner'] == 'DirectRunner':
+                    os.makedirs(path)
+
+                _ = occurrences_by_taxon[taxon] \
+                    | ('ShuffleOccurrences[%s]' % taxon) >> utils.Shuffle() \
+                    | ('ProtoForWrite[%s]' % taxon) >> beam.Map(lambda e: e.encode()) \
+                    | ('WriteOccurrences[%s]' % taxon) >> beam.io.WriteToTFRecord(path, file_name_suffix='.tfrecord.gz')
 
             # _ = data \
             #     | 'EncodePredictAsB64Json' >> beam.Map(utils.encode_as_b64_json) \
             #     | 'WritePredictDataAsText' >> beam.io.WriteToText(output_path, file_name_suffix='.txt')
 
 
-            _ = taxa | 'WriteTaxa' >> beam.io.WriteToText(output_path + "/", file_name_suffix='taxa.txt')
+            # _ = taxa | 'WriteTaxa' >> beam.io.WriteToText(output_path + "/", file_name_suffix='taxa.txt')
 
             # Write metadata
-            _ = pipeline | beam.Create([{
-                'weather_station_distance': options['weather_station_distance'],
-                'minimum_occurrences_within_taxon': options['minimum_occurrences_within_taxon'],
-                'random_train_points': options['add_random_train_point']
-            }]) \
-                | 'WriteToMetadataFile' >> WriteToText(output_path + "/", file_name_suffix=".query.meta", num_shards=1)
+            # _ = pipeline | beam.Create([{
+            #     'weather_station_distance': options['weather_station_distance'],
+            #     'minimum_occurrences_within_taxon': options['minimum_occurrences_within_taxon'],
+            #     'random_train_points': options['add_random_train_point']
+            # }]) \
+            #     | 'WriteToMetadataFile' >> WriteToText(output_path + "/", file_name_suffix=".query.meta", num_shards=1)
 
 
 class ComputeWordLengths(beam.PTransform):
     def expand(self, pcoll):
         # transform logic goes here
         return pcoll | beam.Map(lambda x: len(x))
+
+@beam.typehints.with_input_types(Example)
+@beam.typehints.with_output_types(Example)
+class _DivideByTaxon(beam.DoFn):
+    def __init__(self):
+        super(_DivideByTaxon, self).__init__()
+    def process(self, example):
+        from apache_beam import pvalue
+        yield pvalue.TaggedOutput(example.taxon(), example)
 
 @beam.typehints.with_input_types(int)
 @beam.typehints.with_output_types(Example)
@@ -196,7 +218,9 @@ class _FetchOccurrences(beam.DoFn):
         from google.cloud.firestore_v1beta1 import client
         db = client.Client(project=self._project)
         q = db.collection(u'Occurrences')
-        for o in q.where(u'TaxonID', u'==', taxon_id).order_by("FormattedDate", "DESCENDING").limit(500).get():
+
+        for o in q.where(u'TaxonID', u'==', unicode(taxon_id, "utf-8")).order_by("FormattedDate", "DESCENDING").limit(500).get():
+
             # self.records_read.inc()
             taxon = o.to_dict()
 
@@ -234,12 +258,13 @@ class _FetchOccurrences(beam.DoFn):
 
 class TaxaSource(iobase.BoundedSource):
 
-    def __init__(self, project, taxa="", ecoregion="", minimum_occurrences_within_taxon=100):
+    def __init__(self, project, taxa=[], ecoregion="", minimum_occurrences_within_taxon=100):
         # from apache_beam.metrics import Metrics
         # self.records_read = Metrics.counter(self.__class__, 'recordsRead')
         self._project = project
-        if taxa != None:
+        if taxa != None and len(taxa) > 0:
             self._taxa = taxa.split(",")
+            # self._taxa = taxa
         else:
             self._taxa = []
         self._ecoregion = ecoregion
@@ -266,51 +291,65 @@ class TaxaSource(iobase.BoundedSource):
         from google.cloud.firestore_v1beta1 import client
 
         # One of the two are required.
-        if self._ecoregion == "" and len(self._taxa) == 0:
+        # if self._ecoregion == "" and len(self._taxa) == 0:
+        if len(self._taxa) == 0:
             return
 
         db = client.Client(project=self._project)
 
-        if self._ecoregion != "":
+        for taxon_id in self._taxa:
+            for taxon in db.collection(u'Taxa').where(u'ID', u'==', unicode(taxon_id, "utf-8")).get():
 
-            taxa = dict()
-            # subfield = ("EcoRegions.%s" % self._ecoregion)
-            path = db.field_path("EcoRegions", "_%s" % self._ecoregion)
-            for o in db.collection(u'Taxa').where(path, ">", 0).get():
-                d = o.to_dict()
-
+                fields = taxon.to_dict()
                 total_occurrences = 0
-                total_ecoregions = 0
-                occurrences_in_this_ecoregion = 0
 
-                for k in d["EcoRegions"]:
-                    if k == self._ecoregion:
-                        occurrences_in_this_ecoregion = int(d["EcoRegions"][k])
-                    total_ecoregions = total_ecoregions + 1
-                    total_occurrences = total_occurrences + int(d["EcoRegions"][k])
+                if fields["EcoRegions"] is None:
+                    continue
+
+                for k in fields["EcoRegions"]:
+                    total_occurrences = int(fields["EcoRegions"][k]) + total_occurrences
 
                 if total_occurrences < self._minimum_occurrences_within_taxon:
                     continue
 
-                taxa[d["ID"]] = ((occurrences_in_this_ecoregion/total_occurrences)/total_ecoregions)
+                yield taxon_id
+                break
 
-            # Sort descending
-            count = 0
-            for key, value in sorted(taxa.iteritems(), key=lambda (k,v): (v,k)):
-                yield key
-                count = count + 1
-                # Limit each model to 1000 taxa.
-                if count >= 1000:
-                    return
+        # if self._ecoregion != "":
+        #
+        #     taxa = dict()
+        #     # subfield = ("EcoRegions.%s" % self._ecoregion)
+        #     path = db.field_path("EcoRegions", "_%s" % self._ecoregion)
+        #     for o in db.collection(u'Taxa').where(path, ">", 0).get():
+        #         d = o.to_dict()
+        #
+        #         total_occurrences = 0
+        #         total_ecoregions = 0
+        #         occurrences_in_this_ecoregion = 0
+        #
+        #         for k in d["EcoRegions"]:
+        #             if k == self._ecoregion:
+        #                 occurrences_in_this_ecoregion = int(d["EcoRegions"][k])
+        #             total_ecoregions = total_ecoregions + 1
+        #             total_occurrences = total_occurrences + int(d["EcoRegions"][k])
+        #
+        #         if total_occurrences < self._minimum_occurrences_within_taxon:
+        #             continue
+        #
+        #         taxa[d["ID"]] = ((occurrences_in_this_ecoregion/total_occurrences)/total_ecoregions)
+        #
+        #     # Sort descending
+        #     count = 0
+        #     for key, value in sorted(taxa.iteritems(), key=lambda (k,v): (v,k)):
+        #         yield key
+        #         count = count + 1
+        #         # Limit each model to 1000 taxa.
+        #         if count >= 1000:
+        #             return
+        #
+        #     return
 
-            return
 
-        # for t in self._taxa:
-        #     yield self._taxa
-            # q = db.collection(u'Occurrences')
-            # for o in q.where(u'TaxonID', u'==', t).get():
-            #     # self.records_read.inc()
-            #     yield o.to_dict()
 
     def split(self, desired_bundle_size, start_position=None, stop_position=None):
         """Implements :class:`~apache_beam.io.iobase.BoundedSource.split`
@@ -336,7 +375,7 @@ class _ReadTaxa(PTransform):
     """A :class:`~apache_beam.transforms.ptransform.PTransform` for reading
     from MongoDB.
     """
-    def __init__(self, project, taxa, ecoregion, minimum_occurrences_within_taxon):
+    def __init__(self, project, taxa, minimum_occurrences_within_taxon):
         """Initializes :class:`ReadFromMongo`
         Uses source :class:`_MongoSource`
         """
@@ -344,7 +383,7 @@ class _ReadTaxa(PTransform):
         self._source = TaxaSource(
             project=project,
             taxa=taxa,
-            ecoregion=ecoregion,
+            # ecoregion=ecoregion,
             minimum_occurrences_within_taxon=minimum_occurrences_within_taxon)
 
     def expand(self, pcoll):

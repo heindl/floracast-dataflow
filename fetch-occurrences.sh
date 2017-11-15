@@ -11,8 +11,8 @@ if [ $1 == "local" ]; then
          --temp_location /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/temp \
          --infer_location /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/forests \
          --job_name floracast-fetch-occurrences \
-         --ecoregion 245 \
-         --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/fetcher/setup.py
+         --occurrence_taxa 58682
+#         --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/fetcher/setup.py
 #         --requirements_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/floracast_preprocess/requirements.txt
 fi
 
@@ -25,7 +25,7 @@ if [ $1 == "remote" ]; then
         --train_location="gs://floracast-datamining/train" \
         --infer_location="gs://floracast-datamining/wilderness_areas" \
         --intermediate_location="gs://floracast-datamining/occurrences" \
-        --ecoregion 245 \
+        --occurrence_taxa 58682 \
         --job_name floracast-fetch-occurrences \
         --mode "train" \
         --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/fetcher/setup.py \

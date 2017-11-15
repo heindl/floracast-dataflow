@@ -13,6 +13,17 @@ KEY_PRCP = 'precipitation'
 KEY_DAYLIGHT = 'daylight'
 KEY_GRID_ZONE = 'mgrs_grid_zone'
 
+@beam.typehints.with_input_types(beam.typehints.Tuple[str, beam.typehints.Iterable[beam.typehints.Any]])
+@beam.typehints.with_output_types(beam.typehints.Any)
+class Truncate(beam.DoFn):
+    def process(self, kv, occurrence_total=0):
+        count = 0
+        for e in kv[1]:
+            count = count + 1
+            yield e
+            if count > occurrence_total:
+                return
+
 @beam.ptransform_fn
 def Shuffle(pcoll):  # pylint: disable=invalid-name
     import random
@@ -106,11 +117,11 @@ def make_input_schema(mode):
         KEY_OCCURRENCE_ID: FixedLenFeature(shape=[], dtype=string),
         KEY_ELEVATION: FixedLenFeature(shape=[1], dtype=float32),
         KEY_GRID_ZONE: FixedLenFeature(shape=[1], dtype=string),
-        KEY_MAX_TEMP: FixedLenFeature(shape=[45], dtype=float32),
-        KEY_MIN_TEMP: FixedLenFeature(shape=[45], dtype=float32),
-        KEY_AVG_TEMP: FixedLenFeature(shape=[45], dtype=float32),
-        KEY_PRCP: FixedLenFeature(shape=[45], dtype=float32),
-        KEY_DAYLIGHT: FixedLenFeature(shape=[45], dtype=float32),
+        KEY_MAX_TEMP: FixedLenFeature(shape=[90], dtype=float32),
+        KEY_MIN_TEMP: FixedLenFeature(shape=[90], dtype=float32),
+        KEY_AVG_TEMP: FixedLenFeature(shape=[90], dtype=float32),
+        KEY_PRCP: FixedLenFeature(shape=[90], dtype=float32),
+        KEY_DAYLIGHT: FixedLenFeature(shape=[90], dtype=float32),
     })
 
     return dataset_schema.from_feature_spec(result)

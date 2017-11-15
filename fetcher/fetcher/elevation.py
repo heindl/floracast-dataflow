@@ -10,7 +10,7 @@ class ElevationBundleDoFn(beam.DoFn):
         from google.cloud import storage, exceptions
         client = storage.client.Client(project=project)
         try:
-            bucket = client.get_bucket('floracast-conf')
+            bucket = client.get_bucket('floracast-configuration')
         except exceptions.NotFound:
             print('Sorry, that bucket does not exist!')
             return

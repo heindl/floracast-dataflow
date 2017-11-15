@@ -1,6 +1,23 @@
 # from __future__ import absolute_import
 from __future__ import division
 import logging
+import apache_beam as beam
+
+class Decoder(beam.DoFn):
+    # def __init__(self):
+        # self._counter = 0
+
+    def process(self, element, coder):
+        try:
+            decoded = coder.decode(element)
+            # print(decoded)
+            yield decoded
+        except ValueError:
+            #TODO: LOG THIS ERROR!
+            return
+            # self._counter = self._counter + 1
+            # print("invalid", self._counter)
+
 
 def main(argv=None):
     from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions, StandardOptions, SetupOptions
@@ -15,6 +32,7 @@ def main(argv=None):
     from apache_beam.io.filesystem import CompressionTypes
     import apache_beam as beam
     from transformer import options, functions
+    from apache_beam import pvalue
 
     pipeline_options = PipelineOptions(flags=argv)
     # ['--setup_file', os.path.abspath(os.path.join(os.path.dirname(__file__), 'setup.py'))],
@@ -38,15 +56,31 @@ def main(argv=None):
             input_schema = functions.make_input_schema(transformer_pipeline_options.mode)
             input_coder = coders.ExampleProtoCoder(input_schema)
 
-            records = pipeline \
-                      | 'ReadInitialTFRecords' >> beam.io.ReadFromTFRecord(
-                transformer_pipeline_options.raw_data_location+"/*.gz",
+            occurrences = pipeline \
+                      | 'ReadOccurrenceTFRecords' >> beam.io.ReadFromTFRecord(
+                transformer_pipeline_options.raw_location+"/*.gz",
                 compression_type=CompressionTypes.GZIP) \
-                      | 'DecodeProtoExamples' >> beam.Map(input_coder.decode)
+                      | 'DecodeOccurrenceProtoExamples' >> beam.ParDo(Decoder(), input_coder)
+                      # | 'DecodeOccurrenceProtoExamples' >> beam.Map(input_coder.decode)
+
+            occurrence_count = occurrences | beam.combiners.Count.Globally()
+
+            random_records = pipeline \
+                             | 'ReadRandomTFRecords' >> beam.io.ReadFromTFRecord(
+                                transformer_pipeline_options.random_location+"/*.gz",
+                                compression_type=CompressionTypes.GZIP) \
+                             | 'DecodeRandomProtoExamples' >> beam.ParDo(Decoder(), input_coder) \
+                             | 'ShuffleRandom' >> functions.Shuffle() \
+                             | 'PairWithStandardToGroupToTruncate' >> beam.Map(lambda e: ('_', e)) \
+                             | 'GroupByKey' >> beam.GroupByKey() \
+                             | 'TruncateRandomToOccurrenceCount' >> beam.ParDo(functions.Truncate(), pvalue.AsSingleton(occurrence_count))
+
+            records = (occurrences, random_records) | beam.Flatten()
 
             # records = records | 'RecordsDataset' >> beam.ParDo(occurrences.Counter("main"))
 
-            preprocessing_fn = functions.make_preprocessing_fn(transformer_pipeline_options.num_classes)
+            # preprocessing_fn = functions.make_preprocessing_fn(transformer_pipeline_options.num_classes)
+            preprocessing_fn = functions.make_preprocessing_fn(2)
             metadata = dataset_metadata.DatasetMetadata(schema=input_schema)
 
             _ = metadata \

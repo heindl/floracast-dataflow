@@ -7,12 +7,11 @@ if [ $1 == "local" ]; then
          --runner DirectRunner \
          --project floracast-firestore \
          --mode "train" \
-         --raw_data_location /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/occurrences/1505437167 \
+         --raw_location /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/occurrences/58682/1510696440 \
+         --random_location /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/random/1510706694 \
          --train_location /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/transformed \
          --temp_location /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/temp \
-         --job_name floracast_transform \
-         --num_classes 2 \
-         --percent_eval 10
+         --job_name floracast_transform
 fi
 
 if [ $1 == "remote" ]; then
@@ -22,9 +21,9 @@ if [ $1 == "remote" ]; then
         --job_name="floracast-transform" \
         --temp_location="gs://floracast-datamining/temp" \
         --staging_location="gs://floracast-datamining/staging" \
+        --raw_location="gs://floracast-datamining/occurrences/58682/1510696440" \
+        --random_location="gs://floracast-datamining/random/1510706694" \
         --train_location="gs://floracast-datamining/transformed" \
-        --raw_data_location="gs://floracast-datamining/occurrences/1509392114" \
-        --num_classes 2 \
         --mode "train" \
         --percent_eval 10 \
         --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/transformer/setup.py \
