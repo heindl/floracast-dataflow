@@ -10,13 +10,13 @@ def create_parser():
     parser.add_argument(
         '--train_data_path', type=str, required=True)
     parser.add_argument('--output_path', type=str, required=True)
-    parser.add_argument(
-        '--hidden_units',
-        nargs='*',
-        help='List of hidden units per layer. All layers are fully connected. Ex.'
-             '`64 32` means first layer has 64 nodes and second one has 32.',
-        default=[512],
-        type=int)
+    # parser.add_argument(
+    #     '--hidden_units',
+    #     nargs='*',
+    #     help='List of hidden units per layer. All layers are fully connected. Ex.'
+    #          '`64 32` means first layer has 64 nodes and second one has 32.',
+    #     default=[512],
+    #     type=int)
     parser.add_argument(
         '--model_dir',
         type=str,

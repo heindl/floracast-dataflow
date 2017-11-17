@@ -9,7 +9,7 @@ if [ $1 == "local" ]; then
          --mode "train" \
          --raw_location /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/occurrences/58682/1510696440 \
          --random_location /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/random/1510706694 \
-         --train_location /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/transformed \
+         --train_location /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/transformed/58682 \
          --temp_location /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/temp \
          --job_name floracast_transform
 fi
@@ -23,7 +23,7 @@ if [ $1 == "remote" ]; then
         --staging_location="gs://floracast-datamining/staging" \
         --raw_location="gs://floracast-datamining/occurrences/58682/1510696440" \
         --random_location="gs://floracast-datamining/random/1510706694" \
-        --train_location="gs://floracast-datamining/transformed" \
+        --train_location="gs://floracast-datamining/transformed/58682" \
         --mode "train" \
         --percent_eval 10 \
         --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/transformer/setup.py \

@@ -8,6 +8,7 @@ class FetchWeatherDoFn(beam.DoFn):
     def __init__(self, project, weather_station_distance):
         super(FetchWeatherDoFn, self).__init__()
         from apache_beam.metrics import Metrics
+        import pandas as pd
         self._project = project
         self._dataset = 'bigquery-public-data:noaa_gsod'
         self._insufficient_weather_records = Metrics.counter('main', 'insufficient_weather_records')
@@ -94,6 +95,7 @@ class FetchWeatherDoFn(beam.DoFn):
 class _WeatherLoader(beam.DoFn):
     def __init__(self, project, bbox, year, month, weather_station_distance, days_before):
         import tempfile
+        import geopandas as gpd
         super(_WeatherLoader, self).__init__()
         self._project = project
         self._dataset = 'bigquery-public-data:noaa_gsod'
@@ -102,8 +104,9 @@ class _WeatherLoader(beam.DoFn):
         self._year = int(year)
         self._month = int(month)
         self._temp_directory = tempfile.mkdtemp()
-        self._load()
+        self._stations = gpd.GeoDataFrame()
         self._days_before = days_before
+        self._load()
 
     # year_dictionary provides {2016: ["01"], 2015: [12]}
     def _year_dictionary(self, range):
@@ -145,7 +148,8 @@ class _WeatherLoader(beam.DoFn):
                     mo,
                     da,
                     year,
-                    elev
+                    elev,
+                    stn
                   FROM
                     `bigquery-public-data.noaa_gsod.gsod{q_year}` a
                   JOIN
@@ -176,6 +180,11 @@ class _WeatherLoader(beam.DoFn):
         from pandas import date_range
         from google.cloud import bigquery
         from calendar import monthrange
+        from shapely import geometry
+        import geopandas as gpd
+        import os
+        import pandas as pd
+
         _client = bigquery.Client(project=self._project)
 
         years = self._year_dictionary(date_range(
@@ -183,6 +192,9 @@ class _WeatherLoader(beam.DoFn):
             periods=5,
             freq='M'
         ))
+
+        stations = []
+        points = []
 
         for year, months in years.iteritems():
             query = _client.query(self._form_query(year, months, self._bbox))
@@ -201,12 +213,62 @@ class _WeatherLoader(beam.DoFn):
             #         page_token=page_token
             #     )
             #     for row in iterator:
-                    with open(self._temp_directory+"/"+row[8]+row[6]+row[7]+".csv", "a") as f:
-                        # location, prcp, min, max, temp
-                        f.write('%.6f, %.6f, %.6f, %.6f, %.6f, %.6f\n' % (row[0], row[1], row[2], row[3], row[4], row[5]))
+
+                    if row[10] not in stations:
+                        stations.append(row[10])
+                        points.append(geometry.Point(row[1], row[0]))
+
+                    # stations_dict[row[10]] = [row[0], row[1]]
+
+                    station_path = self._temp_directory+"/"+row[10]+"/"
+
+                    try:
+                        os.makedirs(station_path)
+                    except OSError:
+                        if not os.path.isdir(station_path):
+                            raise
+
+                    with open(station_path+row[8]+row[6]+row[7]+".csv", "w") as f:
+                        # prcp, min, max, temp
+                        f.write('%.6f, %.6f, %.6f, %.6f' % (row[2], row[3], row[4], row[5]))
                 # if iterator.next_page_token is None:
                 #     break
                 # page_token = iterator.next_page_token
+
+        self._stations = gpd.GeoDataFrame(pd.DataFrame({
+            'stn': stations,
+            'geometry': points,
+        }))
+
+        # self._stations['Distance'] = self._stations.apply(lambda z: vincenty(geopy.Point(lat, lng), geopy.Point(float(z.Y), float(z.X))).miles, axis=1)
+
+
+    def _get_stations(self, lat, lng):
+        from shapely import geometry
+        polygon = self._polygon(lat, lng)
+        return self._stations[self._stations.geometry.within(geometry.Polygon(polygon))]
+
+    def _read_one(self, stations, date):
+        import os
+
+        for station in stations["stn"].tolist():
+
+            filepath = ('%s/%s/%s.csv' % (self._temp_directory, station, date.strftime("%Y%m%d")))
+
+            if os.path.exists(filepath) is False:
+                continue
+
+            with open(filepath, 'r') as file:
+                vs = file.read().replace('\n', '').split(',')
+
+                return {
+                    'PRCP': vs[0],
+                    'MIN': vs[1],
+                    'MAX': vs[2],
+                    'AVG': vs[3]
+                }
+
+        return {}
 
     def read(self, lat, lng, today):
         import pandas as pd
@@ -215,10 +277,14 @@ class _WeatherLoader(beam.DoFn):
         from datetime import timedelta
         import geopy as geopy
         from geopy.distance import vincenty
-        import os
+        # import os
 
         records = {}
-        polygon = self._polygon(lat, lng)
+        # polygon = self._polygon(lat, lng)
+
+        stations = self._get_stations(lat, lng)
+        stations['Distance'] = stations.apply(lambda z: vincenty(geopy.Point(lat, lng), geopy.Point(z.geometry.y, z.geometry.x)).miles, axis=1)
+        stations = stations.sort_values(['Distance'], ascending=[1])
 
         for d in pd.date_range(
             # Set one day in the past to ensure we have all data.
@@ -227,22 +293,25 @@ class _WeatherLoader(beam.DoFn):
             periods=self._days_before,
             freq='D'):
 
-            f = ('%s/%s.csv' % (self._temp_directory, d.strftime("%Y%m%d")))
-
-            if os.path.exists(f) is False:
+            o = self._read_one(stations, d)
+            if not o:
                 return {}
 
-            weather = pd.read_csv(f, header=None, names=['Y','X','PRCP','MIN','MAX','AVG'])
-            # csv['geometry'] = csv.apply(lambda z: geometry.Point(float(z.X), float(z.Y)), axis=1)
-            # Initial filter in order to avoid massive sort.
-            # weather = weather[weather.apply(lambda z: geometry.Point(float(z.X), float(z.Y)).within(geometry.Polygon(polygon)), axis=1)]
-            weather['Distance'] = weather.apply(lambda z: vincenty(geopy.Point(lat, lng), geopy.Point(float(z.Y), float(z.X))).miles, axis=1)
-            weather = weather[weather.Distance <= self._weather_station_distance]
-            weather = weather.sort_values(['Distance'], ascending=[1])
-            for index, row in weather.iterrows():
-                if row['Distance'] > self._weather_station_distance:
-                    return {} # Short circuit because we're missing a day and no need to continue
-                records[d.strftime('%Y%m%d')] = row
-                break
+            records[d.strftime("%Y%m%d")] = o
+
+                # page = pd.read_csv(f, header=None, names=['Y','X','PRCP','MIN','MAX','AVG'])
+                # csv['geometry'] = csv.apply(lambda z: geometry.Point(float(z.X), float(z.Y)), axis=1)
+                # Initial filter in order to avoid massive sort.
+                # weather = weather[weather.apply(lambda z: geometry.Point(float(z.X), float(z.Y)).within(geometry.Polygon(polygon)), axis=1)]
+                # weather = pd.concat(weather, page)
+
+                # weather['Distance'] = weather.apply(lambda z: vincenty(geopy.Point(lat, lng), geopy.Point(float(z.Y), float(z.X))).miles, axis=1)
+                # # weather = weather[weather.Distance <= self._weather_station_distance]
+                # weather = weather.sort_values(['Distance'], ascending=[1])
+                # for index, row in weather.iterrows():
+                #     if row['Distance'] > self._weather_station_distance:
+                #         return {} # Short circuit because we're missing a day and no need to continue
+                #     records[d.strftime('%Y%m%d')] = row
+                #     break
 
         return records

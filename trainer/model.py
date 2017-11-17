@@ -27,17 +27,16 @@ def feature_columns():
         # ), dimension=8),
         tf.contrib.layers.real_valued_column("elevation", dtype=tf.float32),
         # tf.contrib.layers.real_valued_column("avg_temp", dtype=tf.float32),
-        tf.contrib.layers.real_valued_column("max_temp", dimension=45, dtype=tf.float32),
-        # tf.contrib.layers.real_valued_column("min_temp", dtype=tf.float32),
-        tf.contrib.layers.real_valued_column("precipitation", dimension=45, dtype=tf.float32),
-        tf.contrib.layers.real_valued_column("daylight", dimension=45, dtype=tf.float32)
+        tf.contrib.layers.real_valued_column("max_temp", dimension=90, dtype=tf.float32),
+        tf.contrib.layers.real_valued_column("min_temp", dimension=90, dtype=tf.float32),
+        tf.contrib.layers.real_valued_column("precipitation", dimension=90, dtype=tf.float32),
+        tf.contrib.layers.real_valued_column("daylight", dimension=90, dtype=tf.float32)
     ]
 
 def feature_keys():
-    return ["elevation", "max_temp", "precipitation", "daylight"]
+    return ["elevation", "max_temp", "min_temp", "precipitation", "daylight"]
 
 def get_label_vocabularly(train_data_path):
-    import os
     import glob
     labels = []
     label_files = glob.glob(train_data_path + "/labels*")
@@ -48,7 +47,6 @@ def get_label_vocabularly(train_data_path):
             for t in taxa:
                 labels.append(t)
 
-    print(labels)
     return labels
 
 def get_estimator(args, run_config):
@@ -71,13 +69,16 @@ def get_estimator(args, run_config):
 
     label_vocabulary = get_label_vocabularly(args.train_data_path)
 
+    print("label vocabulary", label_vocabulary)
+
         # classifier = tf.contrib.learn.Estimator(
     return tf.estimator.Estimator(
         model_fn=_get_model_fn(
             # tf.contrib.learn.DNNClassifier(
             tf.estimator.DNNClassifier(
                 feature_columns=feature_columns(),
-                hidden_units=args.hidden_units,
+                # hidden_units=args.hidden_units,
+                hidden_units=[256, 128],
                 n_classes=len(label_vocabulary),
                 label_vocabulary=label_vocabulary,
                 optimizer=tf.train.ProximalAdagradOptimizer(
