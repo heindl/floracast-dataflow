@@ -48,7 +48,7 @@ def fetch_forests(
             examples = pipeline \
                   | _ReadProtectedAreas(project=options['project'], protected_area_count=options['protected_area_count']) \
                   | 'ConvertProtectedAreaDictToExample' >> beam.ParDo(_ProtectedAreaDictToExample(unix)) \
-                  | 'GroupByYearMonth' >> utils.GroupByYearMonth() \
+                  | 'GroupByYearMonth' >> utils.GroupByYearMonthRegion() \
                   | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(options['project'], options['weather_station_distance'])) \
                   | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(options['project'])) \
                   | 'SplitPCollsByDate' >> beam.ParDo(SplitPCollsByDate()).with_outputs(*dates)

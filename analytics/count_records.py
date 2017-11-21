@@ -21,16 +21,21 @@ taxa = {}
 # except exceptions.NotFound:
 #     print('Sorry, that bucket does not exist!')
 #     return
-
+dates = {}
 # with io.open('./data.txt', 'w', encoding='utf-8') as f:
 for filename in iglob(args.path + "/*.tfrecord.gz"):
     print(filename)
     insufficient = 0
     for example in tf.python_io.tf_record_iterator(filename, options=options):
         e = tf.train.Example.FromString(example)
+        date = e.features.feature["date"].int64_list.value[0]
+        if date not in dates:
+            dates[date] = 1
+        else:
+            dates[date] = 1 + dates[date]
         total = total + 1
-        if len(e.features.feature["daylight"].float_list.value) < 90:
-            insufficient = insufficient + 1
+        # if len(e.features.feature["daylight"].float_list.value) < 90:
+        #     insufficient = insufficient + 1
         # floater = 0
         # for k in e.features.feature["daylight"].float_list[0]:
         #     floater = floater + 1
@@ -39,5 +44,6 @@ for filename in iglob(args.path + "/*.tfrecord.gz"):
         #     taxa[taxon] += 1
         # else:
         #     taxa[taxon] = 1
-    print("insufficient", insufficient)
+    # print("insufficient", insufficient)
+print("dates", dates)
 print("total tf records: ", total)

@@ -40,7 +40,7 @@ def fetch_random(
             #     | 'WritePredictDataAsText' >> beam.io.WriteToText(output_path, file_name_suffix='.txt')
 
             # Write metadata
-            _ = pipeline | beam.Create([{
+            _ = pipeline | beama.Create([{
                 'weather_station_distance': options['weather_station_distance'],
                 'random_occurrence_count': options['random_occurrence_count']
             }]) \

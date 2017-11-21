@@ -28,7 +28,8 @@ if [ $1 == "remote" ]; then
         --occurrence_taxa 58682 \
         --job_name floracast-fetch-occurrences \
         --mode "train" \
-        --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/fetcher/setup.py \
+        --setup
+        _file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/fetcher/setup.py \
         --workerLogLevelOverrides=com.google.cloud.dataflow#DEBUG
 #        --requirements_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/floracast_preprocess/requirements.txt
       # --protected_area_count 3 \

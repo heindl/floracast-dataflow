@@ -151,6 +151,22 @@ class Example:
         d = datetime.fromtimestamp(self.date())
         return d.strftime("%Y%m")
 
+    def month_region_string(self):
+        from datetime import datetime
+        date_str = datetime.fromtimestamp(self.date()).strftime("%Y%m")
+
+        n = self.latitude() > 37.8315026
+        w = self.longitude() < -97.7238796
+
+        if n and w:
+            return date_str + "nw"
+        if n and not w:
+            return date_str + "ne"
+        if not n and w:
+            return date_str + "sw"
+        if not n and not w:
+            return date_str + "se"
+
     def year_string(self):
         from datetime import datetime
         d = datetime.fromtimestamp(self.date())

@@ -36,7 +36,7 @@ class ProcessPipelineOptions(PipelineOptions):
         )
 
         parser.add_argument(
-            '--minimum_occurrences_within_taxon',
+            '--min_occurrences_within_taxon',
             required=False,
             default=100,
             help='The number of occurrence required to process taxon')
@@ -49,71 +49,24 @@ class ProcessPipelineOptions(PipelineOptions):
             help='Restrict occurrence fetch to this taxa')
 
         parser.add_argument(
-            '--weather_station_distance',
+            '--max_weather_station_distance',
             required=False,
-            default=150,
+            default=100,
             help='Maximum distance a weather station can be from an occurrence when fetching weather.')
 
-        parser.add_argument(
-            '--infer_location',
-            required=False,
-            help='Directory that contains timestamped files for protected areas')
-
-        #### TRAIN ####
-        parser.add_argument(
-            '--train_location',
-            required=False,
-            help='Directory that contains timestamped files for each training iteration')
-
-        # parser.add_argument(
-        #     '--ecoregion',
-        #     required=False,
-        #     type=str,
-        #     help='Number of eco regions')
-
-        # Google cloud options.
-        # parser.add_argument(
-        #     '--temp_location',
-        #     required=True,
-        #     help='Temporary data')
-        #
-        # parser.add_argument(
-        #     '--staging_location',
-        #     required=True,
-        #     help='Staging data')
-
-        parser.add_argument(
-            '--num_classes',
-            required=False,
-            type=int,
-            help='Number of training classes')
-
-
         #### INFER ####
-
-
-        parser.add_argument(
-            '--weeks_before',
-            required=False,
-            default=1,
-            type=int,
-            help='The number of weeks in the past to generate prediction data for each forest'
-            # If the model changes, we can expect this to be 52 weeks in the past. If not, just this week,
-            # calculated every Friday.
-        )
 
         parser.add_argument(
             '--protected_area_count',
             required=False,
             default=0,
             type=int,
-            help='The number of locations to generate data for'
-            # If the model changes, we can expect this to be 52 weeks in the past. If not, just this week,
-            # calculated every Friday.
+            help='The number of areas to fetch. Gathers all if zero.'
         )
 
         parser.add_argument(
-            '--add_random_train_point',
+            '--date',
             required=False,
-            default=True,
-            help='Should a random training location be added for every actual occurrence?')
+            type=str,
+            help='The date on which to gather wilderness areas.'
+        )
