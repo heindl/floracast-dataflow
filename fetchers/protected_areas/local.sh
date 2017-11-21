@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-python ./protected_areas/main.py \
+python ./main.py \
          --runner DirectRunner \
          --project floracast-firestore \
          --data_location /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/protected_areas \

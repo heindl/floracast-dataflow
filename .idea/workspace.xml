@@ -2,31 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d5d946e7-fd45-4ccd-884b-e8aec6a492d9" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/fetchers/protected_areas/call.sh" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/fetchers/protected_areas/deploy.sh" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/fetchers/protected_areas/local.sh" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/fetchers/shared/build.sh" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/fetchers/shared/setup.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/fetchers/shared/shared/__init__.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/fetchers/shared/tests/__init__.py" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/fetch-protected.sh" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/fetcher/README.md" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/fetcher/__init__.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/fetcher/fetcher/__init__.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/fetcher/fetcher/elevation.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/fetcher/fetcher/example.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/fetcher/fetcher/occurrences.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/fetcher/fetcher/options.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/fetcher/fetcher/protected_areas.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/fetcher/fetcher/random_occurrences.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/fetcher/fetcher/utils.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/fetcher/fetcher/weather.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/fetcher/fetcher/weather_test.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/fetcher/main.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/fetcher/setup.py" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/analytics/count_records.py" afterPath="$PROJECT_DIR$/analytics/count_records.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fetch-occurrences.sh" afterPath="$PROJECT_DIR$/fetch-occurrences.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fetchers/protected_areas/deploy.sh" afterPath="$PROJECT_DIR$/fetchers/protected_areas/deploy.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fetchers/protected_areas/local.sh" afterPath="$PROJECT_DIR$/fetchers/protected_areas/local.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fetchers/protected_areas/main.py" afterPath="$PROJECT_DIR$/fetchers/protected_areas/main.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fetchers/protected_areas/setup.py" afterPath="$PROJECT_DIR$/fetchers/protected_areas/setup.py" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -48,8 +28,8 @@
       <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/fetchers/protected_areas/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="390">
-              <caret line="26" column="24" lean-forward="false" selection-start-line="26" selection-start-column="24" selection-end-line="26" selection-end-column="24" />
+            <state relative-caret-position="-1505">
+              <caret line="52" column="48" lean-forward="false" selection-start-line="52" selection-start-column="48" selection-end-line="52" selection-end-column="48" />
               <folding>
                 <element signature="e#41#72#0" expanded="true" />
               </folding>
@@ -57,14 +37,22 @@
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/fetchers/main.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="238">
+              <caret line="18" column="0" lean-forward="false" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="setup.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/fetchers/protected_areas/setup.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-141">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding>
-                <element signature="e#1185#1236#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="234">
+              <caret line="25" column="20" lean-forward="false" selection-start-line="25" selection-start-column="20" selection-end-line="25" selection-end-column="20" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -91,16 +79,6 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="ex.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/fetchers/shared/shared/ex.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="208">
-              <caret line="19" column="18" lean-forward="false" selection-start-line="19" selection-start-column="18" selection-end-line="19" selection-end-column="18" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="build.sh" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/fetchers/shared/build.sh">
           <provider selected="true" editor-type-id="text-editor">
@@ -111,23 +89,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="elevation.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/fetchers/shared/shared/elevation.py">
+      <file leaf-file-name="deploy.sh" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/fetchers/protected_areas/deploy.sh">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="180">
-              <caret line="12" column="12" lean-forward="false" selection-start-line="12" selection-start-column="12" selection-end-line="12" selection-end-column="12" />
-              <folding>
-                <element signature="e#41#67#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="165">
+              <caret line="11" column="29" lean-forward="false" selection-start-line="11" selection-start-column="29" selection-end-line="11" selection-end-column="29" />
+              <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="deploy.sh" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/fetchers/protected_areas/deploy.sh">
+      <file leaf-file-name="setup.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/fetchers/shared/setup.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="135">
-              <caret line="9" column="51" lean-forward="true" selection-start-line="9" selection-start-column="51" selection-end-line="9" selection-end-column="51" />
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -146,8 +122,8 @@
       <file leaf-file-name="local.sh" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/fetchers/protected_areas/local.sh">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="120">
-              <caret line="8" column="26" lean-forward="false" selection-start-line="8" selection-start-column="26" selection-end-line="8" selection-end-column="26" />
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -229,8 +205,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/requirements.txt" />
-        <option value="$PROJECT_DIR$/floracast_preprocess/preprocess/utils.py" />
         <option value="$PROJECT_DIR$/floracast_preprocess/README.md" />
         <option value="$PROJECT_DIR$/floracast_preprocess/preprocess/occurrences.py" />
         <option value="$PROJECT_DIR$/floracast_preprocess/preprocess/protected_areas.py" />
@@ -270,15 +244,17 @@
         <option value="$PROJECT_DIR$/train.sh" />
         <option value="$PROJECT_DIR$/predict.sh" />
         <option value="$PROJECT_DIR$/fetchers/utils/setup.py" />
-        <option value="$PROJECT_DIR$/fetchers/protected_areas/setup.py" />
         <option value="$PROJECT_DIR$/fetchers/shared/elevation.py" />
         <option value="$PROJECT_DIR$/fetchers/shared/weather.py" />
         <option value="$PROJECT_DIR$/fetchers/shared/setup.py" />
         <option value="$PROJECT_DIR$/fetchers/shared/build.sh" />
         <option value="$PROJECT_DIR$/fetchers/shared/shared/weather.py" />
         <option value="$PROJECT_DIR$/fetchers/protected_areas/call.sh" />
-        <option value="$PROJECT_DIR$/fetchers/protected_areas/main.py" />
+        <option value="$PROJECT_DIR$/fetchers/protected_areas/protected_areas/main.py" />
+        <option value="$PROJECT_DIR$/fetchers/protected_areas/setup.py" />
         <option value="$PROJECT_DIR$/fetchers/protected_areas/local.sh" />
+        <option value="$PROJECT_DIR$/fetchers/protected_areas/main.py" />
+        <option value="$PROJECT_DIR$/fetchers/deploy.sh" />
         <option value="$PROJECT_DIR$/fetchers/protected_areas/deploy.sh" />
       </list>
     </option>
@@ -378,12 +354,6 @@
               <item name="Root" type="cbb8eebc:String" user="Root" />
               <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
               <item name="fetchers" type="cbb8eebc:String" user="fetchers" />
-              <item name="fetcher" type="cbb8eebc:String" user="fetcher" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
-              <item name="fetchers" type="cbb8eebc:String" user="fetchers" />
               <item name="protected_areas" type="cbb8eebc:String" user="protected_areas" />
             </path>
             <path>
@@ -391,6 +361,17 @@
               <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
               <item name="fetchers" type="cbb8eebc:String" user="fetchers" />
               <item name="shared" type="cbb8eebc:String" user="shared" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
+              <item name="gs/floracast-models" type="cbb8eebc:String" user="gs/floracast-models" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
+              <item name="gs/floracast-models" type="cbb8eebc:String" user="gs/floracast-models" />
+              <item name="protected_areas/20171110" type="cbb8eebc:String" user="protected_areas/20171110" />
             </path>
           </expand>
           <select />
@@ -418,10 +399,10 @@
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/fetchers/protected_areas" />
+      <recent name="$PROJECT_DIR$/fetchers" />
       <recent name="$PROJECT_DIR$/fetchers/protected_areas/protected_areas" />
       <recent name="$PROJECT_DIR$/fetchers/shared/tests" />
       <recent name="$PROJECT_DIR$/fetchers/shared/shared" />
-      <recent name="$PROJECT_DIR$/transformer/transformer" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -672,15 +653,16 @@
       <workItem from="1510796509170" duration="2964000" />
       <workItem from="1510855730448" duration="6104000" />
       <workItem from="1511194266359" duration="163000" />
-      <workItem from="1511194498495" duration="9654000" />
+      <workItem from="1511194498495" duration="12225000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="826775000" />
+    <option name="totallyTimeSpent" value="829346000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1280" height="800" extended-state="0" />
+    <editor active="true" />
     <layout>
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -694,7 +676,7 @@
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2786753" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2786753" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3252841" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.16397415" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -729,13 +711,6 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/transformer/transformer/options.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/transformer/transformer/functions.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-981">
@@ -899,14 +874,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/fetchers/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="248">
-          <caret line="43" column="7" lean-forward="false" selection-start-line="43" selection-start-column="7" selection-end-line="46" selection-end-column="9" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/fetchers/fetcher/occurrences.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -949,14 +916,6 @@
           <folding>
             <element signature="e#0#57#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetchers/shared/setup.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="309">
-          <caret line="34" column="21" lean-forward="false" selection-start-line="34" selection-start-column="21" selection-end-line="34" selection-end-column="21" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1005,14 +964,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/fetchers/shared/build.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/apache_beam/io/tfrecordio.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="225">
@@ -1031,38 +982,68 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/fetchers/protected_areas/main.py">
+    <entry file="file://$PROJECT_DIR$/fetchers/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="390">
-          <caret line="26" column="24" lean-forward="false" selection-start-line="26" selection-start-column="24" selection-end-line="26" selection-end-column="24" />
-          <folding>
-            <element signature="e#41#72#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="238">
+          <caret line="18" column="0" lean-forward="false" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/fetchers/protected_areas/local.sh">
+    <entry file="file://$PROJECT_DIR$/fetchers/protected_areas/protected_areas/run.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="120">
-          <caret line="8" column="26" lean-forward="false" selection-start-line="8" selection-start-column="26" selection-end-line="8" selection-end-column="26" />
+        <state relative-caret-position="300">
+          <caret line="20" column="28" lean-forward="true" selection-start-line="0" selection-start-column="0" selection-end-line="187" selection-end-column="48" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/fetchers/protected_areas/setup.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-141">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        <state relative-caret-position="234">
+          <caret line="25" column="20" lean-forward="false" selection-start-line="25" selection-start-column="20" selection-end-line="25" selection-end-column="20" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetchers/protected_areas/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1505">
+          <caret line="52" column="48" lean-forward="false" selection-start-line="52" selection-start-column="48" selection-end-line="52" selection-end-column="48" />
           <folding>
-            <element signature="e#1185#1236#0" expanded="true" />
+            <element signature="e#41#72#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetchers/shared/setup.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetchers/shared/build.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetchers/protected_areas/local.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/fetchers/protected_areas/deploy.sh">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="135">
-          <caret line="9" column="51" lean-forward="true" selection-start-line="9" selection-start-column="51" selection-end-line="9" selection-end-column="51" />
+        <state relative-caret-position="165">
+          <caret line="11" column="29" lean-forward="false" selection-start-line="11" selection-start-column="29" selection-end-line="11" selection-end-column="29" />
           <folding />
         </state>
       </provider>

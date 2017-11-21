@@ -30,7 +30,7 @@ import setuptools
 
 if __name__ == '__main__':
     setuptools.setup(
-        name='floracast_protected_area_fetcher',
+        name='protected_areas',
         version='0.0.1',
         description='Floracast dataflow pipeline.',
         packages=setuptools.find_packages(),

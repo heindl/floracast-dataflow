@@ -3,16 +3,11 @@ from __future__ import division
 
 import logging
 import apache_beam as beam
-# from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.io import iobase
 from shared import ex
-from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions, StandardOptions, SetupOptions
+from apache_beam.options.pipeline_options import PipelineOptions
 # If error after upgradeing apache beam: metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases
 # then: pip install six==1.10.0
-import os
-from shared import elevation, weather, utils
-from tensorflow_transform.beam import impl as tft
-from datetime import datetime as dt
 
 class LocalPipelineOptions(PipelineOptions):
     @classmethod
@@ -24,7 +19,7 @@ class LocalPipelineOptions(PipelineOptions):
         # The metadata lists how many records, how many of each taxon label.
         parser.add_argument(
             '--data_location',
-            required=False,
+            required=True,
             help='The intermediate TFRecords file that contains downloaded features from BigQuery'
         )
 
@@ -46,10 +41,43 @@ class LocalPipelineOptions(PipelineOptions):
 
         parser.add_argument(
             '--date',
-            required=False,
+            required=True,
             type=str,
             help='The date on which to gather wilderness areas.'
         )
+
+
+def run(argv=None):
+    from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions, StandardOptions, SetupOptions
+    import os
+    from shared import elevation, weather, utils
+    from tensorflow_transform.beam import impl as tft
+    from datetime import datetime as dt
+
+    pipeline_options = PipelineOptions()
+
+    local_pipeline_options = pipeline_options.view_as(LocalPipelineOptions)
+    cloud_options = pipeline_options.view_as(GoogleCloudOptions)
+    standard_options = pipeline_options.view_as(StandardOptions)
+    pipeline_options.view_as(SetupOptions).setup_file = os.path.abspath(os.path.join(os.path.dirname(__file__), 'setup.py'))
+
+    with beam.Pipeline(standard_options.runner, options=pipeline_options) as pipeline:
+        with tft.Context(temp_dir=cloud_options.temp_location):
+
+            output = os.path.join(
+                local_pipeline_options.data_location,
+                local_pipeline_options.date,
+                dt.now().strftime("%s"),
+            )
+
+            _ = pipeline \
+                | _ReadProtectedAreas(project=cloud_options.project, protected_area_count=local_pipeline_options.protected_area_count) \
+                | 'ConvertProtectedAreaDictToExample' >> beam.ParDo(_ProtectedAreaDictToExample(local_pipeline_options.date)) \
+                | 'GroupByYearMonthRegion' >> utils.GroupByYearMonthRegion() \
+                | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(cloud_options.project, local_pipeline_options.max_weather_station_distance)) \
+                | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(cloud_options.project)) \
+                | 'ProtoForWrite' >> beam.Map(lambda e: e.encode()) \
+                | 'WriteDataAsTFRecord' >> beam.io.WriteToTFRecord(output+"/areas", file_name_suffix='.tfrecord.gz')
 
 
 # Filter and prepare for duplicate sort.
@@ -156,34 +184,6 @@ class _ReadProtectedAreas(beam.PTransform):
         # def display_data(self):
         #     return {'source_dd': self._source}
 
-
-
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
-    pipeline_options = PipelineOptions()
-    # ['--setup_file', os.path.abspath(os.path.join(os.path.dirname(__file__), 'setup.py'))],
-    # )
-
-    local_pipeline_options = pipeline_options.view_as(LocalPipelineOptions)
-    cloud_options = pipeline_options.view_as(GoogleCloudOptions)
-    standard_options = pipeline_options.view_as(StandardOptions)
-    pipeline_options.view_as(SetupOptions).setup_file = os.path.abspath(os.path.join(os.path.dirname(__file__), 'setup.py'))
-
-    output = os.path.join(
-        local_pipeline_options.data_location,
-        local_pipeline_options.date,
-        dt.now().strftime("%s"),
-    )
-
-    with beam.Pipeline(standard_options.runner, options=pipeline_options) as pipeline:
-        with tft.Context(temp_dir=cloud_options.temp_location):
-
-            _ = pipeline \
-                | _ReadProtectedAreas(project=cloud_options.project, protected_area_count=local_pipeline_options.protected_area_count) \
-                | 'ConvertProtectedAreaDictToExample' >> beam.ParDo(_ProtectedAreaDictToExample(local_pipeline_options.date)) \
-                | 'GroupByYearMonthRegion' >> utils.GroupByYearMonthRegion() \
-                | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(cloud_options.project, local_pipeline_options.max_weather_station_distance)) \
-                | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(cloud_options.project)) \
-                | 'ProtoForWrite' >> beam.Map(lambda e: e.encode()) \
-                | 'WriteDataAsTFRecord' >> beam.io.WriteToTFRecord(output+"/areas", file_name_suffix='.tfrecord.gz')
-
+    run()
