@@ -14,3 +14,5 @@ python -m main \
          --extra_package dist/shared-0.0.1.tar.gz \
          --random_area_count 100 \
          --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/fetch_random_areas/setup.py
+
+echo $DATE > './LATEST_TEMPLATE_ID'

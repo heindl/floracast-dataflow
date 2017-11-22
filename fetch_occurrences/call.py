@@ -8,16 +8,18 @@ service = build('dataflow', 'v1b3', credentials=credentials)
 # http://zablo.net/blog/post/python-apache-beam-google-dataflow-cron
 # Should be able to port this as a task.
 
-# Set the following variables to your values.
-TEMPLATE_ID="1511317193"
+parser = argparse.ArgumentParser(description='Process some integers.')
+parser.add_argument('--template', type=str, required=True, help='the template_id to use')
+parser.add_argument('--taxa', type=str, required=True, help='taxa to fetch.')
+args = parser.parse_args()
 
-GCSPATH="gs://floracast-datamining/templates/fetch_occurrences/%s" % TEMPLATE_ID
+GCSPATH="gs://floracast-datamining/templates/fetch_occurrences/%s" % args.template
 PROJECT="floracast-firestore"
 
 BODY = {
     "jobName": "fetch-random-areas",
     "parameters": {
-        "taxa" : "58682",
+        "taxa" : args.taxa,
         "data_location": "gs://floracast-datamining/occurrences",
     },
     "environment": {

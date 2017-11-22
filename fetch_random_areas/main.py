@@ -41,8 +41,8 @@ class LocalPipelineOptions(PipelineOptions):
         parser.add_argument(
             '--random_area_count',
             required=True,
-            default=0,
-            type=int,
+            default="",
+            type=str,
             help='The number of areas to fetch. Gathers all if zero.'
         )
 
@@ -69,7 +69,7 @@ def run(argv=None):
         with tft.Context(temp_dir=cloud_options.temp_location):
 
             occurrences = pipeline \
-                          | 'ReadRandomOccurrences' >> _ReadRandomOccurrences(count=local_pipeline_options.random_area_count) \
+                          | 'ReadRandomOccurrences' >> _ReadRandomOccurrences(count=int(local_pipeline_options.random_area_count)) \
                           | 'RemoveOccurrenceExampleLocationDuplicates' >> utils.RemoveOccurrenceExampleLocationDuplicates() \
                           | 'GroupByYearMonth' >> utils.GroupByYearMonth() \
                           | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(cloud_options.project, local_pipeline_options.max_weather_station_distance)) \
