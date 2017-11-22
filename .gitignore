@@ -1,13 +1,14 @@
 beam-temp*
 
 run.sh
-gs
+gs/
 
 # Ignore IntelliJ files.
 .idea/
 *.iml
 *.ipr
 *.iws
+WORKSPACE
 
 # Ignore MacOSX files.
 .DS_Store

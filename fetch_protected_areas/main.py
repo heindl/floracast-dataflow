@@ -4,8 +4,18 @@ from __future__ import division
 import logging
 import apache_beam as beam
 from apache_beam.io import iobase
+from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions, StandardOptions, SetupOptions
+import os
+from shared import elevation, weather, utils
+from tensorflow_transform.beam import impl as tft
+from datetime import datetime as dt
+from apache_beam.io import range_trackers
 from shared import ex
-from apache_beam.options.pipeline_options import PipelineOptions
+from datetime import datetime
+from geopy import Point
+import time
+from google.cloud.firestore_v1beta1 import client
+
 # If error after upgradeing apache beam: metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases
 # then: pip install six==1.10.0
 
@@ -48,11 +58,6 @@ class LocalPipelineOptions(PipelineOptions):
 
 
 def run(argv=None):
-    from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions, StandardOptions, SetupOptions
-    import os
-    from shared import elevation, weather, utils
-    from tensorflow_transform.beam import impl as tft
-    from datetime import datetime as dt
 
     pipeline_options = PipelineOptions()
 
@@ -60,6 +65,7 @@ def run(argv=None):
     cloud_options = pipeline_options.view_as(GoogleCloudOptions)
     standard_options = pipeline_options.view_as(StandardOptions)
     pipeline_options.view_as(SetupOptions).setup_file = os.path.abspath(os.path.join(os.path.dirname(__file__), 'setup.py'))
+    pipeline_options.view_as(SetupOptions).save_main_session = True
 
     with beam.Pipeline(standard_options.runner, options=pipeline_options) as pipeline:
         with tft.Context(temp_dir=cloud_options.temp_location):
@@ -91,10 +97,7 @@ class _ProtectedAreaDictToExample(beam.DoFn):
 
     def process(self, element):
         # from google.cloud.datastore.helpers import entity_from_protobuf
-        from shared import ex
-        from datetime import datetime
-        from geopy import Point
-        import time
+
         """
             Element should be an occurrence entity.
             The key has should be a sufficient key.
@@ -102,12 +105,12 @@ class _ProtectedAreaDictToExample(beam.DoFn):
         # e = entity_from_protobuf(element)
         # centre = self._parse_point(e['Centre'])
         centre = Point(element["Centre"]["Latitude"], element["Centre"]["Longitude"])
-        ex = ex.Example()
-        ex.set_occurrence_id("%.6f|%.6f|%s" % (centre.latitude, centre.longitude, self._date_str))
-        ex.set_longitude(centre.longitude)
-        ex.set_latitude(centre.latitude)
-        ex.set_date(int(time.mktime(datetime.strptime(self._date_str, "%Y%m%d").timetuple())))
-        yield ex
+        e = ex.Example()
+        e.set_occurrence_id("%.6f|%.6f|%s" % (centre.latitude, centre.longitude, self._date_str))
+        e.set_longitude(centre.longitude)
+        e.set_latitude(centre.latitude)
+        e.set_date(int(time.mktime(datetime.strptime(self._date_str, "%Y%m%d").timetuple())))
+        yield e
 
 class _ProtectedAreaSource(iobase.BoundedSource):
 
@@ -121,7 +124,7 @@ class _ProtectedAreaSource(iobase.BoundedSource):
         return 0
 
     def get_range_tracker(self, start_position, stop_position):
-        from apache_beam.io import range_trackers
+
         if start_position is None:
             start_position = 0
         if stop_position is None:
@@ -135,7 +138,6 @@ class _ProtectedAreaSource(iobase.BoundedSource):
         return range_tracker
 
     def read(self, range_tracker):
-        from google.cloud.firestore_v1beta1 import client
 
         db = client.Client(project=self._project)
         q = db.collection(u'WildernessAreas')
@@ -150,7 +152,6 @@ class _ProtectedAreaSource(iobase.BoundedSource):
         This function will currently not be called, because the range tracker
         is unsplittable
         """
-        from apache_beam.io import range_trackers
 
         if start_position is None:
             start_position = 0

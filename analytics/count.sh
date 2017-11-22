@@ -14,5 +14,5 @@ if [[ $1 == ${PREFIX}* ]] ; then
 fi
 
 if [[ $1 != ${PREFIX}* ]] ; then
-    python ./analytics/count_records.py --path $1
+    python ./count_records.py --path $1
 fi

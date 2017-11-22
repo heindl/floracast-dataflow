@@ -23,14 +23,11 @@ This behavior is triggered by specifying the --setup_file command line option
 when running the workflow for remote execution.
 """
 
-from distutils.command.build import build as _build
-import subprocess
-
 import setuptools
 
 if __name__ == '__main__':
     setuptools.setup(
-        name='protected_areas',
+        name='random_areas',
         version='0.0.1',
         description='Floracast dataflow pipeline.',
         packages=setuptools.find_packages(),
@@ -39,8 +36,6 @@ if __name__ == '__main__':
         author_email="matt@floracast.com",
         install_requires=[
             "apache-beam==2.1.1",
-            "geopy==1.11.0",
-            "tensorflow==1.4.0",
             "tensorflow-transform==0.3.1",
             "six==1.10.0"
         ]

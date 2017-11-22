@@ -22,7 +22,7 @@ class WeatherFetcher:
         self._weather_days_before = 90
 
     def process_batch(self, batch):
-        # from multiprocessing.pool import ThreadPool
+        from multiprocessing.pool import ThreadPool
         # import time
 
         # First identify a bounding box.
@@ -55,14 +55,14 @@ class WeatherFetcher:
             days_before=self._weather_days_before
         )
 
-        # for example_batch in self._chunks(examples, 250):
+        for example_batch in self._chunks(examples, 250):
 
-            # records = ThreadPool(50).imap_unordered(self.get_record, example_batch)
+            records = ThreadPool(50).imap_unordered(self.get_record, example_batch)
 
-        for e in examples:
-            r = self.get_record(e)
-            if r is not None:
-                yield r
+            for e in records:
+                # r = self.get_record(e)
+                if e is not None:
+                    yield e
 
                     # with Pool(20) as p:
                     # records = p.map(self.get_record, example_batch)
