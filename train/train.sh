@@ -1,33 +1,28 @@
 #!/usr/bin/env bash
 
-if [ $1 == "local" ]; then
+DATE=$(date '+%s')
 
-    PREFIX="gs://"
-    TRAIN_PATH=$2
-    REMOTE_OUTPUT_PATH=$3
-    LOCAL_OUTPUT_PATH=$3
+PREFIX="gs://"
+TRANSFORMED_PATH=$1
+OUTPUT_PATH="floracast-datamining/models/$DATE"
 
-    if [[ $2 == ${PREFIX}* ]]; then
-        TRAIN_PATH=${2/$PREFIX/'/tmp/'}
-        mkdir -p $TRAIN_PATH
-        gsutil rsync -d -r $2 $TRAIN_PATH
-    fi
-
-    if [[ $3 == ${PREFIX}* ]]; then
-        LOCAL_OUTPUT_PATH=${3/$PREFIX/'/tmp/'}
-        mkdir -p $LOCAL_OUTPUT_PATH
-    fi
-
-    python -m trainer.tassk \
-      --train_data_path $TRAIN_PATH \
-      --output_path $LOCAL_OUTPUT_PATH
-      #      --num_classes 2 \
-      #      --eval_steps 20 \
-      #      --batch_size 512
-      #      --hidden_units 80 140 80 \
-      #      --train_set_size 7361 \
-
+if [[ $1 == ${PREFIX}* ]]; then
+    TRANSFORMED_PATH=${1/$PREFIX/'/tmp/'}
+    mkdir -p $TRANSFORMED_PATH
+    gsutil rsync -d -r $1 $TRANSFORMED_PATH
 fi
+
+mkdir -p "/tmp/$OUTPUT_PATH"
+
+python -m task --transformed_path $TRANSFORMED_PATH --output_path "/tmp/$OUTPUT_PATH"
+  #      --num_classes 2 \
+  #      --eval_steps 20 \
+  #      --batch_size 512
+  #      --hidden_units 80 140 80 \
+  #      --train_set_size 7361 \
+
+gsutil cp -r  "/tmp/$OUTPUT_PATH" "gs://$OUTPUT_PATH"
+
 
 
 

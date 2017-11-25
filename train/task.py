@@ -26,7 +26,7 @@ def create_parser():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--train_data_path', type=str, required=True)
+        '--transformed_path', type=str, required=True)
     parser.add_argument('--output_path', type=str, required=True)
     # parser.add_argument(
     #     '--hidden_units',
@@ -140,8 +140,7 @@ def main(argv=None):
     from tensorflow_transform.tf_metadata import metadata_io
     from tensorflow_transform.saved import input_fn_maker
     import os
-    from train_shared.train_shared import model
-    from train_shared.train_shared import input_fn
+    from train_shared import model, input_fn
 
     """Run a Tensorflow model on the Reddit dataset."""
     env = json.loads(os.environ.get('TF_CONFIG', '{}'))
@@ -174,8 +173,8 @@ def main(argv=None):
     classifier = model.get_estimator(args=args, run_config=run_config)
 
     serving_input_fn = input_fn_maker.build_parsing_transforming_serving_input_receiver_fn(
-        raw_metadata=metadata_io.read_metadata(os.path.join(args.train_data_path, "raw_metadata")),
-        transform_savedmodel_dir=os.path.join(args.train_data_path, "transform_fn"),
+        raw_metadata=metadata_io.read_metadata(os.path.join(args.transformed_path, "raw_metadata")),
+        transform_savedmodel_dir=os.path.join(args.transformed_path, "transform_fn"),
         exclude_raw_keys=['taxon']
     )
 
@@ -189,18 +188,18 @@ def main(argv=None):
     # )
 
     transformed_metadata = metadata_io.read_metadata(
-        os.path.join(args.train_data_path, "transformed_metadata"))
+        os.path.join(args.transformed_path, "transformed_metadata"))
 
     train_input_fn = input_fn.get_transformed_reader_input_fn(
         transformed_metadata,
-        args.train_data_path + "/train_data/*.gz",
+        args.transformed_path + "/train_data/*.gz",
         20,
         # args.batch_size,
         tf.estimator.ModeKeys.TRAIN)
 
     eval_input_fn = input_fn.get_transformed_reader_input_fn(
         transformed_metadata,
-        args.train_data_path + "/eval_data/*.gz",
+        args.transformed_path + "/eval_data/*.gz",
         20,
         # args.batch_size,
         tf.estimator.ModeKeys.EVAL)

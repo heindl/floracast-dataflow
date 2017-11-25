@@ -32,6 +32,7 @@ if __name__ == '__main__':
         description='Transforms raw occurrence or protected area data into model format',
         url="https://bitbucket.org/heindl/dataflow",
         author="mph",
+        packages=['transform'],
         author_email="matt@floracast.com",
         install_requires=[
             "apache-beam",

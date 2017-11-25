@@ -24,14 +24,13 @@ def fetch_latest(project, bucket_name, parent_path):
         if blob.name == parent_path:
             continue
         name = blob.name[len(parent_path)+1:]
-        print(name)
         s = name.split("/")
         names.append(path.join(parent_path, s[0]))
 
     names = sorted(names)
 
     if len(names) == 0:
-        return ""
+        raise ValueError('No latest version found within folder on gcs with parent: %s', parent_path)
 
     return path.join("gs://", bucket_name, names[len(names)-1])
 

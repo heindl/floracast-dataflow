@@ -6,6 +6,7 @@ from google.cloud import storage, exceptions
 import tempfile
 import path
 from train_shared import input_fn
+from fetch_shared import gcs, utils
 
 def trim_path(gcs_path, bucket_name):
     s = "gs://%s/" % bucket_name
@@ -58,14 +59,27 @@ def main(argv=None):
     run_config = tf.contrib.learn.RunConfig()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--project', type=str, required=True)
     parser.add_argument('--bucket', type=str, required=True)
+    parser.add_argument('--date', type=str, required=True)
+    parser.add_argument('--taxon', type=str, required=True)
 
-    parser.add_argument('--transformed', type=str, required=True)
-    parser.add_argument('--output', type=str, required=True)
-    parser.add_argument('--model', type=str, required=True)
-    parser.add_argument("--protected_areas", type=str, required=True)
+    # parser.add_argument('--transformed', type=str, required=True)
+    # parser.add_argument('--output', type=str, required=True)
+    # parser.add_argument('--model', type=str, required=True)
+    # parser.add_argument("--protected_areas", type=str, required=True)
     args = parser.parse_args()
+
+    _project = utils.default_project()
+
+    model = gcs.fetch_latest(_project, args.bucket, "models/%s" % args.taxon)
+
+
+    if args.template is None:
+        template = gcs.fetch_latest(_project, args.bucket, "templates/transform")
+    else:
+        template = args.template
+
+
 
     # Download temp files
     client = storage.client.Client(project=args.project)

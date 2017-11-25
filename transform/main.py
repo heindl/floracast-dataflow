@@ -15,7 +15,8 @@ from tensorflow_transform.beam import impl as tft
 # then: pip install six==1.10.0
 from tensorflow_transform.beam import tft_beam_io
 from tensorflow_transform.tf_metadata import dataset_metadata
-import functions
+
+from transform import functions
 
 
 def _default_project():
@@ -109,7 +110,7 @@ def main(argv=None):
 
     taxon, occurrence_timestamp = parse_taxon_timestamp_from_occurrence_path(local_options.occurrence_location)
 
-    transform_location = os.path.join(local_options.output_location, taxon, occurrence_timestamp, datetime.now().strftime("%s"))
+    transform_location = os.path.join(local_options.output_location, taxon, datetime.now().strftime("%s"))
 
     with beam.Pipeline(standard_options.runner, options=pipeline_options) as pipeline:
         with tft.Context(temp_dir=cloud_options.temp_location):

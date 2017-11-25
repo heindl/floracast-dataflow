@@ -2,7 +2,7 @@
 
 DATE=$(date '+%s')
 
-python ./transformer/main.py \
+python ./main.py \
     --runner=DataflowRunner \
     --job_name="floracast-transform" \
     --temp_location="gs://floracast-datamining/temp" \
@@ -15,5 +15,3 @@ python ./transformer/main.py \
     --percent_eval 10 \
     --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/transform/setup.py \
     --workerLogLevelOverrides=com.google.cloud.dataflow#DEBUG
-
-echo $DATE > './LATEST_TEMPLATE_ID'
