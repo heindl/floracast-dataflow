@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 
-DATE=$(date '+%s')
-
 PREFIX="gs://"
 TRANSFORMED_PATH=$1
-OUTPUT_PATH="floracast-datamining/models/$DATE"
+OUTPUT_PATH="floracast-datamining/models/"
 
 if [[ $1 == ${PREFIX}* ]]; then
     TRANSFORMED_PATH=${1/$PREFIX/'/tmp/'}
@@ -14,7 +12,7 @@ fi
 
 mkdir -p "/tmp/$OUTPUT_PATH"
 
-python -m task --transformed_path $TRANSFORMED_PATH --output_path "/tmp/$OUTPUT_PATH"
+python -m task --train_data_path $TRANSFORMED_PATH --output_path "/tmp/$OUTPUT_PATH"
   #      --num_classes 2 \
   #      --eval_steps 20 \
   #      --batch_size 512

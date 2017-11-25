@@ -2,17 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d5d946e7-fd45-4ccd-884b-e8aec6a492d9" name="Default" comment="">
-      <change type="MOVED" beforePath="$PROJECT_DIR$/train/utils/__init__.py" afterPath="$PROJECT_DIR$/transform/transform/__init__.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/transform/functions.py" afterPath="$PROJECT_DIR$/transform/transform/functions.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fetch_shared/fetch_shared/gcs.py" afterPath="$PROJECT_DIR$/fetch_shared/fetch_shared/gcs.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/predict/predict.py" afterPath="$PROJECT_DIR$/predict/predict.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/train/task.py" afterPath="$PROJECT_DIR$/train/task.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/train/train.sh" afterPath="$PROJECT_DIR$/train/train.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/transform/build.sh" afterPath="$PROJECT_DIR$/transform/build.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/transform/call.py" afterPath="$PROJECT_DIR$/transform/call.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/transform/main.py" afterPath="$PROJECT_DIR$/transform/main.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/transform/setup.py" afterPath="$PROJECT_DIR$/transform/setup.py" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -31,11 +22,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="task.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="task.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/train/task.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="117">
-              <caret line="142" column="21" lean-forward="false" selection-start-line="142" selection-start-column="21" selection-end-line="142" selection-end-column="21" />
+            <state relative-caret-position="1315">
+              <caret line="228" column="30" lean-forward="true" selection-start-line="228" selection-start-column="30" selection-end-line="228" selection-end-column="30" />
               <folding>
                 <element signature="e#713#744#0" expanded="true" />
               </folding>
@@ -97,16 +88,6 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="functions.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/transform/transform/functions.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="480">
-              <caret line="32" column="27" lean-forward="false" selection-start-line="32" selection-start-column="27" selection-end-line="32" selection-end-column="27" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="test.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/train/test.py">
           <provider selected="true" editor-type-id="text-editor">
@@ -122,9 +103,21 @@
       <file leaf-file-name="train.sh" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/train/train.sh">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="300">
-              <caret line="21" column="31" lean-forward="true" selection-start-line="21" selection-start-column="31" selection-end-line="21" selection-end-column="31" />
+            <state relative-caret-position="435">
+              <caret line="29" column="29" lean-forward="true" selection-start-line="29" selection-start-column="29" selection-end-line="29" selection-end-column="29" />
               <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="predict.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/predict/predict.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-440">
+              <caret line="20" column="18" lean-forward="true" selection-start-line="20" selection-start-column="18" selection-end-line="20" selection-end-column="18" />
+              <folding>
+                <element signature="e#0#23#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -152,7 +145,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>epoch</find>
       <find>classes</find>
       <find>tft</find>
       <find>beam</find>
@@ -182,11 +174,13 @@
       <find>logger</find>
       <find>project</find>
       <find>train_data</find>
+      <find>transformed_path</find>
     </findStrings>
     <replaceStrings>
       <replace />
       <replace>},{</replace>
       <replace>&quot;</replace>
+      <replace>train_data_path</replace>
     </replaceStrings>
     <dirStrings>
       <dir>$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages</dir>
@@ -266,8 +260,8 @@
         <option value="$PROJECT_DIR$/transform/call.py" />
         <option value="$PROJECT_DIR$/predict/predict.py" />
         <option value="$PROJECT_DIR$/fetch_shared/fetch_shared/gcs.py" />
-        <option value="$PROJECT_DIR$/train/train.sh" />
         <option value="$PROJECT_DIR$/train/task.py" />
+        <option value="$PROJECT_DIR$/train/train.sh" />
       </list>
     </option>
   </component>
@@ -685,12 +679,12 @@
       <workItem from="1510855730448" duration="6104000" />
       <workItem from="1511194266359" duration="163000" />
       <workItem from="1511194498495" duration="15270000" />
-      <workItem from="1511456264586" duration="28636000" />
+      <workItem from="1511456264586" duration="29024000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="861027000" />
+    <option name="totallyTimeSpent" value="861415000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1280" height="800" extended-state="0" />
@@ -1069,31 +1063,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/predict/predict.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/transform/transform/functions.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="480">
           <caret line="32" column="27" lean-forward="false" selection-start-line="32" selection-start-column="27" selection-end-line="32" selection-end-column="27" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/train/test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1141,14 +1115,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/train/train.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="21" column="31" lean-forward="true" selection-start-line="21" selection-start-column="31" selection-end-line="21" selection-end-column="31" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/train/server.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -1159,12 +1125,40 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/train/test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/train/task.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="117">
-          <caret line="142" column="21" lean-forward="false" selection-start-line="142" selection-start-column="21" selection-end-line="142" selection-end-column="21" />
+        <state relative-caret-position="1315">
+          <caret line="228" column="30" lean-forward="true" selection-start-line="228" selection-start-column="30" selection-end-line="228" selection-end-column="30" />
           <folding>
             <element signature="e#713#744#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/train/train.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="435">
+          <caret line="29" column="29" lean-forward="true" selection-start-line="29" selection-start-column="29" selection-end-line="29" selection-end-column="29" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/predict/predict.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-440">
+          <caret line="20" column="18" lean-forward="true" selection-start-line="20" selection-start-column="18" selection-end-line="20" selection-end-column="18" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
           </folding>
         </state>
       </provider>
