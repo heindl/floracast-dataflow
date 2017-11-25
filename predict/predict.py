@@ -100,11 +100,6 @@ def main(argv=None):
     parser.add_argument('--bucket', type=str, required=True)
     parser.add_argument('--date', type=str, required=True)
     parser.add_argument('--taxon', type=str, required=True)
-
-    # parser.add_argument('--transformed', type=str, required=True)
-    # parser.add_argument('--output', type=str, required=True)
-    # parser.add_argument('--model', type=str, required=True)
-    # parser.add_argument("--protected_areas", type=str, required=True)
     args = parser.parse_args()
 
     _project = utils.default_project()
@@ -117,15 +112,12 @@ def main(argv=None):
 
     model_gcs = gcs.fetch_latest(_project, args.bucket, "models/%s" % args.taxon)
     # Go another level down to get the export directory
-    model_gcs = gcs.fetch_latest(_project, args.bucket, "%s/export/exporter" % model_gcs[len("gs://floracast-datamining/"):])
+    # model_gcs = gcs.fetch_latest(_project, args.bucket, "%s/export/exporter" % model_gcs[len("gs://floracast-datamining/"):])
 
     transformed = gcs.fetch_latest(_project, args.bucket, "transformed/%s" % args.taxon)
     protected_areas = gcs.fetch_latest(_project, args.bucket, "protected_areas/%s" % args.date)
 
-
     print(model_gcs, transformed, protected_areas)
-
-    # return
 
     # Download temp files
     client = storage.client.Client(project=_project)
@@ -140,13 +132,7 @@ def main(argv=None):
     transformed_path = download_gcs_directory_to_temp(bucket, transformed)
     protected_area_path = download_gcs_directory_to_temp(bucket, protected_areas)
 
-
-    #
-    # if args.tranformed == "":
-    #     # Get the last updated transform file.
-    #     transformed_path = "gs://"+bucket.id+"/transformed/"+taxon
-    #     bucket.list_blobs("/transformed/"+taxon)
-    #     bucket.list_blobs(prefix='training_data/cats')
+    print("model_path", model_path)
 
     run_config = tf.estimator.RunConfig()
     run_config = run_config.replace(model_dir=model_path)
@@ -160,17 +146,7 @@ def main(argv=None):
     for _, _, files in os.walk(protected_area_path):
         for file in files:
 
-            # print(file)
-            # date = file.split("-")[0]
-            # print(date)
-            # if date not in map:
-            #     map[date] = []
-        # date = dir
-        # print(file)
-
             for p in estimator.predict(input_fn=input_fn.get_transformed_prediction_features(transformed_path, os.path.join(protected_area_path, file))):
-
-                # print("p", p)
 
                 probabilities = []
 
@@ -179,14 +155,11 @@ def main(argv=None):
 
                 values.append({'probabilities': probabilities, 'classes': label_vocabulary, 'key': p['occurrence_id']})
 
+    prefix = "predictions/%s/%s/%s.json" % (args.taxon, args.date, datetime.now().strftime("%s"))
 
-    # for key in map:
-    #
-    #     if len(map[key]) == 0:
-    #         continue
+    print(json.dumps(values))
 
-    prefix = "/predictions/%s/%s/%s.json" % (args.taxon, args.date, datetime.now().strftime("%s"))
-
+    print(prefix)
     blob = storage.Blob(prefix, bucket)
     blob.upload_from_string(json.dumps(values))
 
