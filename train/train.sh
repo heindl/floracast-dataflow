@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 
+DATE=$(date '+%s')
+
 PREFIX="gs://"
+
 TRANSFORMED_PATH=$1
-OUTPUT_PATH="floracast-datamining/models/"
+OUTPUT_PATH=$2
+LOCAL_OUTPUT_PATH=$2
 
 if [[ $1 == ${PREFIX}* ]]; then
     TRANSFORMED_PATH=${1/$PREFIX/'/tmp/'}
@@ -10,16 +14,24 @@ if [[ $1 == ${PREFIX}* ]]; then
     gsutil rsync -d -r $1 $TRANSFORMED_PATH
 fi
 
-mkdir -p "/tmp/$OUTPUT_PATH"
+if [[ $2 == ${PREFIX}* ]]; then
+    LOCAL_OUTPUT_PATH=${2/$PREFIX/'/tmp/'}
+    mkdir -p $LOCAL_OUTPUT_PATH
+fi
 
-python -m task --train_data_path $TRANSFORMED_PATH --output_path "/tmp/$OUTPUT_PATH"
-  #      --num_classes 2 \
-  #      --eval_steps 20 \
-  #      --batch_size 512
-  #      --hidden_units 80 140 80 \
-  #      --train_set_size 7361 \
 
-gsutil cp -r  "/tmp/$OUTPUT_PATH" "gs://$OUTPUT_PATH"
+python -m task --train_data_path $TRANSFORMED_PATH --output_path $LOCAL_OUTPUT_PATH
+#  #      --num_classes 2 \
+#  #      --eval_steps 20 \
+#  #      --batch_size 512
+#  #      --hidden_units 80 140 80 \
+#  #      --train_set_size 7361 \
+#
+if [ "$LOCAL_OUTPUT_PATH" != "$OUTPUT_PATH" ]; then
+    gsutil cp -r  $LOCAL_OUTPUT_PATH $OUTPUT_PATH
+fi
+
+
 
 
 

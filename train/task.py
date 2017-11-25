@@ -150,13 +150,11 @@ def main(argv=None):
     argv = sys.argv if argv is None else argv
     args = create_parser().parse_args(args=argv[1:])
 
-    output_path = os.path.join(args.output_path, datetime.now().strftime("%s"))
-
     trial = task_data.get('trial')
     if trial is not None:
-        output_dir = os.path.join(output_path, trial)
+        output_dir = os.path.join(args.output_path, trial)
     else:
-        output_dir = output_path
+        output_dir = args.output_path
 
     run_config = tf.estimator.RunConfig(
         model_dir=output_dir

@@ -20,7 +20,7 @@ def fetch_latest(project, bucket_name, parent_path):
     # Note that paging should be done behind the scenes.
     # https://stackoverflow.com/questions/43147339/how-does-paging-work-in-the-list-blobs-function-in-google-cloud-storage-python-c
     for blob in bucket.list_blobs(prefix=parent_path, fields="items/name"):
-        # print(blob.name)
+        # print("name", blob.name)
         if blob.name == parent_path:
             continue
         name = blob.name[len(parent_path)+1:]
@@ -32,7 +32,7 @@ def fetch_latest(project, bucket_name, parent_path):
     if len(names) == 0:
         raise ValueError('No latest version found within folder on gcs with parent: %s', parent_path)
 
-    return path.join("gs://", bucket_name, names[len(names)-1])
+    return path.join("gs://", bucket_name, names[len(names)-1]).encode('utf-8')
 
 # result = fetch_latest("firebase-firestore", "floracast-datamining", "occurrences/58682")
 # print("result", result)
