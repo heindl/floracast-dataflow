@@ -1,6 +1,8 @@
+import tensorflow as tf
+import glob
 
 def feature_columns():
-    import tensorflow as tf
+
     """Return the feature columns with their names and types."""
 
     # vocab_size = vocab_sizes[column_name]
@@ -37,7 +39,6 @@ def feature_keys():
     return ["elevation", "max_temp", "min_temp", "precipitation", "daylight"]
 
 def get_label_vocabularly(train_data_path):
-    import glob
     labels = []
     label_files = glob.glob(train_data_path + "/labels*")
     for file in label_files:
@@ -50,7 +51,6 @@ def get_label_vocabularly(train_data_path):
     return labels
 
 def get_estimator(args, run_config):
-    import tensorflow as tf
 
     def _get_model_fn(estimator):
         # def _model_fn(features, labels, mode):

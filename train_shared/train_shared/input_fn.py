@@ -1,26 +1,32 @@
+import tensorflow as tf
+from tensorflow_transform.saved import saved_transform_io
+import os
+from tensorflow_transform.tf_metadata import metadata_io
+from tensorflow_transform.saved import input_fn_maker
+from tensorflow import estimator
+import model
+import six
+
 
 def gzip_reader_fn():
-    import tensorflow as tf
     return tf.TFRecordReader(options=tf.python_io.TFRecordOptions(
         compression_type=tf.python_io.TFRecordCompressionType.GZIP))
 
 
-def get_test_prediction_data_fn(args, raw_data_file_pattern):
-    import tensorflow as tf
-    from tensorflow_transform.saved import saved_transform_io
-    import six
-    import os
-    from tensorflow_transform.tf_metadata import metadata_io
+def get_transformed_prediction_features(
+        tranformed_location,
+        raw_data_file_pattern,
+    ):
 
     transformed_metadata = metadata_io.read_metadata(
-        os.path.join(args.train_data_path, "transformed_metadata"))
+        os.path.join(tranformed_location, "transformed_metadata"))
 
     raw_metadata = metadata_io.read_metadata(
-        os.path.join(args.train_data_path, "raw_metadata"))
+        os.path.join(tranformed_location, "raw_metadata"))
 
-    transform_savedmodel_dir = os.path.join(args.train_data_path, "transform_fn")
+    transform_savedmodel_dir = os.path.join(tranformed_location, "transform_fn")
 
-    raw_data_file_pattern=raw_data_file_pattern
+    # raw_data_file_pattern=raw_data_file_pattern
 
     raw_feature_spec = raw_metadata.schema.as_feature_spec()
     raw_feature_keys = _prepare_feature_keys(raw_metadata, ["taxon"])
@@ -28,7 +34,7 @@ def get_test_prediction_data_fn(args, raw_data_file_pattern):
         key: raw_feature_spec[key]
         for key in raw_feature_keys} # + raw_label_keys}
 
-    transformed_feature_keys = _prepare_feature_keys(transformed_metadata, ["taxon"])
+    # transformed_feature_keys = _prepare_feature_keys(transformed_metadata, ["taxon"])
 
     def raw_training_input_fn():
         """Training input function that reads raw data and applies transforms."""
@@ -84,9 +90,6 @@ def get_transformed_reader_input_fn(transformed_metadata,
                                     transformed_data_paths,
                                     batch_size,
                                     mode):
-    from tensorflow_transform.saved import input_fn_maker
-    from tensorflow import estimator
-    import model
 
     """Wrap the get input features function to provide the runtime arguments."""
     return input_fn_maker.build_training_input_fn(
@@ -153,7 +156,6 @@ def get_serving_input_fn(
 
 
 def _prepare_feature_keys(metadata, label_keys, feature_keys=None):
-    import six
     """Infer feature keys if needed, and sanity-check label and feature keys."""
     if label_keys is None:
         raise ValueError("label_keys must be specified.")

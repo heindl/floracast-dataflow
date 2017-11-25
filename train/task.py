@@ -133,18 +133,15 @@ def create_parser():
 
 
 def main(argv=None):
-    import os
     import sys
     import json
-    from tensorflow_transform.saved import input_fn_maker
-    from random import randint
     from datetime import datetime
     import tensorflow as tf
     from tensorflow_transform.tf_metadata import metadata_io
     from tensorflow_transform.saved import input_fn_maker
     import os
-    import model, input_fn
-
+    from train_shared.train_shared import model
+    from train_shared.train_shared import input_fn
 
     """Run a Tensorflow model on the Reddit dataset."""
     env = json.loads(os.environ.get('TF_CONFIG', '{}'))

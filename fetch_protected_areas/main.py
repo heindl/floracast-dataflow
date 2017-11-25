@@ -6,11 +6,10 @@ import apache_beam as beam
 from apache_beam.io import iobase
 from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions, StandardOptions, SetupOptions
 import os
-from shared import elevation, weather, utils
+from fetch_shared import elevation, weather, utils, ex
 from tensorflow_transform.beam import impl as tft
 from datetime import datetime as dt
 from apache_beam.io import range_trackers
-from shared import ex
 from datetime import datetime
 from geopy import Point
 import time
@@ -63,8 +62,8 @@ def run(argv=None):
 
     local_pipeline_options = pipeline_options.view_as(LocalPipelineOptions)
     cloud_options = pipeline_options.view_as(GoogleCloudOptions)
+    cloud_options.project = utils.default_project()
     standard_options = pipeline_options.view_as(StandardOptions)
-    pipeline_options.view_as(SetupOptions).setup_file = os.path.abspath(os.path.join(os.path.dirname(__file__), 'setup.py'))
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
     with beam.Pipeline(standard_options.runner, options=pipeline_options) as pipeline:

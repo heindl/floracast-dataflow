@@ -23,25 +23,23 @@ This behavior is triggered by specifying the --setup_file command line option
 when running the workflow for remote execution.
 """
 
-from distutils.command.build import build as _build
-import subprocess
-
 import setuptools
 
 if __name__ == '__main__':
     setuptools.setup(
-        name='floracast_transformer',
+        name='train_shared',
         version='0.0.1',
-        description='Transforms raw occurrence or protected area data into model format',
-        packages=setuptools.find_packages(),
+        description='Floracast dataflow pipeline shared functions.',
+        packages=['train_shared'],
         url="https://bitbucket.org/heindl/dataflow",
         author="mph",
         author_email="matt@floracast.com",
         install_requires=[
-            "apache-beam",
-            "google-cloud",
-            "tensorflow",
-            "tensorflow-transform",
+            "apache-beam==2.1.1",
+            "google-cloud==0.30.0",
+            "numpy==1.13.3",
+            "tensorflow==1.4.0",
+            # "tensorflow-transform==0.3.1",
             "six==1.10.0"
         ]
     )

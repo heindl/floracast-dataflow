@@ -27,25 +27,17 @@ import setuptools
 
 if __name__ == '__main__':
     setuptools.setup(
-        name='fetch_shared',
+        name='floracast_transformer',
         version='0.0.1',
-        description='Floracast dataflow pipeline shared functions.',
-        packages=['fetch_shared'],
+        description='Transforms raw occurrence or protected area data into model format',
         url="https://bitbucket.org/heindl/dataflow",
         author="mph",
         author_email="matt@floracast.com",
         install_requires=[
-            "apache-beam==2.1.1",
-            "astral==1.4",
-            "geopy==1.11.0",
-            "google-cloud==0.30.0",
-            "google-cloud-bigquery==0.28.0",
-            "googlemaps==2.5.1",
-            "mgrs==1.3.5",
-            "numpy==1.13.3",
-            "pandas==0.21.0",
-            "tensorflow==1.4.0",
-            # "tensorflow-transform==0.3.1",
+            "apache-beam",
+            "google-cloud",
+            "tensorflow",
+            "tensorflow-transform",
             "six==1.10.0"
         ]
     )

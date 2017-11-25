@@ -2,6 +2,17 @@
 
 import apache_beam as beam
 
+
+def default_project():
+    import os
+    import subprocess
+    get_project = [
+        'gcloud', 'config', 'list', 'project', '--format=value(core.project)'
+    ]
+
+    with open(os.devnull, 'w') as dev_null:
+        return subprocess.check_output(get_project, stderr=dev_null).strip()
+
 # def encode_as_b64_json(serialized_example):
 #     import base64  # pylint: disable=g-import-not-at-top
 #     import json  # pylint: disable=g-import-not-at-top

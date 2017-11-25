@@ -6,7 +6,6 @@ DATE=$(date '+%s')
 
 python -m main \
          --runner DataflowRunner \
-         --project floracast-firestore \
          --output_location "gs://floracast-datamining/occurrences" \
          --temp_location="gs://floracast-datamining/temp" \
          --staging_location="gs://floracast-datamining/staging" \
