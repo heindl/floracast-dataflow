@@ -37,35 +37,35 @@ class LocalPipelineOptions(PipelineOptions):
 
         # Intermediate TFRecords are stored in their own directory, each with a corresponding metadata file.
         # The metadata lists how many records, how many of each taxon label.
-        parser.add_argument(
+        parser.add_value_provider_argument(
             '--output_location',
             required=True,
             type=str,
             help='The location to write transformed tfrecords'
         )
 
-        parser.add_argument(
+        parser.add_value_provider_argument(
             '--occurrence_location',
             required=True,
             type=str,
             help='The location of occurrence tfrecords.'
         )
 
-        parser.add_argument(
+        parser.add_value_provider_argument(
             '--random_location',
             required=True,
             type=str,
             help='The location of random tfrecords.'
         )
 
-        parser.add_argument(
+        parser.add_value_provider_argument(
             '--mode',
             required=True,
             type=str,
             help='train, eval, infer'
         )
 
-        parser.add_argument(
+        parser.add_value_provider_argument(
             '--percent_eval',
             required=False,
             default=10,

@@ -26,26 +26,26 @@ class LocalPipelineOptions(PipelineOptions):
 
         # Intermediate TFRecords are stored in their own directory, each with a corresponding metadata file.
         # The metadata lists how many records, how many of each taxon label.
-        parser.add_argument(
+        parser.add_value_provider_argument(
             '--output_location',
             required=True,
             help='The intermediate TFRecords file that contains downloaded features from BigQuery'
         )
 
-        parser.add_argument(
+        parser.add_value_provider_argument(
             '--min_occurrences_within_taxon',
             required=False,
             default=100,
             help='The number of occurrence required to process taxon')
 
-        parser.add_argument(
+        parser.add_value_provider_argument(
             '--taxa',
             required=True,
             default=None,
             type=str,
             help='Restrict occurrence fetch to this taxa')
 
-        parser.add_argument(
+        parser.add_value_provider_argument(
             '--max_weather_station_distance',
             required=False,
             default=100,

@@ -132,8 +132,6 @@ def main(argv=None):
     transformed_path = download_gcs_directory_to_temp(bucket, transformed)
     protected_area_path = download_gcs_directory_to_temp(bucket, protected_areas)
 
-    print("model_path", model_path)
-
     run_config = tf.estimator.RunConfig()
     run_config = run_config.replace(model_dir=model_path)
 
@@ -148,29 +146,19 @@ def main(argv=None):
 
             for p in estimator.predict(input_fn=input_fn.get_transformed_prediction_features(transformed_path, os.path.join(protected_area_path, file))):
 
-                probabilities = []
+                if label_vocabulary[0] == "0":
+                    random_point = p['probabilities'][0]
+                    target_point = p['probabilities'][1]
+                else:
+                    random_point = p['probabilities'][1]
+                    target_point = p['probabilities'][0]
 
-                for prob in p['probabilities']:
-                    probabilities.append(float(prob))
+                values.append("%s,%.8f,%.8f" % (p['occurrence_id'].replace("|", ","), target_point, random_point))
 
-                values.append({'probabilities': probabilities, 'classes': label_vocabulary, 'key': p['occurrence_id']})
+    prefix = "predictions/%s/%s/%s.csv" % (args.taxon, args.date, datetime.now().strftime("%s"))
 
-    prefix = "predictions/%s/%s/%s.json" % (args.taxon, args.date, datetime.now().strftime("%s"))
-
-    print(json.dumps(values))
-
-    print(prefix)
     blob = storage.Blob(prefix, bucket)
-    blob.upload_from_string(json.dumps(values))
-
-    # output_path = path.join(
-    #     args.output,
-    #     args.taxon,
-    #     date,
-    #     "%s.json" % datetime.now().strftime("%s"))
-    #
-    # with io.open(output_path, 'w', encoding='utf-8') as f:
-    #     f.write(unicode(json.dumps(values, f, ensure_ascii=False)))
+    blob.upload_from_string('\n'.join(values))
 
 
 if __name__ == '__main__':

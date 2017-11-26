@@ -42,7 +42,6 @@ def get_label_vocabularly(train_data_path):
     labels = []
     label_files = glob.glob(train_data_path + "/labels*")
     for file in label_files:
-        print("file", file)
         with open(file, 'r') as label_file:
             taxa = label_file.read().splitlines()
             for t in taxa:

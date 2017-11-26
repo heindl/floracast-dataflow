@@ -26,13 +26,13 @@ class LocalPipelineOptions(PipelineOptions):
 
         # Intermediate TFRecords are stored in their own directory, each with a corresponding metadata file.
         # The metadata lists how many records, how many of each taxon label.
-        parser.add_argument(
+        parser.add_value_provider_argument(
             '--data_location',
-            required=True,
+            required=False,
             help='The intermediate TFRecords file that contains downloaded features from BigQuery'
         )
 
-        parser.add_argument(
+        parser.add_value_provider_argument(
             '--max_weather_station_distance',
             required=False,
             default=100,
@@ -40,7 +40,7 @@ class LocalPipelineOptions(PipelineOptions):
 
         #### INFER ####
 
-        parser.add_argument(
+        parser.add_value_provider_argument(
             '--protected_area_count',
             required=False,
             default=0,
@@ -48,9 +48,9 @@ class LocalPipelineOptions(PipelineOptions):
             help='The number of areas to fetch. Gathers all if zero.'
         )
 
-        parser.add_argument(
+        parser.add_value_provider_argument(
             '--date',
-            required=True,
+            required=False,
             type=str,
             help='The date on which to gather wilderness areas.'
         )
@@ -66,12 +66,18 @@ def run(argv=None):
     standard_options = pipeline_options.view_as(StandardOptions)
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
+    # Having issues validating in live version.
+    if local_pipeline_options.data_location is None:
+        return
+    if local_pipeline_options.date is None:
+        return
+
     with beam.Pipeline(standard_options.runner, options=pipeline_options) as pipeline:
         with tft.Context(temp_dir=cloud_options.temp_location):
 
             output = os.path.join(
-                local_pipeline_options.data_location,
-                local_pipeline_options.date,
+                str(local_pipeline_options.data_location),
+                str(local_pipeline_options.date),
                 dt.now().strftime("%s"),
             )
 
