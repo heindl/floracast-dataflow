@@ -2,11 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d5d946e7-fd45-4ccd-884b-e8aec6a492d9" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fetch_occurrences/setup.py" afterPath="$PROJECT_DIR$/fetch_occurrences/setup.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fetch_protected_areas/build.sh" afterPath="$PROJECT_DIR$/fetch_protected_areas/build.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fetch_protected_areas/call.py" afterPath="$PROJECT_DIR$/fetch_protected_areas/call.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fetch_protected_areas/main.py" afterPath="$PROJECT_DIR$/fetch_protected_areas/main.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fetch_protected_areas/setup.py" afterPath="$PROJECT_DIR$/fetch_protected_areas/setup.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fetch_shared/fetch_shared/weather.py" afterPath="$PROJECT_DIR$/fetch_shared/fetch_shared/weather.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fetch_shared/setup.py" afterPath="$PROJECT_DIR$/fetch_shared/setup.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/predict/predict.sh" afterPath="$PROJECT_DIR$/predict/predict.sh" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -28,8 +29,8 @@
       <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/fetch_protected_areas/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="286">
-              <caret line="102" column="99" lean-forward="false" selection-start-line="102" selection-start-column="99" selection-end-line="102" selection-end-column="99" />
+            <state relative-caret-position="369">
+              <caret line="86" column="26" lean-forward="true" selection-start-line="86" selection-start-column="26" selection-end-line="86" selection-end-column="26" />
               <folding>
                 <element signature="e#41#72#0" expanded="true" />
               </folding>
@@ -37,83 +38,23 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="weather.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/fetch_shared/fetch_shared/weather.py">
+      <file leaf-file-name="utils.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/fetch_shared/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="388">
-              <caret line="71" column="0" lean-forward="true" selection-start-line="71" selection-start-column="0" selection-end-line="71" selection-end-column="0" />
-              <folding>
-                <marker date="1511805027459" expanded="true" signature="7312:8108" ph="SELECT lat, " />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/fetch_random_areas/main.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="382">
-              <caret line="73" column="79" lean-forward="false" selection-start-line="73" selection-start-column="79" selection-end-line="73" selection-end-column="79" />
+            <state relative-caret-position="75">
+              <caret line="5" column="4" lean-forward="false" selection-start-line="5" selection-start-column="4" selection-end-line="5" selection-end-column="4" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
       <file leaf-file-name="weather.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/fetch_shared/weather.py">
+        <entry file="file://$PROJECT_DIR$/fetch_shared/fetch_shared/weather.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="148">
-              <caret line="13" column="29" lean-forward="false" selection-start-line="13" selection-start-column="29" selection-end-line="13" selection-end-column="29" />
+            <state relative-caret-position="270">
+              <caret line="20" column="53" lean-forward="false" selection-start-line="20" selection-start-column="53" selection-end-line="20" selection-end-column="53" />
               <folding>
-                <marker date="1511805048520" expanded="true" signature="264:777" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="801:4991" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="864:1062" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="1099:2979" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="1160:1266" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="1367:1772" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="2437:2979" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="2553:2979" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="2628:2979" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="2678:2979" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="3017:3153" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="3189:4642" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="3535:4618" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="3552:3909" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="3955:4275" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="4099:4275" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="4703:4991" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="5043:6212" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="5077:5269" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="5321:6212" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="5733:6120" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="5746:5849" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="5914:6088" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="6237:12263" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="6328:6686" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="6784:6992" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="6834:6973" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="7044:8401" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="7096:7250" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="7290:8124" ph="&quot;&quot;&quot;...&quot;&quot;&quot;" />
-                <marker date="1511805048520" expanded="true" signature="7312:8108" ph="SELECT lat, " />
-                <marker date="1511805048520" expanded="true" signature="8143:8365" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="8423:10806" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="8940:10750" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="9032:9316" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="9369:10750" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="9383:9581" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="9689:9840" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="9862:10146" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="10206:10383" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="10405:10750" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="10852:11591" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="10940:11572" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="10971:11572" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="11009:11572" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="11066:11572" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="11629:12263" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="11864:11989" ph="..." />
-                <marker date="1511805048520" expanded="true" signature="12096:12239" ph="..." />
+                <marker date="1511809547821" expanded="true" signature="7129:7925" ph="SELECT lat, " />
               </folding>
             </state>
           </provider>
@@ -122,7 +63,7 @@
       <file leaf-file-name="utils.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/fetch_shared/fetch_shared/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-471">
+            <state relative-caret-position="0">
               <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
               <folding />
             </state>
@@ -141,28 +82,8 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="ex.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/fetch_shared/fetch_shared/ex.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="214">
-              <caret line="43" column="49" lean-forward="false" selection-start-line="43" selection-start-column="49" selection-end-line="43" selection-end-column="49" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="elevation.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/fetch_shared/fetch_shared/elevation.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="240">
-              <caret line="17" column="14" lean-forward="false" selection-start-line="17" selection-start-column="14" selection-end-line="17" selection-end-column="14" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="LATEST_TEMPLATE_ID" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/fetch_random_areas/LATEST_TEMPLATE_ID">
+      <file leaf-file-name="local.sh" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/fetch_protected_areas/local.sh">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="0">
               <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
@@ -171,11 +92,43 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="local.sh" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/fetch_random_areas/local.sh">
+      <file leaf-file-name="call.sh" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/fetch_protected_areas/call.sh">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="135">
-              <caret line="9" column="21" lean-forward="false" selection-start-line="9" selection-start-column="21" selection-end-line="9" selection-end-column="21" />
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="call.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/fetch_protected_areas/call.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="249">
+              <caret line="24" column="39" lean-forward="false" selection-start-line="24" selection-start-column="39" selection-end-line="24" selection-end-column="39" />
+              <folding>
+                <element signature="e#0#43#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="predict.sh" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/predict/predict.sh">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="build.sh" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/fetch_protected_areas/build.sh">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="225">
+              <caret line="15" column="63" lean-forward="true" selection-start-line="15" selection-start-column="63" selection-end-line="15" selection-end-column="63" />
               <folding />
             </state>
           </provider>
@@ -192,8 +145,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>model.</find>
-      <find>prepare_fe</find>
       <find>split</find>
       <find>input_schema</find>
       <find>input_sch</find>
@@ -221,7 +172,9 @@
       <find>args.templ</find>
       <find>startswith</find>
       <find>fetchweatherdofn</find>
+      <find>(date</find>
       <find>.get(</find>
+      <find>weather</find>
     </findStrings>
     <replaceStrings>
       <replace />
@@ -291,7 +244,6 @@
         <option value="$PROJECT_DIR$/transform/build.sh" />
         <option value="$PROJECT_DIR$/transform/setup.py" />
         <option value="$PROJECT_DIR$/transform/call.py" />
-        <option value="$PROJECT_DIR$/predict/predict.sh" />
         <option value="$PROJECT_DIR$/train/task.py" />
         <option value="$PROJECT_DIR$/train/task_launcher.py" />
         <option value="$PROJECT_DIR$/train/launcher.py" />
@@ -300,16 +252,17 @@
         <option value="$PROJECT_DIR$/predict/test.py" />
         <option value="$PROJECT_DIR$/predict/predict.py" />
         <option value="$PROJECT_DIR$/fetch_shared/build.sh" />
-        <option value="$PROJECT_DIR$/fetch_protected_areas/call.py" />
-        <option value="$PROJECT_DIR$/fetch_protected_areas/build.sh" />
         <option value="$PROJECT_DIR$/fetch_protected_areas/call.sh" />
         <option value="$PROJECT_DIR$/fetch_occurrences/main.py" />
         <option value="$PROJECT_DIR$/fetch_random_areas/main.py" />
         <option value="$PROJECT_DIR$/transform/main.py" />
         <option value="$PROJECT_DIR$/fetch_shared/setup.py" />
         <option value="$PROJECT_DIR$/fetch_occurrences/setup.py" />
-        <option value="$PROJECT_DIR$/fetch_protected_areas/main.py" />
         <option value="$PROJECT_DIR$/fetch_shared/fetch_shared/weather.py" />
+        <option value="$PROJECT_DIR$/fetch_protected_areas/call.py" />
+        <option value="$PROJECT_DIR$/fetch_protected_areas/main.py" />
+        <option value="$PROJECT_DIR$/fetch_protected_areas/build.sh" />
+        <option value="$PROJECT_DIR$/predict/predict.sh" />
       </list>
     </option>
   </component>
@@ -387,11 +340,6 @@
             <path>
               <item name="Root" type="cbb8eebc:String" user="Root" />
               <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
-              <item name="fetch_random_areas" type="cbb8eebc:String" user="fetch_random_areas" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
               <item name="fetch_shared" type="cbb8eebc:String" user="fetch_shared" />
             </path>
             <path>
@@ -399,6 +347,11 @@
               <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
               <item name="fetch_shared" type="cbb8eebc:String" user="fetch_shared" />
               <item name="fetch_shared" type="cbb8eebc:String" user="fetch_shared" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
+              <item name="predict" type="cbb8eebc:String" user="predict" />
             </path>
             <path>
               <item name="Root" type="cbb8eebc:String" user="Root" />
@@ -712,16 +665,15 @@
       <workItem from="1510855730448" duration="6104000" />
       <workItem from="1511194266359" duration="163000" />
       <workItem from="1511194498495" duration="15270000" />
-      <workItem from="1511456264586" duration="55046000" />
+      <workItem from="1511456264586" duration="60636000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="887437000" />
+    <option name="totallyTimeSpent" value="893027000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1280" height="800" extended-state="0" />
-    <editor active="true" />
     <layout>
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -735,7 +687,7 @@
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2786753" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2786753" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3252841" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.16397415" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -770,14 +722,6 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/transform/setup.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="17" column="55" lean-forward="false" selection-start-line="17" selection-start-column="55" selection-end-line="17" selection-end-column="55" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/fetch_shared/gcs.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="45">
@@ -950,14 +894,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/predict/predict.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="30">
-          <caret line="2" column="36" lean-forward="false" selection-start-line="2" selection-start-column="36" selection-end-line="2" selection-end-column="36" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/google/cloud/storage/blob.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="218">
@@ -1065,40 +1001,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/fetch_protected_areas/build.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="225">
-          <caret line="15" column="30" lean-forward="false" selection-start-line="15" selection-start-column="30" selection-end-line="15" selection-end-column="30" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetch_protected_areas/call.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetch_protected_areas/call.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="479">
-          <caret line="34" column="36" lean-forward="false" selection-start-line="34" selection-start-column="36" selection-end-line="34" selection-end-column="36" />
-          <folding>
-            <element signature="e#0#43#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetch_protected_areas/local.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="10" column="33" lean-forward="false" selection-start-line="10" selection-start-column="33" selection-end-line="10" selection-end-column="33" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/google/cloud/firestore_v1beta1/client.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="95">
@@ -1112,42 +1014,6 @@
         <state relative-caret-position="355">
           <caret line="25" column="17" lean-forward="false" selection-start-line="25" selection-start-column="17" selection-end-line="25" selection-end-column="17" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/apache_beam/options/value_provider.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="218">
-          <caret line="71" column="6" lean-forward="false" selection-start-line="71" selection-start-column="6" selection-end-line="71" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetch_protected_areas/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="286">
-          <caret line="102" column="99" lean-forward="false" selection-start-line="102" selection-start-column="99" selection-end-line="102" selection-end-column="99" />
-          <folding>
-            <element signature="e#41#72#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetch_shared/fetch_shared/utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-471">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetch_shared/fetch_shared/gcs.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#44#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1183,79 +1049,144 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/fetch_shared/weather.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="133">
+          <caret line="12" column="29" lean-forward="false" selection-start-line="12" selection-start-column="29" selection-end-line="12" selection-end-column="29" />
+          <folding>
+            <marker date="1511809667627" expanded="true" signature="264:391" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="327:391" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="6012:12080" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="6103:6503" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="6601:6809" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="6651:6790" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="6861:8218" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="6913:7067" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="7107:7941" ph="&quot;&quot;&quot;...&quot;&quot;&quot;" />
+            <marker date="1511809667627" expanded="true" signature="7129:7925" ph="SELECT lat, " />
+            <marker date="1511809667627" expanded="true" signature="7960:8182" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="8240:10623" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="8757:10567" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="8849:9133" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="9186:10567" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="9200:9398" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="9506:9657" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="9679:9963" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="10023:10200" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="10222:10567" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="10669:11408" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="10757:11389" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="10788:11389" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="10826:11389" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="10883:11389" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="11446:12080" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="11681:11806" ph="..." />
+            <marker date="1511809667627" expanded="true" signature="11913:12056" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/fetch_random_areas/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="382">
-          <caret line="73" column="79" lean-forward="false" selection-start-line="73" selection-start-column="79" selection-end-line="73" selection-end-column="79" />
+        <state relative-caret-position="363">
+          <caret line="68" column="0" lean-forward="false" selection-start-line="68" selection-start-column="0" selection-end-line="68" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/fetch_shared/weather.py">
+    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/apache_beam/options/value_provider.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="148">
-          <caret line="13" column="29" lean-forward="false" selection-start-line="13" selection-start-column="29" selection-end-line="13" selection-end-column="29" />
+        <state relative-caret-position="218">
+          <caret line="71" column="6" lean-forward="false" selection-start-line="71" selection-start-column="6" selection-end-line="71" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/fetch_shared/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="75">
+          <caret line="5" column="4" lean-forward="false" selection-start-line="5" selection-start-column="4" selection-end-line="5" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetch_shared/fetch_shared/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetch_shared/fetch_shared/gcs.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1511805048520" expanded="true" signature="264:777" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="801:4991" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="864:1062" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="1099:2979" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="1160:1266" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="1367:1772" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="2437:2979" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="2553:2979" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="2628:2979" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="2678:2979" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="3017:3153" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="3189:4642" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="3535:4618" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="3552:3909" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="3955:4275" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="4099:4275" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="4703:4991" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="5043:6212" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="5077:5269" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="5321:6212" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="5733:6120" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="5746:5849" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="5914:6088" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="6237:12263" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="6328:6686" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="6784:6992" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="6834:6973" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="7044:8401" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="7096:7250" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="7290:8124" ph="&quot;&quot;&quot;...&quot;&quot;&quot;" />
-            <marker date="1511805048520" expanded="true" signature="7312:8108" ph="SELECT lat, " />
-            <marker date="1511805048520" expanded="true" signature="8143:8365" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="8423:10806" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="8940:10750" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="9032:9316" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="9369:10750" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="9383:9581" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="9689:9840" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="9862:10146" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="10206:10383" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="10405:10750" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="10852:11591" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="10940:11572" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="10971:11572" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="11009:11572" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="11066:11572" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="11629:12263" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="11864:11989" ph="..." />
-            <marker date="1511805048520" expanded="true" signature="12096:12239" ph="..." />
+            <element signature="e#0#44#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetch_protected_areas/local.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetch_protected_areas/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="369">
+          <caret line="86" column="26" lean-forward="true" selection-start-line="86" selection-start-column="26" selection-end-line="86" selection-end-column="26" />
+          <folding>
+            <element signature="e#41#72#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetch_protected_areas/build.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="225">
+          <caret line="15" column="63" lean-forward="true" selection-start-line="15" selection-start-column="63" selection-end-line="15" selection-end-column="63" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetch_protected_areas/call.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetch_protected_areas/call.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="249">
+          <caret line="24" column="39" lean-forward="false" selection-start-line="24" selection-start-column="39" selection-end-line="24" selection-end-column="39" />
+          <folding>
+            <element signature="e#0#43#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/fetch_shared/fetch_shared/weather.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="388">
-          <caret line="71" column="0" lean-forward="true" selection-start-line="71" selection-start-column="0" selection-end-line="71" selection-end-column="0" />
+        <state relative-caret-position="270">
+          <caret line="20" column="53" lean-forward="false" selection-start-line="20" selection-start-column="53" selection-end-line="20" selection-end-column="53" />
           <folding>
-            <marker date="1511805027459" expanded="true" signature="7312:8108" ph="SELECT lat, " />
+            <marker date="1511809547821" expanded="true" signature="7129:7925" ph="SELECT lat, " />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/predict/predict.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>

@@ -60,6 +60,12 @@ class LocalPipelineOptions(PipelineOptions):
         )
 
 
+def get_provided_value(value_provider):
+    if value_provider.is_accessible():
+        return value_provider.get()
+    else:
+        return value_provider.default_value
+
 def run(argv=None):
 
 
@@ -71,29 +77,12 @@ def run(argv=None):
 
     local_options = pipeline_options.view_as(LocalPipelineOptions)
     cloud_options = pipeline_options.view_as(GoogleCloudOptions)
-    cloud_options.project = utils.default_project()
+    # cloud_options.project = utils.default_project()
     standard_options = pipeline_options.view_as(StandardOptions)
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
-    # Having issues validating in live version.
-    if local_options.data_location is None:
-        return
-    if local_options.date is None:
-        return
-
-    # data_location = local_pipeline_options.data_location.get()
-    # date = local_pipeline_options.date.get()
-    # protected_area_count = local_pipeline_options.protected_area_count.get()
-    # max_weather_station_distance = local_pipeline_options.max_weather_station_distance.get()
-
     with beam.Pipeline(standard_options.runner, options=pipeline_options) as pipeline:
         with tft.Context(temp_dir=cloud_options.temp_location):
-
-            output = os.path.join(
-                str(local_options.data_location),
-                str(local_options.date),
-                dt.now().strftime("%s"),
-            )
 
             _ = pipeline \
                 | _ReadProtectedAreas(project=cloud_options.project, protected_area_count=local_options.protected_area_count) \
@@ -103,7 +92,7 @@ def run(argv=None):
                 | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(cloud_options.project)) \
                 | 'ProtoForWrite' >> beam.Map(lambda e: e.encode()) \
                 | 'WriteDataAsTFRecord' >> beam.io.WriteToTFRecord(
-                        file_path_prefix=output+"/areas",
+                        file_path_prefix=local_options.data_location,
                         file_name_suffix='.tfrecord.gz')
 
 

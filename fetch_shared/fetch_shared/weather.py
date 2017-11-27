@@ -8,16 +8,10 @@ from ex import Example
 class FetchWeatherDoFn(beam.DoFn):
     def __init__(self, project, min_weather_station_distance):
         super(FetchWeatherDoFn, self).__init__()
-        self._project = project
-        self._weather_station_distance = min_weather_station_distance
+        self._fetcher = WeatherFetcher(project, min_weather_station_distance)
 
     def process(self, batch):
-
-        if type(self._weather_station_distance) is not int:
-            self._weather_station_distance = self._weather_station_distance.get()
-
-        fetcher = WeatherFetcher(self._project, self._weather_station_distance)
-        return fetcher.process_batch(batch)
+        return self._fetcher.process_batch(batch)
 
 
 class WeatherFetcher:
@@ -49,15 +43,15 @@ class WeatherFetcher:
                 ne[1] = example.longitude()
 
         # For each point, ensure we give enough space to get a station for that furthest point.
-        sw = self.bounding_box(sw[0], sw[1], self._weather_station_distance)[0]
-        ne = self.bounding_box(ne[0], ne[1], self._weather_station_distance)[1]
+        sw = self.bounding_box(sw[0], sw[1], self._weather_station_distance.get())[0]
+        ne = self.bounding_box(ne[0], ne[1], self._weather_station_distance.get())[1]
 
         self._weather_store = _WeatherLoader(
             project=self._project,
             bbox=[sw.longitude, sw.latitude, ne.longitude, ne.latitude],
             year=batch[0][0:4],
             month=batch[0][4:6],
-            weather_station_distance=self._weather_station_distance,
+            weather_station_distance=self._weather_station_distance.get(),
             days_before=self._weather_days_before
         )
 
@@ -157,8 +151,10 @@ class BallTreeIndex:
         pairs = sorted(pairs, key=lambda v: v[0])
         return [x[1] for x in pairs][0:5]
 
-class _WeatherLoader():
+
+class _WeatherLoader:
     def __init__(self, project, bbox, year, month, weather_station_distance, days_before):
+        print("weather-project", project)
         self._project = project
         self._dataset = 'bigquery-public-data:noaa_gsod'
         self._weather_station_distance = weather_station_distance

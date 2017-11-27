@@ -3,6 +3,7 @@ from oauth2client.client import GoogleCredentials
 import argparse
 import sys
 from fetch_shared import utils, gcs
+from datetime import datetime
 
 
 credentials = GoogleCredentials.get_application_default()
@@ -32,7 +33,7 @@ BODY = {
     "jobName": "fetch-protected-areas-%s" % args.date,
     "parameters": {
         "date" : args.date,
-        "data_location": "gs://%s/protected_areas" % args.bucket,
+        "data_location": "gs://%s/protected_areas/%s/%s/" % (args.bucket, args.date, datetime.now().strftime("%s")),
     },
     "environment": {
         "tempLocation": "gs://%s/temp" % args.bucket,
