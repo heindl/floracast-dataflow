@@ -35,7 +35,7 @@ if __name__ == '__main__':
         author="mph",
         author_email="matt@floracast.com",
         install_requires=[
-            "apache-beam==2.1.1",
+            "apache-beam==2.2.0",
             "geopy==1.11.0",
             "tensorflow==1.4.0",
             "tensorflow-transform==0.3.1",

@@ -3,6 +3,7 @@ from __future__ import division
 
 import logging
 import apache_beam as beam
+from apache_beam.typehints import Dict
 from apache_beam.io import iobase
 from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions, StandardOptions, SetupOptions
 import os
@@ -13,7 +14,8 @@ from apache_beam.io import range_trackers
 from datetime import datetime
 from geopy import Point
 import time
-from google.cloud.firestore_v1beta1 import client
+# from google.cloud.firestore_v1beta1 import client
+from google.cloud import firestore
 
 # If error after upgradeing apache beam: metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases
 # then: pip install six==1.10.0
@@ -29,6 +31,7 @@ class LocalPipelineOptions(PipelineOptions):
         parser.add_value_provider_argument(
             '--data_location',
             required=False,
+            type=str,
             help='The intermediate TFRecords file that contains downloaded features from BigQuery'
         )
 
@@ -36,6 +39,7 @@ class LocalPipelineOptions(PipelineOptions):
             '--max_weather_station_distance',
             required=False,
             default=100,
+            type=int,
             help='Maximum distance a weather station can be from an occurrence when fetching weather.')
 
         #### INFER ####
@@ -58,41 +62,54 @@ class LocalPipelineOptions(PipelineOptions):
 
 def run(argv=None):
 
+
+    # from apache_beam.options.value_provider import RuntimeValueProvider
+    #
+    # RuntimeValueProvider.get()
+
     pipeline_options = PipelineOptions()
 
-    local_pipeline_options = pipeline_options.view_as(LocalPipelineOptions)
+    local_options = pipeline_options.view_as(LocalPipelineOptions)
     cloud_options = pipeline_options.view_as(GoogleCloudOptions)
     cloud_options.project = utils.default_project()
     standard_options = pipeline_options.view_as(StandardOptions)
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
     # Having issues validating in live version.
-    if local_pipeline_options.data_location is None:
+    if local_options.data_location is None:
         return
-    if local_pipeline_options.date is None:
+    if local_options.date is None:
         return
+
+    # data_location = local_pipeline_options.data_location.get()
+    # date = local_pipeline_options.date.get()
+    # protected_area_count = local_pipeline_options.protected_area_count.get()
+    # max_weather_station_distance = local_pipeline_options.max_weather_station_distance.get()
 
     with beam.Pipeline(standard_options.runner, options=pipeline_options) as pipeline:
         with tft.Context(temp_dir=cloud_options.temp_location):
 
             output = os.path.join(
-                str(local_pipeline_options.data_location),
-                str(local_pipeline_options.date),
+                str(local_options.data_location),
+                str(local_options.date),
                 dt.now().strftime("%s"),
             )
 
             _ = pipeline \
-                | _ReadProtectedAreas(project=cloud_options.project, protected_area_count=local_pipeline_options.protected_area_count) \
-                | 'ConvertProtectedAreaDictToExample' >> beam.ParDo(_ProtectedAreaDictToExample(local_pipeline_options.date)) \
+                | _ReadProtectedAreas(project=cloud_options.project, protected_area_count=local_options.protected_area_count) \
+                | 'ConvertProtectedAreaDictToExample' >> beam.ParDo(_ProtectedAreaDictToExample(local_options.date)) \
                 | 'GroupByYearMonthRegion' >> utils.GroupByYearMonthRegion() \
-                | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(cloud_options.project, local_pipeline_options.max_weather_station_distance)) \
+                | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(cloud_options.project, local_options.max_weather_station_distance)) \
                 | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(cloud_options.project)) \
                 | 'ProtoForWrite' >> beam.Map(lambda e: e.encode()) \
-                | 'WriteDataAsTFRecord' >> beam.io.WriteToTFRecord(output+"/areas", file_name_suffix='.tfrecord.gz')
+                | 'WriteDataAsTFRecord' >> beam.io.WriteToTFRecord(
+                        file_path_prefix=output+"/areas",
+                        file_name_suffix='.tfrecord.gz')
+
 
 
 # Filter and prepare for duplicate sort.
-@beam.typehints.with_input_types(dict)
+@beam.typehints.with_input_types(Dict)
 @beam.typehints.with_output_types(ex.Example)
 class _ProtectedAreaDictToExample(beam.DoFn):
 
@@ -111,10 +128,10 @@ class _ProtectedAreaDictToExample(beam.DoFn):
         # centre = self._parse_point(e['Centre'])
         centre = Point(element["Centre"]["Latitude"], element["Centre"]["Longitude"])
         e = ex.Example()
-        e.set_occurrence_id("%.6f|%.6f|%s" % (centre.latitude, centre.longitude, self._date_str))
+        e.set_occurrence_id("%.6f|%.6f|%s" % (centre.latitude, centre.longitude, self._date_str.get()))
         e.set_longitude(centre.longitude)
         e.set_latitude(centre.latitude)
-        e.set_date(int(time.mktime(datetime.strptime(self._date_str, "%Y%m%d").timetuple())))
+        e.set_date(int(time.mktime(datetime.strptime(str(self._date_str.get()), "%Y%m%d").timetuple())))
         yield e
 
 class _ProtectedAreaSource(iobase.BoundedSource):
@@ -144,10 +161,13 @@ class _ProtectedAreaSource(iobase.BoundedSource):
 
     def read(self, range_tracker):
 
-        db = client.Client(project=self._project)
+        db = firestore.Client(self._project)
+
+        # db = client.Client(project=self._project)
         q = db.collection(u'WildernessAreas')
-        if self._protected_area_count > 0:
-            q = q.limit(self._protected_area_count)
+        protected_area_count = self._protected_area_count.get()
+        if protected_area_count > 0:
+            q = q.limit(protected_area_count)
 
         for w in q.get():
             yield w.to_dict()

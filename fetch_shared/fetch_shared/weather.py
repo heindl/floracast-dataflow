@@ -8,10 +8,16 @@ from ex import Example
 class FetchWeatherDoFn(beam.DoFn):
     def __init__(self, project, min_weather_station_distance):
         super(FetchWeatherDoFn, self).__init__()
-        self._fetcher = WeatherFetcher(project, min_weather_station_distance)
+        self._project = project
+        self._weather_station_distance = min_weather_station_distance
 
     def process(self, batch):
-        return self._fetcher.process_batch(batch)
+
+        if type(self._weather_station_distance) is not int:
+            self._weather_station_distance = self._weather_station_distance.get()
+
+        fetcher = WeatherFetcher(self._project, self._weather_station_distance)
+        return fetcher.process_batch(batch)
 
 
 class WeatherFetcher:
@@ -151,9 +157,8 @@ class BallTreeIndex:
         pairs = sorted(pairs, key=lambda v: v[0])
         return [x[1] for x in pairs][0:5]
 
-class _WeatherLoader(beam.DoFn):
+class _WeatherLoader():
     def __init__(self, project, bbox, year, month, weather_station_distance, days_before):
-        super(_WeatherLoader, self).__init__()
         self._project = project
         self._dataset = 'bigquery-public-data:noaa_gsod'
         self._weather_station_distance = weather_station_distance
