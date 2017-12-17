@@ -37,35 +37,35 @@ class LocalPipelineOptions(PipelineOptions):
 
         # Intermediate TFRecords are stored in their own directory, each with a corresponding metadata file.
         # The metadata lists how many records, how many of each taxon label.
-        parser.add_value_provider_argument(
+        parser.add_argument(
             '--output_location',
             required=True,
             type=str,
             help='The location to write transformed tfrecords'
         )
 
-        parser.add_value_provider_argument(
+        parser.add_argument(
             '--occurrence_location',
             required=True,
             type=str,
             help='The location of occurrence tfrecords.'
         )
 
-        parser.add_value_provider_argument(
+        parser.add_argument(
             '--random_location',
             required=True,
             type=str,
             help='The location of random tfrecords.'
         )
 
-        parser.add_value_provider_argument(
+        parser.add_argument(
             '--mode',
             required=True,
             type=str,
             help='train, eval, infer'
         )
 
-        parser.add_value_provider_argument(
+        parser.add_argument(
             '--percent_eval',
             required=False,
             default=10,
@@ -74,12 +74,10 @@ class LocalPipelineOptions(PipelineOptions):
         )
 
 class Decoder(beam.DoFn):
-    # def __init__(self):
-        # self._counter = 0
 
-    def process(self, element, coder):
+    def process(self, element, input_coder):
         try:
-            decoded = coder.decode(element)
+            decoded = input_coder.decode(element)
             # print(decoded)
             yield decoded
         except ValueError:
@@ -108,10 +106,6 @@ def main(argv=None):
     standard_options = pipeline_options.view_as(StandardOptions)
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
-    taxon, occurrence_timestamp = parse_taxon_timestamp_from_occurrence_path(local_options.occurrence_location)
-
-    transform_location = os.path.join(local_options.output_location, taxon, datetime.now().strftime("%s"))
-
     with beam.Pipeline(standard_options.runner, options=pipeline_options) as pipeline:
         with tft.Context(temp_dir=cloud_options.temp_location):
 
@@ -124,7 +118,7 @@ def main(argv=None):
 
             occurrences = pipeline \
                       | 'ReadOccurrenceTFRecords' >> beam.io.ReadFromTFRecord(
-                local_options.occurrence_location+"/*.gz",
+                local_options.occurrence_location + "/*.gz",
                 compression_type=CompressionTypes.GZIP) \
                       | 'DecodeOccurrenceProtoExamples' >> beam.ParDo(Decoder(), input_coder)
                       # | 'DecodeOccurrenceProtoExamples' >> beam.Map(input_coder.decode)
@@ -151,7 +145,7 @@ def main(argv=None):
 
             _ = metadata \
                 | 'WriteInputMetadata' >> tft_beam_io.WriteMetadata(
-                path=os.path.join(transform_location, RAW_METADATA_DIR),
+                path=os.path.join(local_options.output_location, RAW_METADATA_DIR),
                 pipeline=pipeline)
 
             (records_dataset, records_metadata), transform_fn = (
@@ -160,10 +154,10 @@ def main(argv=None):
             _ = records_dataset \
                 | 'ProjectLabels' >> beam.Map(lambda e: e["taxon"]) \
                 | 'RemoveLabelDuplicates' >> beam.RemoveDuplicates() \
-                | 'WriteLabels' >> beam.io.WriteToText(transform_location+"/labels", file_name_suffix='.txt')
+                | 'WriteLabels' >> beam.io.WriteToText(local_options.output_location, file_name_suffix='labels.txt')
 
             _ = (transform_fn
-                 | 'WriteTransformFn' >> tft_beam_io.WriteTransformFn(transform_location))
+                 | 'WriteTransformFn' >> tft_beam_io.WriteTransformFn(local_options.output_location))
 
             random_seed = int(datetime.now().strftime("%s"))
             def train_eval_partition_fn(ex, unused_num_partitions):
@@ -177,25 +171,27 @@ def main(argv=None):
                 | 'SerializeTrainExamples' >> beam.Map(coder.encode) \
                 | 'ShuffleTraining' >> functions.Shuffle() \
                 | 'WriteTraining' >> beam.io.WriteToTFRecord(
-                os.path.join(transform_location+"/train_data/", TRANSFORMED_TRAIN_DATA_FILE_PREFIX),
-                file_name_suffix='.tfrecord.gz')
+                    os.path.join(local_options.output_location, "train_data", TRANSFORMED_TRAIN_DATA_FILE_PREFIX),
+                    file_name_suffix='.tfrecord.gz')
 
             _ = eval_dataset \
                 | 'SerializeEvalExamples' >> beam.Map(coder.encode) \
                 | 'ShuffleEval' >> functions.Shuffle() \
                 | 'WriteEval' >> beam.io.WriteToTFRecord(
-                os.path.join(transform_location+"/eval_data/", TRANSFORMED_EVAL_DATA_FILE_PREFIX),
-                file_name_suffix='.tfrecord.gz')
+                    os.path.join(local_options.output_location, "eval_data", TRANSFORMED_EVAL_DATA_FILE_PREFIX),
+                    file_name_suffix='.tfrecord.gz')
 
             _ = train_dataset \
                 | 'CountTraining' >> beam.combiners.Count.Globally() \
                 | 'WriteTrainCount' >> beam.io.WriteToText(
-                os.path.join(transform_location, 'train_count'), file_name_suffix=".txt")
+                    local_options.output_location + "/train_count",
+                    file_name_suffix=".txt")
 
             _ = eval_dataset \
                 | 'CountEval' >> beam.combiners.Count.Globally() \
                 | 'WriteEvalCount' >> beam.io.WriteToText(
-                os.path.join(transform_location, 'eval_count'), file_name_suffix=".txt")
+                    local_options.output_location + "/eval_count",
+                    file_name_suffix=".txt")
 
 
 if __name__ == '__main__':

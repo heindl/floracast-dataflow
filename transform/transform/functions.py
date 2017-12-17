@@ -42,6 +42,7 @@ def partition_fn(ex, partition_random_seed, percent_eval):
 
 def make_preprocessing_fn(num_classes):
     import tensorflow_transform as tt
+    import tensorflow as tf
     """Creates a preprocessing function for reddit.
     Args:
 
@@ -56,11 +57,13 @@ def make_preprocessing_fn(num_classes):
         m = {
             KEY_OCCURRENCE_ID: i[KEY_OCCURRENCE_ID],
             KEY_ELEVATION: tt.scale_to_0_1(i[KEY_ELEVATION]),
-            KEY_AVG_TEMP: tt.scale_to_0_1(i[KEY_AVG_TEMP]),
             KEY_MIN_TEMP: tt.scale_to_0_1(i[KEY_MIN_TEMP]),
             KEY_MAX_TEMP: tt.scale_to_0_1(i[KEY_MAX_TEMP]),
-            KEY_PRCP: tt.scale_to_0_1(i[KEY_PRCP]),
             KEY_DAYLIGHT: tt.scale_to_0_1(i[KEY_DAYLIGHT]),
+            # KEY_MIN_TEMP: tf.reduce_mean(tf.reshape(i[KEY_MIN_TEMP], [18, 5]), 1),
+            # KEY_MAX_TEMP: tf.reduce_mean(tf.reshape(i[KEY_MAX_TEMP], [18, 5]), 1),
+            # KEY_PRCP: tf.reduce_mean(tf.reshape(i[KEY_PRCP], [18, 5]), 1),
+            # KEY_DAYLIGHT: tf.reduce_mean(tf.reshape(i[KEY_DAYLIGHT], [18, 5]), 1),
             # KEY_GRID_ZONE: tt.hash_strings(i[KEY_GRID_ZONE], 1000)
             KEY_GRID_ZONE: i[KEY_GRID_ZONE],
             KEY_TAXON: i[KEY_TAXON]

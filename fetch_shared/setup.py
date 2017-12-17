@@ -35,7 +35,7 @@ if __name__ == '__main__':
         author="mph",
         author_email="matt@floracast.com",
         install_requires=[
-            "apache-beam==2.2.0",
+            "apache-beam==2.2.1",
             "astral==1.4",
             "geopy==1.11.0",
             "google-cloud==0.30.0",
