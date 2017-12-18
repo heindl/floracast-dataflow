@@ -18,7 +18,7 @@ from __future__ import division
 from __future__ import print_function
 import sys
 import tensorflow as tf
-import train_shared_model, train_shared_input_fn
+from train_shared import train_shared_model
 import functools
 import argparse
 import shutil
@@ -29,7 +29,7 @@ parser.add_argument(
     '--train_data_path', type=str, required=False, default="/tmp/floracast-datamining/transformed/53713/1513571852")
 
 parser.add_argument(
-    '--model_dir', type=str, default='/tmp/morel_model',
+    '--model_dir', type=str, default='/tmp/chicken_of_the_woods_model',
     help='Base directory for the model.')
 
 
@@ -48,22 +48,20 @@ def main(unused_argv):
     # Clean up existing model dir.
     shutil.rmtree(FLAGS.model_dir, ignore_errors=True)
 
-    model = tf.estimator.DNNClassifier(
-        feature_columns=train_shared_model.feature_columns(),
-        hidden_units=[100, 75, 50, 25],
-        model_dir=FLAGS.model_dir
-    )
+
+    run_config = tf.estimator.RunConfig(model_dir=FLAGS.model_dir)
+    model = train_shared_model.get_estimator(FLAGS, run_config)
 
     # Train and evaluate the model every `FLAGS.epochs_per_eval` epochs.
     for n in range(FLAGS.train_epochs // FLAGS.epochs_per_eval):
 
-        model.train(input_fn=functools.partial(train_shared_input_fn.transformed_input_fn,
+        model.train(input_fn=functools.partial(train_shared_model.transformed_input_fn,
                                                transformed_location=FLAGS.train_data_path,
                                                batch_size=FLAGS.batch_size,
                                                mode=tf.estimator.ModeKeys.TRAIN,
                                                epochs=FLAGS.epochs_per_eval))
 
-        res = model.evaluate(input_fn=functools.partial(train_shared_input_fn.transformed_input_fn,
+        res = model.evaluate(input_fn=functools.partial(train_shared_model.transformed_input_fn,
                                                         transformed_location=FLAGS.train_data_path,
                                                         batch_size=FLAGS.batch_size,
                                                         mode=tf.estimator.ModeKeys.EVAL,

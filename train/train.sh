@@ -20,7 +20,7 @@ if [[ $2 == ${PREFIX}* ]]; then
 fi
 
 
-python -m task --train_data_path $TRANSFORMED_PATH --output_path $LOCAL_OUTPUT_PATH
+python -m task --train_data_path $TRANSFORMED_PATH --model_dir $LOCAL_OUTPUT_PATH
 #  #      --num_classes 2 \
 #  #      --eval_steps 20 \
 #  #      --batch_size 512

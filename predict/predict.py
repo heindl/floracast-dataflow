@@ -3,14 +3,15 @@ import io, json, os
 import argparse
 from google.cloud import storage, exceptions
 import tempfile
-from train_shared import input_fn
-from train_shared import model as train_shared_model
+from train_shared import train_shared_model
 from fetch_shared import gcs, utils
 from os import path
 import sys
 import shutil
 import errno
 from datetime import datetime
+import functools
+import re
 
 def trim_path(gcs_path, bucket_name):
     s = "gs://%s/" % bucket_name
@@ -138,27 +139,57 @@ def main(argv=None):
     args.train_data_path = transformed_path
     estimator = train_shared_model.get_estimator(args, run_config)
 
-    label_vocabulary = train_shared_model.get_label_vocabularly(transformed_path)
+    # label_vocabulary = train_shared_model.get_label_vocabularly(transformed_path)
 
     values = []
+    random_count = 0
+    target_count = 1
     for _, _, files in os.walk(protected_area_path):
         for file in files:
 
-            for p in estimator.predict(input_fn=input_fn.get_transformed_prediction_features(transformed_path, os.path.join(protected_area_path, file))):
+            newFile = ensure_taxon(protected_area_path, file)
 
-                if label_vocabulary[0] == "0":
-                    random_point = p['probabilities'][0]
-                    target_point = p['probabilities'][1]
+            for p in estimator.predict(input_fn=functools.partial(train_shared_model.transformed_input_fn,
+                                                            transformed_location=transformed_path,
+                                                            mode=tf.estimator.ModeKeys.PREDICT,
+                                                               raw_data_file_pattern=newFile)):
+
+                random_point = p['probabilities'][0]
+                target_point = p['probabilities'][1]
+                if random_point > target_point:
+                    random_count = random_count + 1
                 else:
-                    random_point = p['probabilities'][1]
-                    target_point = p['probabilities'][0]
+                    target_count = target_count + 1
 
                 values.append("%s,%.8f,%.8f" % (p['occurrence_id'].replace("|", ","), target_point, random_point))
+
+    print("count", args.date, random_count, target_count)
 
     prefix = "predictions/%s/%s/%s.csv" % (args.taxon, args.date, datetime.now().strftime("%s"))
 
     blob = storage.Blob(prefix, bucket)
     blob.upload_from_string('\n'.join(values))
+
+# TODO: Improve this by figuring out how to ammend metadata.
+def ensure_taxon(tfrecords_path, tfrecord_filename) :
+
+    options = tf.python_io.TFRecordOptions(tf.python_io.TFRecordCompressionType.GZIP)
+
+    new_file_path = path.join(tfrecords_path, "taxon-amended"+tfrecord_filename)
+
+    open(new_file_path, 'a').close()
+
+    # recordWriter = tf.python_io.TFRecordWriter(re.sub('\.gz$', '', new_file_path), options=options)
+    recordWriter = tf.python_io.TFRecordWriter(new_file_path, options=options)
+
+    for example in tf.python_io.tf_record_iterator(path.join(tfrecords_path, tfrecord_filename), options=options):
+        e = tf.train.Example.FromString(example)
+        e.features.feature["taxon"].bytes_list.value.append('0')
+        recordWriter.write(e.SerializeToString())
+
+    recordWriter.close()
+
+    return new_file_path
 
 
 if __name__ == '__main__':
