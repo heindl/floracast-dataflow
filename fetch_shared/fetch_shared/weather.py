@@ -86,7 +86,7 @@ class WeatherFetcher:
 
         records = self._weather_store.read(example.latitude(), example.longitude(), datetime.fromtimestamp(example.date()))
 
-        if len(records.keys()) < self._weather_days_before:
+        if records is None or len(records.keys()) < self._weather_days_before:
             return None
 
         for date_string in sorted(records.keys()):
@@ -127,6 +127,7 @@ class BallTreeIndex:
         from sklearn.neighbors import BallTree
         import numpy as np
         self.lat_longs = lat_longs
+        print('radians', lat_longs, np.radians(lat_longs))
         self.ball_tree_index = BallTree(np.radians(lat_longs), metric='haversine')
 
     def query_radius(self,lat, lng ,radius_miles):
@@ -281,7 +282,10 @@ class _WeatherLoader:
                 #     break
                 # page_token = iterator.next_page_token
 
-        self._stations_index = BallTreeIndex(stations)
+        if len(stations) != 0:
+            self._stations_index = BallTreeIndex(stations)
+        else:
+            self._stations_index = None
 
     def _read_one(self, lat_lng_keys, date):
         # import os
@@ -312,6 +316,9 @@ class _WeatherLoader:
     def read(self, lat, lng, today):
         import pandas as pd
         from datetime import timedelta
+
+        if self._stations_index is None:
+            return None
 
         records = {}
 

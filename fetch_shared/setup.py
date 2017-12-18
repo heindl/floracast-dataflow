@@ -35,7 +35,7 @@ if __name__ == '__main__':
         author="mph",
         author_email="matt@floracast.com",
         install_requires=[
-            "apache-beam==2.2.1",
+            "apache-beam==2.2.0",
             "astral==1.4",
             "geopy==1.11.0",
             "google-cloud==0.30.0",
@@ -43,9 +43,9 @@ if __name__ == '__main__':
             "googlemaps==2.5.1",
             "mgrs==1.3.5",
             "numpy==1.13.3",
-            "pandas==0.21.0",
+            "pandas==0.21.1",
             "tensorflow==1.4.0",
-            # "tensorflow-transform==0.3.1",
+            "scikit-learn==0.19.1",
             "six==1.10.0"
         ]
     )

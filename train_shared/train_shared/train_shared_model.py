@@ -1,6 +1,13 @@
 import tensorflow as tf
 import glob
 import constants
+import tensorflow as tf
+import os
+from tensorflow_transform.tf_metadata import metadata_io
+from tensorflow_transform.saved import input_fn_maker
+from tensorflow import estimator
+import train_shared_model
+import constants
 
 
 def normalizer(f):
@@ -11,39 +18,17 @@ def normalizer(f):
 
 def feature_columns():
 
-    """Return the feature columns with their names and types."""
-
-    # vocab_size = vocab_sizes[column_name]
-    # column = tf.contrib.layers.sparse_column_with_integerized_feature(
-    #     column_name, vocab_size, combiner='sum') // Sum means it's not reduced
-    # embedding_size = int(math.floor(6 * vocab_size**0.25))
-    # embedding = tf.contrib.layers.embedding_column(column,
-    #                                                embedding_size,
-    #                                                combiner='mean')
-
-    # feature_columns = [
-    #     tf.feature_column.numeric_column("x", shape=[28]),
-    #     tf.contrib.layers.embedding_column(sparse_column_with_hash_bucket(
-    #         column_name="grid",
-    #         hash_bucket_size=1000
-    #     ), dimension=8)
-    # ]
-
-
     return [
-        # tf.contrib.layers.embedding_column(tf.contrib.layers.sparse_column_with_hash_bucket(
-        #     column_name="mgrs_grid_zone",
-        #     hash_bucket_size=1000
-        # ), dimension=8),
         tf.feature_column.numeric_column(constants.KEY_ELEVATION, shape=[1]),
         tf.feature_column.numeric_column(constants.KEY_MAX_TEMP, shape=[8]),
         tf.feature_column.numeric_column(constants.KEY_MIN_TEMP, shape=[8]),
         tf.feature_column.numeric_column(constants.KEY_PRCP, shape=[8]),
         tf.feature_column.numeric_column(constants.KEY_DAYLIGHT, shape=[8]),
+        tf.feature_column.numeric_column(constants.KEY_GRID_ZONE, shape=[1])
     ]
 
 def all_feature_keys():
-    return list_feature_keys() + [constants.KEY_ELEVATION]
+    return list_feature_keys() + [constants.KEY_ELEVATION, constants.KEY_GRID_ZONE]
 
 
 def list_feature_keys():
@@ -60,6 +45,56 @@ def get_label_vocabularly(train_data_path):
                 labels.append(t)
 
     return labels
+
+def gzip_reader_fn():
+    return tf.TFRecordReader(options=tf.python_io.TFRecordOptions(
+        compression_type=tf.python_io.TFRecordCompressionType.GZIP))
+
+def transformed_input_fn(transformed_location, batch_size, mode, epochs):
+
+    def map(f):
+        f = tf.reshape(f, [18, 5])
+        f = tf.reduce_mean(f, 1)
+        f = tf.slice(f, [10], [8])
+        return f
+
+    raw_data_file_pattern = ""
+    if mode == estimator.ModeKeys.EVAL:
+        raw_data_file_pattern = transformed_location + "/eval_data/*.gz"
+    if mode == estimator.ModeKeys.TRAIN:
+        raw_data_file_pattern = transformed_location + "/train_data/*.gz"
+
+    fn = input_fn_maker.build_transforming_training_input_fn(
+        raw_metadata=metadata_io.read_metadata(os.path.join(transformed_location, "raw_metadata")),
+        transformed_metadata=metadata_io.read_metadata(os.path.join(transformed_location, "transformed_metadata")),
+        transform_savedmodel_dir=os.path.join(transformed_location, "transform_fn"),
+        raw_data_file_pattern=raw_data_file_pattern,
+        training_batch_size=batch_size,
+        transformed_label_keys=[constants.KEY_TAXON],
+        transformed_feature_keys=train_shared_model.all_feature_keys(),
+        key_feature_name=None,
+        convert_scalars_to_vectors=True,
+        # Read batch features.
+        reader=gzip_reader_fn,
+        # num_epochs=(1 if mode != estimator.ModeKeys.TRAIN else None),
+        num_epochs=epochs,
+        randomize_input=(mode == estimator.ModeKeys.TRAIN),
+        queue_capacity=batch_size * 20,
+    )
+
+    features, labels = fn()
+
+    labels = tf.reshape(labels, [-1])
+
+    features[constants.KEY_GRID_ZONE] = tf.string_to_number(features[constants.KEY_GRID_ZONE], out_type=tf.int32)
+
+    for label in train_shared_model.list_feature_keys():
+        features[label] = tf.map_fn(map, features[label])
+
+    if mode == estimator.ModeKeys.PREDICT:
+        return features
+    else:
+        return features, tf.not_equal(labels, '0')
 
 
 def get_estimator(args, run_config):

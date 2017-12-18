@@ -2,8 +2,8 @@
 
 python ./main.py \
          --runner DirectRunner \
-         --output_location /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/occurrences \
-         --job_name floracast-fetch-occurrences \
-         --taxa 58682 \
-         --extra_package dist/shared-0.0.1.tar.gz \
+         --data_location /tmp/floracast-models/occurrences \
+         --job_name floracast-fetch-occurrences-53713 \
+         --taxa 53713 \
+         --extra_package dist/fetch_shared-0.0.1.tar.gz \
          --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/fetchers/occurrences/setup.py

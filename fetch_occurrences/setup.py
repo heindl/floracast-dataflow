@@ -39,7 +39,7 @@ if __name__ == '__main__':
             "google-cloud==0.30.0",
             "google-cloud-bigquery==0.28.0",
             "tensorflow==1.4.0",
-            "tensorflow-transform==0.3.1",
+            "tensorflow-transform==0.4.0",
             "six==1.10.0"
         ]
     )

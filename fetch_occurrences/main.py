@@ -27,20 +27,14 @@ class LocalPipelineOptions(PipelineOptions):
         # Intermediate TFRecords are stored in their own directory, each with a corresponding metadata file.
         # The metadata lists how many records, how many of each taxon label.
         parser.add_value_provider_argument(
-            '--output_location',
-            required=True,
+            '--data_location',
+            required=False,
             help='The intermediate TFRecords file that contains downloaded features from BigQuery'
         )
 
         parser.add_value_provider_argument(
-            '--min_occurrences_within_taxon',
-            required=False,
-            default=100,
-            help='The number of occurrence required to process taxon')
-
-        parser.add_value_provider_argument(
             '--taxa',
-            required=True,
+            required=False,
             default=None,
             type=str,
             help='Restrict occurrence fetch to this taxa')
@@ -62,42 +56,35 @@ def run(argv=None):
     standard_options = pipeline_options.view_as(StandardOptions)
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
-    t = dt.now().strftime("%s")
-
     with beam.Pipeline(standard_options.runner, options=pipeline_options) as pipeline:
         with tft.Context(temp_dir=cloud_options.temp_location):
 
-            taxa_list = local_pipeline_options.occurrence_taxa.split(",")
-
             taxa = pipeline | 'ReadTaxa' >> _ReadTaxa(
                 project=cloud_options.project,
-                taxa=taxa_list,
+                taxa=local_pipeline_options.taxa,
                 # ecoregion=options['ecoregion'], Have a different process that pulls an array for this.
-                minimum_occurrences_within_taxon=local_pipeline_options.minimum_occurrences_within_taxon
+                minimum_occurrences_within_taxon=300
             )
 
             occurrences = taxa \
                           | 'FetchOccurrences' >> beam.ParDo(_FetchOccurrences(cloud_options.project)) \
                           | 'RemoveOccurrenceExampleLocationDuplicates' >> utils.RemoveOccurrenceExampleLocationDuplicates()
 
-            occurrences_by_taxon = occurrences \
-                                   | 'GroupByYearMonth' >> utils.GroupByYearMonth() \
-                                   | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(cloud_options.project, local_pipeline_options.max_weather_station_distance)) \
-                                   | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(cloud_options.project)) \
-                                   | 'DivideByTaxon' >> beam.ParDo(_DivideByTaxon()).with_outputs(*taxa_list)
+            _ = occurrences \
+                   | 'GroupByYearMonth' >> utils.GroupByYearMonth() \
+                   | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(cloud_options.project, local_pipeline_options.max_weather_station_distance)) \
+                   | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(cloud_options.project)) \
+                   | 'ShuffleOccurrences' >> utils.Shuffle() \
+                   | 'ProtoForWrite' >> beam.Map(lambda e: e.encode()) \
+                   | 'WriteOccurrences' >> beam.io.WriteToTFRecord(local_pipeline_options.data_location, file_name_suffix='.tfrecord.gz')
+                   # | 'DivideByTaxon' >> beam.ParDo(_DivideByTaxon()).with_outputs(*taxa_list)
 
+            # for taxon in taxa_list:
 
-            for taxon in taxa_list:
-
-                path = local_pipeline_options.output_location + "/" + taxon + "/" + t + "/"
-
-                if standard_options.runner == 'DirectRunner':
-                    os.makedirs(path)
-
-                _ = occurrences_by_taxon[taxon] \
-                    | ('ShuffleOccurrences[%s]' % taxon) >> utils.Shuffle() \
-                    | ('ProtoForWrite[%s]' % taxon) >> beam.Map(lambda e: e.encode()) \
-                    | ('WriteOccurrences[%s]' % taxon) >> beam.io.WriteToTFRecord(path, file_name_suffix='.tfrecord.gz')
+            # _ = occurrences_by_taxon[taxon] \
+            #     | ('ShuffleOccurrences[%s]' % taxon) >> utils.Shuffle() \
+            #     | ('ProtoForWrite[%s]' % taxon) >> beam.Map(lambda e: e.encode()) \
+            #     | ('WriteOccurrences[%s]' % taxon) >> beam.io.WriteToTFRecord(local_pipeline_options.data_location, file_name_suffix='.tfrecord.gz')
 
 
 @beam.typehints.with_input_types(ex.Example)
@@ -122,21 +109,21 @@ class _FetchOccurrences(beam.DoFn):
         db = client.Client(project=self._project)
         q = db.collection(u'Occurrences')
 
-        for o in q.where(u'TaxonID', u'==', unicode(taxon_id, "utf-8")).order_by("FormattedDate", "DESCENDING").limit(500).get():
+        for o in q.where(u'TaxonID', u'==', unicode(taxon_id, "utf-8")).get():
 
             # self.records_read.inc()
-            taxon = o.to_dict()
+            occurrence = o.to_dict()
 
             # This is a hack to avoid indexing the 'Date' property in Go.
-            if taxon['Date'].year < 1970:
+            if int(occurrence['FormattedDate']) < 19700101:
                 continue
 
-            if 'Elevation' not in taxon:
-                continue
+            # if 'Elevation' not in taxon:
+            #     continue
 
-            lat = taxon['Location']['Latitude']
-            lng = taxon['Location']['Longitude']
-            elevation = taxon['Elevation']
+            lat = occurrence['Location']['Latitude']
+            lng = occurrence['Location']['Longitude']
+            # elevation = taxon['Elevation']
 
             # (lat, lng) = (0.0, 0.0)
             # if type(loc) is GeoPoint:
@@ -150,25 +137,27 @@ class _FetchOccurrences(beam.DoFn):
             #     return
 
             e = ex.Example()
-            e.set_date(int(taxon['Date'].strftime("%s")))
+            e.set_date(int(occurrence['Date'].strftime("%s")))
             e.set_latitude(lat)
             e.set_longitude(lng)
-            e.set_elevation(elevation)
+            # e.set_elevation(elevation)
             e.set_taxon(taxon_id)
-            e.set_occurrence_id(str(taxon['DataSourceID']+"|"+taxon['TargetID']))
+            e.set_occurrence_id(str(occurrence['DataSourceID']+"|"+occurrence['TargetID']))
 
             yield e
 
 class _TaxaSource(iobase.BoundedSource):
 
-    def __init__(self, project, taxa=[], ecoregion="", minimum_occurrences_within_taxon=100):
+    def __init__(self, project, taxa, ecoregion="", minimum_occurrences_within_taxon=300):
         self._project = project
-        if taxa != None and len(taxa) > 0:
-            self._taxa = taxa.split(",")
-            # self._taxa = taxa
-        else:
-            self._taxa = []
-        self._ecoregion = ecoregion
+        # if taxa is not None and len(taxa) > 0:
+        #     self._taxa = taxa.split(",")
+        #     # self._taxa = taxa
+        # else:
+        #     self._taxa = []
+        #     self._taxa
+        # # self._ecoregion = ecoregion
+        self._taxa = taxa
         self._minimum_occurrences_within_taxon = minimum_occurrences_within_taxon
 
     def estimate_size(self):
@@ -191,12 +180,14 @@ class _TaxaSource(iobase.BoundedSource):
 
         # One of the two are required.
         # if self._ecoregion == "" and len(self._taxa) == 0:
-        if len(self._taxa) == 0:
+        taxa = self._taxa.get()
+
+        if taxa == "":
             return
 
         db = client.Client(project=self._project)
 
-        for taxon_id in self._taxa:
+        for taxon_id in taxa.split(","):
             for taxon in db.collection(u'Taxa').where(u'ID', u'==', unicode(taxon_id, "utf-8")).get():
 
                 fields = taxon.to_dict()

@@ -44,3 +44,4 @@ BODY = {
 
 request = service.projects().templates().launch(projectId=PROJECT, gcsPath=TEMPLATE, body=BODY)
 response = request.execute()
+print(response)

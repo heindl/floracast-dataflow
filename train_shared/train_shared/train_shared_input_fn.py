@@ -11,12 +11,6 @@ def gzip_reader_fn():
     return tf.TFRecordReader(options=tf.python_io.TFRecordOptions(
         compression_type=tf.python_io.TFRecordCompressionType.GZIP))
 
-
-# def get_transformed_input(tranformed_location,
-#                           raw_data_file_pattern,
-#                           batch_size,
-#                           mode):
-
 def transformed_input_fn(transformed_location, batch_size, mode, epochs):
 
     def map(f):
@@ -52,6 +46,8 @@ def transformed_input_fn(transformed_location, batch_size, mode, epochs):
     features, labels = fn()
 
     labels = tf.reshape(labels, [-1])
+
+    features[constants.KEY_GRID_ZONE] = tf.string_to_number(features[constants.KEY_GRID_ZONE], out_type=tf.int32)
 
     for label in train_shared_model.list_feature_keys():
         features[label] = tf.map_fn(map, features[label])

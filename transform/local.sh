@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 
 DATE=$(date '+%s')
-TAXON=58682
+TAXON=53713
+TAXON_DATE=1513551459
+RANDOM_DATE=1510706694
 
-mkdir -p /tmp/floracast-datamining/occurrences/58682/1510696440
-gsutil rsync -d -r gs://floracast-datamining/occurrences/58682/1510696440 /tmp/floracast-datamining/occurrences/58682/1510696440
-mkdir -p /tmp/floracast-datamining/random/1510706694
-gsutil rsync -d -r gs://floracast-datamining/random/1510706694 /tmp/floracast-datamining/random/1510706694
+OCCURRENCE_PATH="floracast-datamining/occurrences/$TAXON/$TAXON_DATE"
+RANDOM_PATH="floracast-datamining/random/$RANDOM_DATE"
+
+mkdir -p "/tmp/$OCCURRENCE_PATH"
+gsutil rsync -d -r "gs://$OCCURRENCE_PATH" "/tmp/$OCCURRENCE_PATH"
+mkdir -p "/tmp/$RANDOM_PATH"
+gsutil rsync -d -r "gs://$RANDOM_PATH" "/tmp/$RANDOM_PATH"
 
 TRANSFORMED_PATH="/tmp/floracast-datamining/transformed/$TAXON/$DATE"
 
@@ -16,9 +21,9 @@ mkdir -p
 python ./main.py \
     --runner=DirectRunner \
     --job_name="floracast-transform" \
-    --occurrence_location="/tmp/floracast-datamining/occurrences/58682/1510696440" \
+    --occurrence_location="/tmp/$OCCURRENCE_PATH" \
     --temp_location="/tmp/floracast-datamining/temp" \
-    --random_location="/tmp/floracast-datamining/random/1510706694" \
+    --random_location="/tmp/$RANDOM_PATH" \
     --output_location="$TRANSFORMED_PATH" \
     --mode "train" \
     --percent_eval 10 \

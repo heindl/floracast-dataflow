@@ -26,7 +26,7 @@ import shutil
 parser = argparse.ArgumentParser()
 
 parser.add_argument(
-    '--train_data_path', type=str, required=True)
+    '--train_data_path', type=str, required=False, default="/tmp/floracast-datamining/transformed/53713/1513571852")
 
 parser.add_argument(
     '--model_dir', type=str, default='/tmp/morel_model',
@@ -46,7 +46,7 @@ parser.add_argument(
 def main(unused_argv):
 
     # Clean up existing model dir.
-    shutil.rmtree(FLAGS.model_dir, ignore_errors=False)
+    shutil.rmtree(FLAGS.model_dir, ignore_errors=True)
 
     model = tf.estimator.DNNClassifier(
         feature_columns=train_shared_model.feature_columns(),

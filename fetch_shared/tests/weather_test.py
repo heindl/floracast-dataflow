@@ -1,4 +1,4 @@
-from fetchers.shared.shared.weather import _WeatherLoader
+from fetch_shared.weather import _WeatherLoader
 import datetime
 
 loader = _WeatherLoader(

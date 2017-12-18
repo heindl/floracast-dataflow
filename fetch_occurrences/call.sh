@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-python ./call.py --template=$(cat ./LATEST_TEMPLATE_ID) --taxa=58682
+python ./call.py --bucket=floracast-datamining --taxa=53713

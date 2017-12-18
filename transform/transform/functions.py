@@ -52,32 +52,16 @@ def make_preprocessing_fn(num_classes):
 
     def preprocessing_fn(i):
 
-        # import tensorflow as tf
-
-        m = {
+        return {
             KEY_OCCURRENCE_ID: i[KEY_OCCURRENCE_ID],
             KEY_ELEVATION: tt.scale_to_0_1(i[KEY_ELEVATION]),
             KEY_MIN_TEMP: tt.scale_to_0_1(i[KEY_MIN_TEMP]),
             KEY_MAX_TEMP: tt.scale_to_0_1(i[KEY_MAX_TEMP]),
             KEY_DAYLIGHT: tt.scale_to_0_1(i[KEY_DAYLIGHT]),
-            # KEY_MIN_TEMP: tf.reduce_mean(tf.reshape(i[KEY_MIN_TEMP], [18, 5]), 1),
-            # KEY_MAX_TEMP: tf.reduce_mean(tf.reshape(i[KEY_MAX_TEMP], [18, 5]), 1),
-            # KEY_PRCP: tf.reduce_mean(tf.reshape(i[KEY_PRCP], [18, 5]), 1),
-            # KEY_DAYLIGHT: tf.reduce_mean(tf.reshape(i[KEY_DAYLIGHT], [18, 5]), 1),
-            # KEY_GRID_ZONE: tt.hash_strings(i[KEY_GRID_ZONE], 1000)
+            KEY_PRCP: tt.scale_to_0_1(i[KEY_PRCP]),
             KEY_GRID_ZONE: i[KEY_GRID_ZONE],
             KEY_TAXON: i[KEY_TAXON]
         }
-
-        # def relable_fn(v):
-        #     print("called", v[0])
-        #     if v == 0:
-        #         return [0]
-        #     else:
-        #         return [1]
-
-        # m[KEY_TAXON] = tf.cast(i[KEY_TAXON], tf.string)
-
         # if num_classes == 2:
         #     # m[KEY_TAXON] = tt.apply_function(relable_fn, i[KEY_TAXON])
         #     m[KEY_TAXON] = tf.cast(i[KEY_TAXON], tf.bool)
@@ -85,27 +69,14 @@ def make_preprocessing_fn(num_classes):
         # else:
         #     m[KEY_TAXON] = i[KEY_TAXON]
 
-        return m
-        # m = {}
-        # m[KEY_ELEVATION] = tt.scale_to_0_1(inputs[KEY_ELEVATION])
-        # m[KEY_MAX_TEMP] = tt.scale_to_0_1(inputs[KEY_MAX_TEMP])
-        # m[KEY_MIN_TEMP] = tt.scale_to_0_1(inputs[KEY_MIN_TEMP])
-        # m[KEY_AVG_TEMP] = tt.scale_to_0_1(inputs[KEY_AVG_TEMP])
-        # m[KEY_PRCP] = tt.scale_to_0_1(inputs[KEY_PRCP])
-        # m[KEY_DAYLIGHT] = tt.scale_to_0_1(inputs[KEY_DAYLIGHT])
-        #
-        # m[KEY_GRID_ZONE] = tt.hash_strings(inputs[KEY_GRID_ZONE], 8)
-
-        # m['tmax'] = array_ops.reshape(m['tmax'])
-
-        # return m
-
     return preprocessing_fn
 
-def make_input_schema(mode):
-    from tensorflow_transform.tf_metadata import dataset_schema
-    from tensorflow import FixedLenFeature, float32, string, int64, VarLenFeature
+
+def create_raw_metadata(mode):
+    from tensorflow_transform.tf_metadata import dataset_schema, dataset_metadata
+    from tensorflow import FixedLenFeature, float32, string
     from tensorflow.contrib.learn import ModeKeys
+
     """Input schema definition.
     Args:
       mode: tf.contrib.learn.ModeKeys specifying if the schema is being used for
@@ -127,7 +98,7 @@ def make_input_schema(mode):
         KEY_DAYLIGHT: FixedLenFeature(shape=[90], dtype=float32),
     })
 
-    return dataset_schema.from_feature_spec(result)
+    return dataset_metadata.DatasetMetadata(schema=dataset_schema.from_feature_spec(result))
 
 
     # features['elevation'].set_shape((1,))

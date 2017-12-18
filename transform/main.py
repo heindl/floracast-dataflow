@@ -14,10 +14,7 @@ from tensorflow_transform.beam import impl as tft
 # If error after upgradeing apache beam: metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases
 # then: pip install six==1.10.0
 from tensorflow_transform.beam import tft_beam_io
-from tensorflow_transform.tf_metadata import dataset_metadata
-
 from transform import functions
-
 
 def _default_project():
     import os
@@ -67,7 +64,7 @@ class LocalPipelineOptions(PipelineOptions):
 
         parser.add_argument(
             '--percent_eval',
-            required=False,
+            required=True,
             default=10,
             type=int,
             help='Percentage to use for testing.'
@@ -75,9 +72,9 @@ class LocalPipelineOptions(PipelineOptions):
 
 class Decoder(beam.DoFn):
 
-    def process(self, element, input_coder):
+    def process(self, element, decoder):
         try:
-            decoded = input_coder.decode(element)
+            decoded = decoder(element)
             # print(decoded)
             yield decoded
         except ValueError:
@@ -109,19 +106,20 @@ def main(argv=None):
     with beam.Pipeline(standard_options.runner, options=pipeline_options) as pipeline:
         with tft.Context(temp_dir=cloud_options.temp_location):
 
+            print("OUTPUT", local_options.output_location)
+
             RAW_METADATA_DIR = 'raw_metadata'
             TRANSFORMED_TRAIN_DATA_FILE_PREFIX = 'train'
             TRANSFORMED_EVAL_DATA_FILE_PREFIX = 'eval'
 
-            input_schema = functions.make_input_schema(local_options.mode)
-            input_coder = coders.ExampleProtoCoder(input_schema)
+            RAW_DATA_METADATA = functions.create_raw_metadata(local_options.mode)
+            converter = coders.ExampleProtoCoder(RAW_DATA_METADATA.schema)
 
             occurrences = pipeline \
                       | 'ReadOccurrenceTFRecords' >> beam.io.ReadFromTFRecord(
                 local_options.occurrence_location + "/*.gz",
                 compression_type=CompressionTypes.GZIP) \
-                      | 'DecodeOccurrenceProtoExamples' >> beam.ParDo(Decoder(), input_coder)
-                      # | 'DecodeOccurrenceProtoExamples' >> beam.Map(input_coder.decode)
+                      | 'DecodeOccurrenceProtoExamples' >> beam.ParDo(Decoder(), converter.decode)
 
             occurrence_count = occurrences | beam.combiners.Count.Globally()
 
@@ -129,7 +127,7 @@ def main(argv=None):
                              | 'ReadRandomTFRecords' >> beam.io.ReadFromTFRecord(
                                 local_options.random_location+"/*.gz",
                                 compression_type=CompressionTypes.GZIP) \
-                             | 'DecodeRandomProtoExamples' >> beam.ParDo(Decoder(), input_coder) \
+                             | 'DecodeRandomProtoExamples' >> beam.ParDo(Decoder(), converter.decode) \
                              | 'ShuffleRandom' >> functions.Shuffle() \
                              | 'PairWithStandardToGroupToTruncate' >> beam.Map(lambda e: ('_', e)) \
                              | 'GroupByKey' >> beam.GroupByKey() \
@@ -141,20 +139,19 @@ def main(argv=None):
 
             # preprocessing_fn = functions.make_preprocessing_fn(transformer_pipeline_options.num_classes)
             preprocessing_fn = functions.make_preprocessing_fn(num_classes=2)
-            metadata = dataset_metadata.DatasetMetadata(schema=input_schema)
 
-            _ = metadata \
+            _ = RAW_DATA_METADATA \
                 | 'WriteInputMetadata' >> tft_beam_io.WriteMetadata(
                 path=os.path.join(local_options.output_location, RAW_METADATA_DIR),
                 pipeline=pipeline)
 
-            (records_dataset, records_metadata), transform_fn = (
-                (records, metadata) | tft.AnalyzeAndTransformDataset(preprocessing_fn))
+            (transformed_dataset, transformed_metadata), transform_fn = (
+                (records, RAW_DATA_METADATA) | tft.AnalyzeAndTransformDataset(preprocessing_fn))
 
-            _ = records_dataset \
-                | 'ProjectLabels' >> beam.Map(lambda e: e["taxon"]) \
-                | 'RemoveLabelDuplicates' >> beam.RemoveDuplicates() \
-                | 'WriteLabels' >> beam.io.WriteToText(local_options.output_location, file_name_suffix='labels.txt')
+            # _ = transformed_dataset \
+            #     | 'ProjectLabels' >> beam.Map(lambda e: e["taxon"]) \
+            #     | 'RemoveLabelDuplicates' >> beam.RemoveDuplicates() \
+            #     | 'WriteLabels' >> beam.io.WriteToText(local_options.output_location, file_name_suffix='labels.txt')
 
             _ = (transform_fn
                  | 'WriteTransformFn' >> tft_beam_io.WriteTransformFn(local_options.output_location))
@@ -163,19 +160,19 @@ def main(argv=None):
             def train_eval_partition_fn(ex, unused_num_partitions):
                 return functions.partition_fn(ex, random_seed, local_options.percent_eval)
 
-            train_dataset, eval_dataset = records_dataset \
+            train_dataset, eval_dataset = records \
                                           | 'TrainEvalPartition' >> beam.Partition(train_eval_partition_fn, 2)
 
-            coder = coders.ExampleProtoCoder(records_metadata.schema)
+            # coder = coders.ExampleProtoCoder(transformed_metadata.schema)
             _ = train_dataset \
-                | 'SerializeTrainExamples' >> beam.Map(coder.encode) \
+                | 'SerializeTrainExamples' >> beam.Map(converter.encode) \
                 | 'ShuffleTraining' >> functions.Shuffle() \
                 | 'WriteTraining' >> beam.io.WriteToTFRecord(
                     os.path.join(local_options.output_location, "train_data", TRANSFORMED_TRAIN_DATA_FILE_PREFIX),
                     file_name_suffix='.tfrecord.gz')
 
             _ = eval_dataset \
-                | 'SerializeEvalExamples' >> beam.Map(coder.encode) \
+                | 'SerializeEvalExamples' >> beam.Map(converter.encode) \
                 | 'ShuffleEval' >> functions.Shuffle() \
                 | 'WriteEval' >> beam.io.WriteToTFRecord(
                     os.path.join(local_options.output_location, "eval_data", TRANSFORMED_EVAL_DATA_FILE_PREFIX),

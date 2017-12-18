@@ -7,11 +7,15 @@ options = tf_record.TFRecordOptions(TFRecordCompressionType.GZIP)
 random = 0
 total = 0
 # /eval_data/*.gz
-for filename in iglob("/tmp/floracast-datamining/transformed/58682/1511615426" + '/train_data/*.gz'):
+res = {}
+for filename in iglob("/tmp/floracast-datamining/transformed/53713/1513571852" + '/train_data/*.gz'):
     for example in tf.python_io.tf_record_iterator(filename, options=options):
         e = tf.train.Example.FromString(example)
         txn = e.features.feature["taxon"].bytes_list.value[0]
-        print(txn, e.features.feature["daylight"].float_list)
+        z = e.features.feature["mgrs_grid_zone"].bytes_list.value[0]
+        if z not in res:
+            res[z] = 0
+        res[z] = res[z] + 1
         if txn == '0':
             random = random + 1
         # print(e.features.feature["latitude"].float_list.value[0],
@@ -21,3 +25,5 @@ for filename in iglob("/tmp/floracast-datamining/transformed/58682/1511615426" +
         total = total + 1
 print("total", total)
 print("random", random)
+for key in sorted(res):
+    print "%s: %s" % (key, res[key])
