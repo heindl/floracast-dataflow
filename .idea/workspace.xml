@@ -2,17 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d5d946e7-fd45-4ccd-884b-e8aec6a492d9" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train/test.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_shared/train_shared/task.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_shared/train_shared/train_shared_input_fn.py" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/predict/predict.py" afterPath="$PROJECT_DIR$/predict/predict.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/predict/predict.sh" afterPath="$PROJECT_DIR$/predict/predict.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/train/task.py" afterPath="$PROJECT_DIR$/train/task.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/train/train.sh" afterPath="$PROJECT_DIR$/train/train.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/train_shared/train_shared/print_input_fn.py" afterPath="$PROJECT_DIR$/train_shared/train_shared/print_input_fn.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/train_shared/train_shared/print_raw_data.py" afterPath="$PROJECT_DIR$/train_shared/train_shared/print_raw_data.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/train_shared/train_shared/train_shared_model.py" afterPath="$PROJECT_DIR$/train_shared/train_shared/train_shared_model.py" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -34,11 +25,31 @@
       <file leaf-file-name="predict.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/predict/predict.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-2192">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+            <state relative-caret-position="268">
+              <caret line="169" column="39" lean-forward="true" selection-start-line="169" selection-start-column="39" selection-end-line="169" selection-end-column="39" />
               <folding>
                 <element signature="e#0#23#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name=".gitignore" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/.gitignore">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="150">
+              <caret line="10" column="9" lean-forward="true" selection-start-line="10" selection-start-column="9" selection-end-line="10" selection-end-column="9" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="gcs.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/fetch_shared/gcs.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="45">
+              <caret line="4" column="4" lean-forward="false" selection-start-line="4" selection-start-column="4" selection-end-line="4" selection-end-column="4" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -67,7 +78,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="predict.sh" pinned="false" current-in-tab="false">
+      <file leaf-file-name="predict.sh" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/predict/predict.sh">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="225">
@@ -87,26 +98,6 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="example_pb2.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/tensorflow/core/example/example_pb2.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="316">
-              <caret line="104" column="0" lean-forward="false" selection-start-line="104" selection-start-column="0" selection-end-line="104" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="python_message.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/google/protobuf/internal/python_message.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="928">
-              <caret line="757" column="6" lean-forward="false" selection-start-line="757" selection-start-column="6" selection-end-line="757" selection-end-column="6" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="ex.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/fetch_shared/fetch_shared/ex.py">
           <provider selected="true" editor-type-id="text-editor">
@@ -117,11 +108,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="local.sh" pinned="false" current-in-tab="true">
+      <file leaf-file-name="local.sh" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/transform/local.sh">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+            <state relative-caret-position="450">
+              <caret line="30" column="30" lean-forward="false" selection-start-line="30" selection-start-column="30" selection-end-line="30" selection-end-column="30" />
               <folding />
             </state>
           </provider>
@@ -150,7 +141,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>Decoder(</find>
       <find>occurrence_l</find>
       <find>output_lo</find>
       <find>output_loc</find>
@@ -180,6 +170,7 @@
       <find>TFRecordOptions</find>
       <find>encode</find>
       <find>taxon</find>
+      <find>print(</find>
     </findStrings>
     <replaceStrings>
       <replace />
@@ -204,6 +195,7 @@
       <dir>$PROJECT_DIR$/fetchers/protected_areas</dir>
       <dir>$PROJECT_DIR$/fetch_shared/fetch_shared</dir>
       <dir>$PROJECT_DIR$</dir>
+      <dir>$PROJECT_DIR$/train_shared/train_shared</dir>
     </dirStrings>
   </component>
   <component name="Git.Settings">
@@ -334,30 +326,7 @@
             <path>
               <item name="Root" type="cbb8eebc:String" user="Root" />
               <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
-              <item name="fetch_occurrences" type="cbb8eebc:String" user="fetch_occurrences" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
-              <item name="fetch_occurrences" type="cbb8eebc:String" user="fetch_occurrences" />
-              <item name="dist" type="cbb8eebc:String" user="dist" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
-              <item name="fetch_shared" type="cbb8eebc:String" user="fetch_shared" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
-              <item name="fetch_shared" type="cbb8eebc:String" user="fetch_shared" />
-              <item name="fetch_shared" type="cbb8eebc:String" user="fetch_shared" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
-              <item name="fetch_shared" type="cbb8eebc:String" user="fetch_shared" />
-              <item name="tests" type="cbb8eebc:String" user="tests" />
+              <item name="gs/floracast-models/protected_areas/" type="cbb8eebc:String" user="gs/floracast-models/protected_areas/" />
             </path>
             <path>
               <item name="Root" type="cbb8eebc:String" user="Root" />
@@ -367,11 +336,6 @@
             <path>
               <item name="Root" type="cbb8eebc:String" user="Root" />
               <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
-              <item name="train" type="cbb8eebc:String" user="train" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
               <item name="train_shared" type="cbb8eebc:String" user="train_shared" />
             </path>
             <path>
@@ -379,17 +343,6 @@
               <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
               <item name="train_shared" type="cbb8eebc:String" user="train_shared" />
               <item name="train_shared" type="cbb8eebc:String" user="train_shared" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
-              <item name="transform" type="cbb8eebc:String" user="transform" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
-              <item name="transform" type="cbb8eebc:String" user="transform" />
-              <item name="transform" type="cbb8eebc:String" user="transform" />
             </path>
             <path>
               <item name="Root" type="cbb8eebc:String" user="Root" />
@@ -707,16 +660,15 @@
       <workItem from="1511834187448" duration="1818000" />
       <workItem from="1512327667471" duration="3649000" />
       <workItem from="1512354920967" duration="10444000" />
-      <workItem from="1513434413398" duration="74176000" />
+      <workItem from="1513434413398" duration="75426000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="985789000" />
+    <option name="totallyTimeSpent" value="987039000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1280" height="800" extended-state="0" />
-    <editor active="true" />
     <layout>
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -765,22 +717,6 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/fetch_protected_areas/build.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="180">
-          <caret line="12" column="9" lean-forward="false" selection-start-line="12" selection-start-column="9" selection-end-line="12" selection-end-column="57" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetch_protected_areas/local.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/fetch_protected_areas/call.sh">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -1167,24 +1103,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/predict/predict.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="225">
-          <caret line="15" column="4" lean-forward="true" selection-start-line="15" selection-start-column="4" selection-end-line="15" selection-end-column="4" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/predict/predict.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2192">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/transform/main.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="480">
@@ -1197,8 +1115,42 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/transform/local.sh">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        <state relative-caret-position="450">
+          <caret line="30" column="30" lean-forward="false" selection-start-line="30" selection-start-column="30" selection-end-line="30" selection-end-column="30" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/fetch_shared/gcs.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="45">
+          <caret line="4" column="4" lean-forward="false" selection-start-line="4" selection-start-column="4" selection-end-line="4" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.gitignore">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="150">
+          <caret line="10" column="9" lean-forward="true" selection-start-line="10" selection-start-column="9" selection-end-line="10" selection-end-column="9" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/predict/predict.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="268">
+          <caret line="169" column="39" lean-forward="true" selection-start-line="169" selection-start-column="39" selection-end-line="169" selection-end-column="39" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/predict/predict.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="225">
+          <caret line="15" column="4" lean-forward="true" selection-start-line="15" selection-start-column="4" selection-end-line="15" selection-end-column="4" />
           <folding />
         </state>
       </provider>

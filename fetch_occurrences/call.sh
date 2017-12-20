@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-python ./call.py --bucket=floracast-datamining --taxa=53713
+python ./call.py --bucket=floracast-datamining --taxa=118078

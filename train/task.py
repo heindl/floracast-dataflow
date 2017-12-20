@@ -29,7 +29,7 @@ parser.add_argument(
     '--train_data_path', type=str, required=False, default="/tmp/floracast-datamining/transformed/53713/1513571852")
 
 parser.add_argument(
-    '--model_dir', type=str, default='/tmp/chicken_of_the_woods_model',
+    '--model_dir', type=str, default='',
     help='Base directory for the model.')
 
 

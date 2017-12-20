@@ -95,6 +95,12 @@ def download_gcs_directory_to_temp(bucket, gcs_path):
 
     return local_path
 
+def get_latest_local(local_path):
+    lst = os.listdir(local_path)
+    lst.sort()
+    return local_path + "/" + lst[-1]
+
+
 def main(argv=None):
 
     parser = argparse.ArgumentParser()
@@ -111,27 +117,31 @@ def main(argv=None):
     if len(args.taxon) == 0:
         sys.exit("A valid taxon is required.")
 
-    model_gcs = gcs.fetch_latest(_project, args.bucket, "models/%s" % args.taxon)
-    # Go another level down to get the export directory
-    # model_gcs = gcs.fetch_latest(_project, args.bucket, "%s/export/exporter" % model_gcs[len("gs://floracast-datamining/"):])
+    # model_gcs = gcs.fetch_latest(_project, args.bucket, "models/%s" % args.taxon)
+    # # Go another level down to get the export directory
+    # # model_gcs = gcs.fetch_latest(_project, args.bucket, "%s/export/exporter" % model_gcs[len("gs://floracast-datamining/"):])
+    #
+    # transformed = gcs.fetch_latest(_project, args.bucket, "transformed/%s" % args.taxon)
+    # protected_areas = gcs.fetch_latest(_project, args.bucket, "protected_areas/%s" % args.date)
 
-    transformed = gcs.fetch_latest(_project, args.bucket, "transformed/%s" % args.taxon)
-    protected_areas = gcs.fetch_latest(_project, args.bucket, "protected_areas/%s" % args.date)
-
-    print(model_gcs, transformed, protected_areas)
+    # print(model_gcs, transformed, protected_areas)
 
     # Download temp files
-    client = storage.client.Client(project=_project)
-    try:
-        bucket = client.get_bucket(args.bucket)
-    except exceptions.NotFound:
-        print('Sorry, that bucket does not exist!')
-        return
+    # client = storage.client.Client(project=_project)
+    # try:
+    #     bucket = client.get_bucket(args.bucket)
+    # except exceptions.NotFound:
+    #     print('Sorry, that bucket does not exist!')
+    #     return
+    #
+    # # Note that the timestamp for the model and transformed should be the same.
+    # model_path = download_gcs_directory_to_temp(bucket, model_gcs)
+    # transformed_path = download_gcs_directory_to_temp(bucket, transformed)
+    # protected_area_path = download_gcs_directory_to_temp(bucket, protected_areas)
 
-    # Note that the timestamp for the model and transformed should be the same.
-    model_path = download_gcs_directory_to_temp(bucket, model_gcs)
-    transformed_path = download_gcs_directory_to_temp(bucket, transformed)
-    protected_area_path = download_gcs_directory_to_temp(bucket, protected_areas)
+    model_path = get_latest_local(os.path.join("/tmp", args.bucket, "models", args.taxon))
+    transformed_path = get_latest_local(os.path.join("/tmp", args.bucket, "transformed", args.taxon))
+    protected_area_path = get_latest_local(os.path.join("/tmp", args.bucket, "protected_areas", args.date))
 
     run_config = tf.estimator.RunConfig()
     run_config = run_config.replace(model_dir=model_path)
@@ -147,12 +157,14 @@ def main(argv=None):
     for _, _, files in os.walk(protected_area_path):
         for file in files:
 
-            newFile = ensure_taxon(protected_area_path, file)
+            if "taxon-amended" not in file:
+                # This is a hack to avoid spending more time on tranformer
+                file = ensure_taxon(protected_area_path, file)
 
             for p in estimator.predict(input_fn=functools.partial(train_shared_model.transformed_input_fn,
                                                             transformed_location=transformed_path,
                                                             mode=tf.estimator.ModeKeys.PREDICT,
-                                                               raw_data_file_pattern=newFile)):
+                                                               raw_data_file_pattern=os.path.join(protected_area_path, file))):
 
                 random_point = p['probabilities'][0]
                 target_point = p['probabilities'][1]
@@ -165,13 +177,22 @@ def main(argv=None):
 
     print("count", args.date, random_count, target_count)
 
-    prefix = "predictions/%s/%s/%s.csv" % (args.taxon, args.date, datetime.now().strftime("%s"))
+    csv_path = os.path.join("predictions", args.taxon, args.date)
+    local_dir = os.path.join("/tmp", args.bucket, csv_path)
+    csv_file = datetime.now().strftime("%s") + ".csv"
 
-    blob = storage.Blob(prefix, bucket)
-    blob.upload_from_string('\n'.join(values))
+    if not os.path.exists(local_dir):
+        os.makedirs(local_dir)
+
+    with open(os.path.join(local_dir, csv_file), "w+") as f:
+        f.write('\n'.join(values))
+    # blob = storage.Blob(os.path.join(local_dir, csv_file), bucket)
+    # blob.upload_from_string('\n'.join(values))
 
 # TODO: Improve this by figuring out how to ammend metadata.
 def ensure_taxon(tfrecords_path, tfrecord_filename) :
+
+    original_path = path.join(tfrecords_path, tfrecord_filename)
 
     options = tf.python_io.TFRecordOptions(tf.python_io.TFRecordCompressionType.GZIP)
 
@@ -182,12 +203,14 @@ def ensure_taxon(tfrecords_path, tfrecord_filename) :
     # recordWriter = tf.python_io.TFRecordWriter(re.sub('\.gz$', '', new_file_path), options=options)
     recordWriter = tf.python_io.TFRecordWriter(new_file_path, options=options)
 
-    for example in tf.python_io.tf_record_iterator(path.join(tfrecords_path, tfrecord_filename), options=options):
+    for example in tf.python_io.tf_record_iterator(original_path, options=options):
         e = tf.train.Example.FromString(example)
         e.features.feature["taxon"].bytes_list.value.append('0')
         recordWriter.write(e.SerializeToString())
 
     recordWriter.close()
+
+    os.remove(original_path)
 
     return new_file_path
 
