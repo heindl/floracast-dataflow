@@ -8,11 +8,11 @@ random = 0
 total = 0
 # /eval_data/*.gz
 res = {}
-for filename in iglob('/tmp/floracast-datamining/transformed/60782/1513731928/train_data/train-00000-of-00001.tfrecord.gz'):
+for filename in iglob('/tmp/floracast-datamining/transformed/118078/1513794854/train_data/*.gz'):
     for example in tf.python_io.tf_record_iterator(filename, options=options):
         e = tf.train.Example.FromString(example)
         txn = e.features.feature["taxon"].bytes_list.value[0]
-        print(txn)
+        # print(txn)
         # z = e.features.feature["mgrs_grid_zone"].bytes_list.value[0]
         # if z not in res:
         #     res[z] = 0

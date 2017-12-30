@@ -11,6 +11,7 @@ TAXON_DATE=$(ls -l $TAXON_PATH | grep '^d' | sed 's/.* //' | sort -n | tail -1)
 RANDOM_PATH="/tmp/floracast-datamining/random/"
 RANDOM_DATE=$(ls -l $RANDOM_PATH | grep '^d' | sed 's/.* //' | sort -n | tail -1)
 
+#118078 119528 130925 47392  473935 48443  48494  48529  53713  56318  58682  60782
 
 #mkdir -p "/tmp/$OCCURRENCE_PATH"
 #gsutil rsync -d -r "gs://$OCCURRENCE_PATH" "/tmp/$OCCURRENCE_PATH"

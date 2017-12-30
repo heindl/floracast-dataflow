@@ -143,6 +143,8 @@ def main(argv=None):
     transformed_path = get_latest_local(os.path.join("/tmp", args.bucket, "transformed", args.taxon))
     protected_area_path = get_latest_local(os.path.join("/tmp", args.bucket, "protected_areas", args.date))
 
+    print(model_path, transformed_path, protected_area_path)
+
     run_config = tf.estimator.RunConfig()
     run_config = run_config.replace(model_dir=model_path)
 
