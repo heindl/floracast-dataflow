@@ -27,19 +27,11 @@ import setuptools
 
 if __name__ == '__main__':
     setuptools.setup(
-        name='occurrences',
+        name='Floracast Fetch',
         version='0.0.1',
-        description='Floracast dataflow pipeline.',
+        description='Fetches occurrences, random data, and protected areas and prepares them for Tensorflow',
         packages=setuptools.find_packages(),
         url="https://bitbucket.org/heindl/dataflow",
         author="mph",
         author_email="matt@floracast.com",
-        install_requires=[
-            "apache-beam==2.2.0",
-            "google-cloud==0.30.0",
-            "google-cloud-bigquery==0.28.0",
-            "tensorflow==1.4.0",
-            "tensorflow-transform==0.4.0",
-            "six==1.10.0"
-        ]
     )

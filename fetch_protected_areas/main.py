@@ -7,7 +7,8 @@ from apache_beam.typehints import Dict
 from apache_beam.io import iobase
 from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions, StandardOptions, SetupOptions
 import os
-from fetch_shared import elevation, weather, utils, ex
+from fetch_shared import elevation, weather, utils
+from fetch_shared.ex import Example
 from tensorflow_transform.beam import impl as tft
 from datetime import datetime as dt
 from apache_beam.io import range_trackers
@@ -68,7 +69,6 @@ def get_provided_value(value_provider):
 
 def run(argv=None):
 
-
     # from apache_beam.options.value_provider import RuntimeValueProvider
     #
     # RuntimeValueProvider.get()
@@ -87,7 +87,7 @@ def run(argv=None):
             _ = pipeline \
                 | _ReadProtectedAreas(project=cloud_options.project, protected_area_count=local_options.protected_area_count) \
                 | 'ConvertProtectedAreaDictToExample' >> beam.ParDo(_ProtectedAreaDictToExample(local_options.date)) \
-                | 'GroupByYearMonthRegion' >> utils.GroupByYearMonthRegion() \
+                | 'GroupByStateToFetchWeather' >> beam.GroupByKey() \
                 | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(cloud_options.project, local_options.max_weather_station_distance)) \
                 | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(cloud_options.project)) \
                 | 'ProtoForWrite' >> beam.Map(lambda e: e.encode()) \
@@ -96,10 +96,9 @@ def run(argv=None):
                         file_name_suffix='.tfrecord.gz')
 
 
-
 # Filter and prepare for duplicate sort.
 @beam.typehints.with_input_types(Dict)
-@beam.typehints.with_output_types(ex.Example)
+@beam.typehints.with_output_types(beam.typehints.Tuple[str, Example])
 class _ProtectedAreaDictToExample(beam.DoFn):
 
     def __init__(self, date_str):
@@ -115,13 +114,18 @@ class _ProtectedAreaDictToExample(beam.DoFn):
         """
         # e = entity_from_protobuf(element)
         # centre = self._parse_point(e['Centre'])
+
+        if 'Centre' not in element.keys() or len(element["Centre"].keys()) == 0:
+            return
+
         centre = Point(element["Centre"]["Latitude"], element["Centre"]["Longitude"])
-        e = ex.Example()
+        e = Example()
         e.set_occurrence_id("%.6f|%.6f|%s" % (centre.latitude, centre.longitude, self._date_str.get()))
         e.set_longitude(centre.longitude)
         e.set_latitude(centre.latitude)
-        e.set_date(int(time.mktime(datetime.strptime(str(self._date_str.get()), "%Y%m%d").timetuple())))
-        yield e
+        date_str = str(self._date_str.get())
+        e.set_date(int(time.mktime(datetime.strptime(date_str, "%Y%m%d").timetuple())))
+        yield (date_str[0:6] + element["State"].encode('utf8'), e)
 
 class _ProtectedAreaSource(iobase.BoundedSource):
 
@@ -153,7 +157,7 @@ class _ProtectedAreaSource(iobase.BoundedSource):
         db = firestore.Client(self._project)
 
         # db = client.Client(project=self._project)
-        q = db.collection(u'WildernessAreas')
+        q = db.collection(u'ProtectedAreas')
         protected_area_count = self._protected_area_count.get()
         if protected_area_count > 0:
             q = q.limit(protected_area_count)

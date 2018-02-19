@@ -2,7 +2,7 @@
 import apache_beam as beam
 
 KEY_EXAMPLE_ID = 'example_id'
-KEY_NAMEUSAGE = 'nameusage'
+KEY_CATEGORY = 'nameusage'
 KEY_LATITUDE = 'latitude'
 KEY_LONGITUDE = 'longitude'
 KEY_ELEVATION = 'elevation'
@@ -103,19 +103,19 @@ class Example:
     def example_id(self):
         return self._get_value(KEY_EXAMPLE_ID, LIST_TYPE_BYTES)
 
-    def set_occurrence_id(self, occurrence_id):
-        self._set_value(KEY_EXAMPLE_ID, LIST_TYPE_BYTES, occurrence_id)
+    def set_example_id(self, example_id):
+        self._set_value(KEY_EXAMPLE_ID, LIST_TYPE_BYTES, example_id)
 
-    def nameusage(self):
-        t = self._get_value(KEY_NAMEUSAGE, LIST_TYPE_BYTES)
-        if t is None:
-            return "0"
-        return t
+    def category(self):
+        c = self._get_value(KEY_CATEGORY, LIST_TYPE_BYTES)
+        if c is None or c == "":
+            raise ValueError('Invalid example category')
+        return c
 
-    def set_nameusage(self, nameusage):
-        if nameusage == "":
-            raise ValueError('Invalid example NameUsage')
-        self._set_value(KEY_NAMEUSAGE, LIST_TYPE_BYTES, nameusage)
+    def set_category(self, category):
+        if category == "":
+            raise ValueError('Invalid example category')
+        self._set_value(KEY_CATEGORY, LIST_TYPE_BYTES, category)
 
     def latitude(self):
         lat = self._get_value(KEY_LATITUDE, LIST_TYPE_FLOAT)
@@ -170,7 +170,7 @@ class Example:
         return d[1]
 
     def month_region_key(self):
-        return self.year_string() + "-" + self.month_string() + "-" + self.s2_cell(4)
+        return self.year_string() + "-" + self.month_string() + "-" + self.s2_cell(3)
 
     def set_s2_cell(self, cellDict):
         if len(cellDict) != 8:
@@ -214,7 +214,7 @@ class Example:
 
     def equality_key(self):
         return "%s|||%.4f|||%.4f|||%s" % (
-            self.taxon(),
+            self.category(),
             self.latitude(),
             self.longitude(),
             self.date()
@@ -285,11 +285,11 @@ def FromSerialized(serialized):
     e.decode_from_string(serialized)
     return e
 
-def FromFirestore(taxon_id, occurrence_id, o):
+def ParseExampleFromFirestore(category_id, example_id, o):
     e = Example()
 
-    e.set_nameusage(taxon_id)
-    e.set_occurrence_id(occurrence_id)
+    e.set_category(category_id)
+    e.set_example_id(example_id)
 
     # This is a hack to avoid indexing the 'Date' property in Go.
     # 20170215: Should already be done.

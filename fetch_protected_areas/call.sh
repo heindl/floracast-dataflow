@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-currentDateTs=$(date -j -f "%Y-%m-%d" "2017-11-29" "+%s")
+currentDateTs=$(date -j -f "%Y-%m-%d" "2017-12-13" "+%s")
 endDateTs=$(date -j -f "%Y-%m-%d" "2017-12-27" "+%s")
 # Seconds in a week
 offset=604800

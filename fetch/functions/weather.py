@@ -1,9 +1,9 @@
 # from __future__ import absolute_import
+
 import apache_beam as beam
+from .example import Example
 
-from ex import Example
-
-@beam.typehints.with_input_types(beam.typehints.Tuple[str, beam.typehints.Iterable[Example]])
+@beam.typehints.with_input_types(beam.typehints.KV[str, beam.typehints.Iterable[Example]])
 @beam.typehints.with_output_types(Example)
 class FetchWeatherDoFn(beam.DoFn):
     def __init__(self, project, min_weather_station_distance):
@@ -127,7 +127,7 @@ class BallTreeIndex:
         from sklearn.neighbors import BallTree
         import numpy as np
         self.lat_longs = lat_longs
-        print('radians', lat_longs, np.radians(lat_longs))
+        # print('radians', lat_longs, np.radians(lat_longs))
         self.ball_tree_index = BallTree(np.radians(lat_longs), metric='haversine')
 
     def query_radius(self,lat, lng ,radius_miles):
