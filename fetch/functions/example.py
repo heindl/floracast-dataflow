@@ -69,11 +69,20 @@ class Example:
 
     def _set_value(self, feature, typer, value, i=0):
         if typer == LIST_TYPE_INT64:
-            self._example.features.feature[feature].int64_list.value[i] = value
+            if len(self._example.features.feature[feature].int64_list.value) <= i:
+                self._append_value(feature, typer, value)
+            else:
+                self._example.features.feature[feature].int64_list.value[i] = value
         elif typer == LIST_TYPE_FLOAT:
-            self._example.features.feature[feature].float_list.value[i] = value
+            if len(self._example.features.feature[feature].float_list.value) <= i:
+                self._append_value(feature, typer, value)
+            else:
+                self._example.features.feature[feature].float_list.value[i] = value
         elif typer == LIST_TYPE_BYTES:
-            self._example.features.feature[feature].bytes_list.value[i] = value
+            if len(self._example.features.feature[feature].bytes_list.value) <= i:
+                self._append_value(feature, typer, value)
+            else:
+                self._example.features.feature[feature].bytes_list.value[i] = value
 
     def _get_value(self, feature, typer, i=0):
         v = self._get_values(feature, typer)
@@ -185,20 +194,20 @@ class Example:
         return cell
 
     def set_eco_region(self, realm, biome, num):
-        if realm == "" or biome == "" or num == "":
+        if realm == 0 or biome == 0 or num == 0:
             raise ValueError('Realm, Biome and EcoNum can not be empty')
         # self._set_value(KEY_ECO_REALM, LIST_TYPE_BYTES, realm)
-        self._set_value(KEY_ECO_BIOME, LIST_TYPE_BYTES, biome)
-        self._set_value(KEY_ECO_NUM, LIST_TYPE_BYTES, num)
+        self._set_value(KEY_ECO_BIOME, LIST_TYPE_INT64, biome)
+        self._set_value(KEY_ECO_NUM, LIST_TYPE_INT64, num)
 
     def coordinates(self):
         return self.latitude(), self.longitude()
 
     def elevation(self):
-        return self._get_value(KEY_ELEVATION, LIST_TYPE_FLOAT)
+        return self._get_value(KEY_ELEVATION, LIST_TYPE_INT64)
 
     def set_elevation(self, elevation):
-        self._set_value(KEY_ELEVATION, LIST_TYPE_FLOAT, elevation)
+        self._set_value(KEY_ELEVATION, LIST_TYPE_INT64, elevation)
 
     def as_pb2(self):
         return self._example
@@ -288,26 +297,26 @@ def FromSerialized(serialized):
 def ParseExampleFromFirestore(category_id, example_id, o):
     e = Example()
 
-    e.set_category(category_id)
-    e.set_example_id(example_id)
+    e.set_category(str(category_id))
+    e.set_example_id(str(example_id))
 
     # This is a hack to avoid indexing the 'Date' property in Go.
     # 20170215: Should already be done.
     # if int(occurrence['FormattedDate']) < 19700101:
     #     continue
-    e.set_date(o['FormattedDate'])
+    e.set_date(str(o['FormattedDate']))
 
-    e.set_latitude(o['GeoPoint']['latitude'])
-    e.set_longitude(o['GeoPoint']['longitude'])
+    e.set_latitude(float(o['GeoPoint']['latitude']))
+    e.set_longitude(float(o['GeoPoint']['longitude']))
 
     if 'Elevation' not in o:
         raise ValueError('Elevation must be set in Firestore Occurrence')
 
-    e.set_elevation(o['Elevation'])
-
-    e.set_s2_cell(o['S2Tokens'])
+    e.set_elevation(float(o['Elevation']))
 
     e.set_eco_region(o["EcoRealm"], o["EcoBiome"], o["EcoNum"])
+
+    e.set_s2_cell(o['S2Tokens'])
 
     return e
 

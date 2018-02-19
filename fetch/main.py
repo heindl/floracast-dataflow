@@ -12,9 +12,13 @@ from functions.write import WriteTFRecords
 # If error after upgradeing apache beam: metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases
 # then: pip install six==1.10.0
 
+logging.basicConfig()
+logging.getLogger().setLevel(logging.DEBUG)
+
 class LocalPipelineOptions(PipelineOptions):
     @classmethod
     def _add_argparse_args(cls, parser):
+
 
         #### FETCH ####
 
@@ -98,10 +102,10 @@ def run(argv=None):
 
             _ = examples \
                    | 'ProjectMonthRegionKV' >> beam.Map(lambda e: (e.month_region_string(), e)) \
-                   | 'GroupByMonthRegion' >> beam.GroupByKey() \
-                   | 'FetchWeather' >> beam.ParDo(FetchWeatherDoFn(cloud_options.project, local_pipeline_options.max_weather_station_distance)) \
-                   | 'ProtoForWrite' >> beam.Map(lambda e: (e.category(), e.encode())) \
-                   | 'GroupByCategory' >> beam.GroupByKey()
+                   | 'GroupByMonthRegion' >> beam.GroupByKey()
+                   # | 'FetchWeather' >> beam.ParDo(FetchWeatherDoFn(cloud_options.project, local_pipeline_options.max_weather_station_distance)) \
+                   # | 'ProtoForWrite' >> beam.Map(lambda e: (e.category(), e.encode())) \
+                   # | 'GroupByCategory' >> beam.GroupByKey()
                    # | 'WriteRecords' >> beam.ParDo(WriteTFRecords(cloud_options.project, local_pipeline_options.data_location))
                    # | 'DivideByTaxon' >> beam.ParDo(_DivideByTaxon()).with_outputs(*taxa_list)
 
@@ -124,5 +128,5 @@ def run(argv=None):
 
 
 if __name__ == '__main__':
-    logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger().setLevel(logging.DEBUG)
     run()

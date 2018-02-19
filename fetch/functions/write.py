@@ -2,13 +2,12 @@
 
 import apache_beam as beam
 from google.cloud import storage, exceptions
-from os import path
 from example import Example
-from tensorflow import python_io
 from tempfile import TemporaryFile
 from datetime import datetime
 from os import path
-
+import tensorflow as tf
+import logging
 
 @beam.typehints.with_input_types(beam.typehints.KV[str, beam.typehints.Iterable[Example]])
 class WriteTFRecords(beam.DoFn):
@@ -39,14 +38,20 @@ class WriteTFRecords(beam.DoFn):
         else:
             local_file = TemporaryFile()
 
-        record_writer = python_io.TFRecordWriter(path=local_file, options=python_io.TFRecordOptions(python_io.TFRecordCompressionType.GZIP))
+        record_writer = tf.python_io.TFRecordWriter(path=local_file, options=tf.python_io.TFRecordOptions(tf.python_io.TFRecordCompressionType.GZIP))
 
         for e in examples:
             record_writer.write(e)
 
         if isBoundForCloudStorage:
             bucket_name = self._filepath[len("gs://")-1:].split("/")[0]
-            bucket = storage.Client(project=self._project).bucket(bucket_name)
+
+            try:
+                bucket = storage.Client(project=self._project).bucket(bucket_name)
+            except exceptions.NotFound:
+               logging.error('GCS Bucket [%s] does not exist', bucket_name)
+               return
+
             storage.Blob(suffix, bucket).upload_from_file(local_file)
 
 

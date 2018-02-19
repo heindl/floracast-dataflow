@@ -5,4 +5,5 @@ python ./main.py \
          --data_location /tmp/floracast-models/ \
          --job_name floracast-fetch-examples \
          --nameusages n9DCwVo5ZxaMDpd9arIgexZBc \
-         --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/fetch_examples/setup.py
+         --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/fetch/setup.py \
+         --requirements_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/fetch/requirements.txt
