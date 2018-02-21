@@ -8,6 +8,7 @@ from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOpt
 from functions.fetch import FetchRandom, FetchNameUsages, FetchOccurrences, FetchProtectedAreas
 from functions.weather import FetchWeatherDoFn
 from functions.write import WriteTFRecords
+from functions.example import Example
 
 # If error after upgradeing apache beam: metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases
 # then: pip install six==1.10.0
@@ -101,12 +102,12 @@ def run(argv=None):
             examples = (occurrences, protected_areas, random) | beam.Flatten()
 
             _ = examples \
-                   | 'ProjectMonthRegionKV' >> beam.Map(lambda e: (e.month_region_string(), e)) \
-                   | 'GroupByMonthRegion' >> beam.GroupByKey()
-                   # | 'FetchWeather' >> beam.ParDo(FetchWeatherDoFn(cloud_options.project, local_pipeline_options.max_weather_station_distance)) \
-                   # | 'ProtoForWrite' >> beam.Map(lambda e: (e.category(), e.encode())) \
-                   # | 'GroupByCategory' >> beam.GroupByKey()
-                   # | 'WriteRecords' >> beam.ParDo(WriteTFRecords(cloud_options.project, local_pipeline_options.data_location))
+                   | 'ProjectMonthRegionKV' >> beam.Map(lambda e: (e.month_region_key(), e)).with_input_types(Example) \
+                   | 'GroupByMonthRegion' >> beam.GroupByKey() \
+                   | 'FetchWeather' >> beam.ParDo(FetchWeatherDoFn(cloud_options.project)) \
+                   | 'ProtoForWrite' >> beam.Map(lambda e: (e.category(), e.encode())) \
+                   | 'GroupByCategory' >> beam.GroupByKey() \
+                   | 'WriteRecords' >> beam.ParDo(WriteTFRecords(cloud_options.project, local_pipeline_options.data_location))
                    # | 'DivideByTaxon' >> beam.ParDo(_DivideByTaxon()).with_outputs(*taxa_list)
 
             # for taxon in taxa_list:

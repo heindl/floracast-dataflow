@@ -2,57 +2,89 @@
 
 import apache_beam as beam
 from google.cloud import storage, exceptions
-from example import Example
-from tempfile import TemporaryFile
+from example import Example, Examples
 from datetime import datetime
-from os import path
-import tensorflow as tf
+from os import path, makedirs
 import logging
 
 @beam.typehints.with_input_types(beam.typehints.KV[str, beam.typehints.Iterable[Example]])
 class WriteTFRecords(beam.DoFn):
-    def __init__(self, project, filepath):
+    def __init__(self, project, dir, timestamp=None):
         super(WriteTFRecords, self).__init__()
-        self._project = project,
-        self._filepath = filepath
+        self._project = project
+        self._directory = dir
+        self._time = timestamp if timestamp is not None else datetime.now().strftime("%s")
 
-    def process(self, (category, examples)):
+    def _use_cloud_storage(self):
+        return self._directory.startswith("gs://")
 
-        suffix = datetime.now().strftime("%s") + ".tfrecords"
+    def _bucket_name(self):
+        if not self._use_cloud_storage():
+            raise ValueError("Can not parse bucket from invalid CloudStorage Path:", self._directory)
+        return self._directory[len("gs://"):].split("/")[0]
 
-        isRandom = "random" in category.lower()
-        isProtectedArea = "protectedarea" in category.lower()
-        isOccurrence = isRandom is False and isProtectedArea is False
+    def _cloud_storage_path(self, category):
+        if not self._use_cloud_storage():
+            return None
+        return path.join(self._sub_path(category), self._file_name())
 
-        if isRandom:
-            suffix = "/random/" + suffix
-        elif isProtectedArea:
-            suffix = "/protected_areas/" + suffix
-        elif isOccurrence:
-            suffix = "/occurrences/" + suffix
+    def _sub_path(self, category):
 
-        isBoundForCloudStorage = self._filepath.startswith("gs://")
+        category = category.lower()
 
-        if isBoundForCloudStorage is False:
-            local_file = path.join(self._filepath, suffix)
+        if category == "" or "/" in category or " " in category:
+            raise ValueError("Invalid Category")
+
+        if "random" in category:
+            return "random"
+        elif "protectedarea" in category:
+            return "protected_areas"
         else:
-            local_file = TemporaryFile()
+            return "occurrences/%s" % category
 
-        record_writer = tf.python_io.TFRecordWriter(path=local_file, options=tf.python_io.TFRecordOptions(tf.python_io.TFRecordCompressionType.GZIP))
+    def _local_path(self, category):
 
-        for e in examples:
-            record_writer.write(e)
+        if self._directory.strip("/").strip(" ") == "":
+            raise ValueError("Invalid Directory")
 
-        if isBoundForCloudStorage:
-            bucket_name = self._filepath[len("gs://")-1:].split("/")[0]
+        directory = self._directory
+        if self._use_cloud_storage():
+            directory = "/tmp/" + self._directory[len("gs://")-1:]
 
+        directory = path.join(directory, self._sub_path(category))
+
+        if not path.exists(directory):
+            makedirs(directory)
+
+        return path.join(directory, self._file_name())
+
+    def _file_name(self):
+        return "%s.tfrecord.gz" % self._time
+
+
+
+    def _upload(self, category):
+        cloud_path = self._cloud_storage_path(category)
+        if cloud_path is not None:
             try:
-                bucket = storage.Client(project=self._project).bucket(bucket_name)
+                bucket = storage.Client(project=self._project).bucket(self._bucket_name())
             except exceptions.NotFound:
-               logging.error('GCS Bucket [%s] does not exist', bucket_name)
-               return
+                logging.error('GCS Bucket [%s] does not exist', self._bucket_name())
+                return
+            storage.Blob(cloud_path, bucket).upload_from_filename(self._local_path(category))
 
-            storage.Blob(suffix, bucket).upload_from_file(local_file)
+    def _write(self, category, examples):
+        fpath = self._local_path(category)
+        examples.write(fpath)
+        return fpath
+
+    def process(self, (category, iter)):
+        examples = Examples(list(iter))
+        _ = self._write(category, examples)
+        self._upload(category)
+
+
+
 
 
 def fetch_latest(project, bucket_name, parent_path):

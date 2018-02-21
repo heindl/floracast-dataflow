@@ -1,64 +1,90 @@
 # from __future__ import absolute_import
 
 import apache_beam as beam
-from .example import Example
+from .example import Example, Examples
+from multiprocessing.pool import ThreadPool
+import astral
+import logging
+from sklearn.neighbors import BallTree
+import numpy
+from datetime import datetime, timedelta
+from pandas import date_range
+from google.cloud import bigquery
+import geopy as geopy
+from geopy.distance import vincenty
 
 @beam.typehints.with_input_types(beam.typehints.KV[str, beam.typehints.Iterable[Example]])
 @beam.typehints.with_output_types(Example)
 class FetchWeatherDoFn(beam.DoFn):
-    def __init__(self, project, min_weather_station_distance):
+    def __init__(self, project):
         super(FetchWeatherDoFn, self).__init__()
-        self._fetcher = WeatherFetcher(project, min_weather_station_distance)
+        self._fetcher = WeatherFetcher(
+            project=project,
+            max_station_distance=100,
+            weather_days_before=90,
+        )
 
     def process(self, batch):
-        return self._fetcher.process_batch(batch)
+
+        logging.debug("Fetching Weather for Batch: %s", batch[0])
+
+        key_components = batch[0].split("-")
+        if len(key_components) != 3:
+            logging.error("Weather Fetcher received invalid Key [%s]", batch[0])
+            return
+
+        year = int(key_components[0])
+
+        if year < 1950 or year > datetime.now().year:
+            logging.error("Weather Fetcher received invalid Year [%s]", key_components[0])
+            return
+
+        month = int(key_components[1])
+        if month < 1 or month > 12:
+            logging.error("Weather Fetcher received invalid Month [%s]", key_components[1])
+
+        examples = Examples(list(batch[1]))
+
+        return self._fetcher.process_batch(examples)
 
 
 class WeatherFetcher:
-    def __init__(self, project, min_weather_station_distance):
+    def __init__(self, project, max_station_distance, weather_days_before):
         self._project = project
         self._dataset = 'bigquery-public-data:noaa_gsod'
-        self._weather_station_distance = min_weather_station_distance
-        self._weather_days_before = 90
+        self._max_weather_station_distance = max_station_distance
+        self._weather_days_before = weather_days_before
 
-    def process_batch(self, batch):
-        from multiprocessing.pool import ThreadPool
-        # import time
+    def process_batch(self, examples):
 
-        # First identify a bounding box.
-        # [33.2398, -85.0795], [34.1448, -83.3327]
-        sw, ne = [0, 0], [0, 0]
+        if examples.count() == 0:
+            logging.debug("Example batch contains no examples")
+            return
 
-        examples = list(batch[1])
+        bounds = examples.bounds()
+        bounds.extend_radius(self._max_weather_station_distance)
 
-        for example in examples:
-            if sw[0] == 0 or sw[0] > example.latitude():
-                sw[0] = example.latitude()
-            if sw[1] == 0 or sw[1] > example.longitude():
-                sw[1] = example.longitude()
+        print("earliest recalc", self._weather_days_before, examples.earliest_datetime() - timedelta(days=self._weather_days_before))
 
-            if ne[0] == 0 or ne[0] < example.latitude():
-                ne[0] = example.latitude()
-            if ne[1] == 0 or ne[1] < example.longitude():
-                ne[1] = example.longitude()
-
-        # For each point, ensure we give enough space to get a station for that furthest point.
-        sw = self.bounding_box(sw[0], sw[1], self._weather_station_distance.get())[0]
-        ne = self.bounding_box(ne[0], ne[1], self._weather_station_distance.get())[1]
-
-        self._weather_store = _WeatherLoader(
+        self._weather_store = WeatherStore(
             project=self._project,
-            bbox=[sw.longitude, sw.latitude, ne.longitude, ne.latitude],
-            year=batch[0][0:4],
-            month=batch[0][4:6],
-            weather_station_distance=self._weather_station_distance.get(),
-            days_before=self._weather_days_before
+            bounds=bounds,
+            earliest_datetime=examples.earliest_datetime() - timedelta(days=self._weather_days_before),
+            latest_datetime=examples.latest_datetime()
         )
 
-        for example_batch in self._chunks(examples, 250):
+        pool = ThreadPool(20)
+        #
+        for example_batch in examples.in_batches(20):
 
-            records = ThreadPool(50).imap_unordered(self.get_record, example_batch)
-
+            # for e in example_batch:
+            #     print("getting", e.datetime())
+            #     r = self._get_record(e)
+            #     if r is not None:
+            #         yield r
+        #
+            records = pool.imap_unordered(self._get_record, example_batch)
+        #
             for e in records:
                 # r = self.get_record(e)
                 if e is not None:
@@ -72,29 +98,26 @@ class WeatherFetcher:
                     #         print("yielding")
                     #         yield e
 
+    def _get_record(self, example):
 
-    def _chunks(self, examples, n):
-        """Yield successive n-sized chunks from l."""
-        for i in xrange(0, len(examples), n):
-            yield examples[i:i + n]
+        # Should return in order from least to greatest.
+        records = self._weather_store.read(
+            example.latitude(),
+            example.longitude(),
+            example.datetime(),
+            self._max_weather_station_distance,
+            self._weather_days_before
+        )
 
-    def get_record(self, example):
-
-        import astral
-        import logging
-        from datetime import datetime
-
-        records = self._weather_store.read(example.latitude(), example.longitude(), datetime.fromtimestamp(example.date()))
-
-        if records is None or len(records.keys()) < self._weather_days_before:
+        if records is None or len(records) < self._weather_days_before:
             return None
 
-        for date_string in sorted(records.keys()):
+        for r in records:
             try:
                 a = astral.Astral()
                 a.solar_depression = 'civil'
                 astro = a.sun_utc(
-                    datetime.strptime(date_string, '%Y%m%d').date(),
+                    datetime.strptime(r["DATE"], '%Y%m%d').date(),
                     example.latitude(),
                     example.longitude()
                 )
@@ -103,41 +126,29 @@ class WeatherFetcher:
                 if "Sun never reaches 6 degrees below the horizon" in err.message:
                     day_length = 86400
                 else:
-                    logging.error("Error parsing day[%s] length at [%.6f,%.6f]: %s", date_string, example.latitude(), example.longitude(), err)
+                    logging.error("Error parsing day[%s] length at [%.6f,%.6f]: %s", r["DATE"], example.latitude(), example.longitude(), err)
                     return None
 
             example.append_daylight(day_length)
-            example.append_precipitation(float(records[date_string]['PRCP']))
-            example.append_temp_min(float(records[date_string]['MIN']))
-            example.append_temp_max(float(records[date_string]['MAX']))
-            example.append_temp_avg(float(records[date_string]['AVG']))
+            example.append_precipitation(r['PRCP'])
+            example.append_temp_min(r['MIN'])
+            example.append_temp_max(r['MAX'])
+            example.append_temp_avg(r['AVG'])
 
         return example
-
-    def bounding_box(self, lat, lng, max_station_distance):
-        from geopy import Point, distance
-        location = Point(lat, lng)
-        sw = distance.VincentyDistance(miles=max_station_distance).destination(location, 225)
-        ne = distance.VincentyDistance(miles=max_station_distance).destination(location, 45)
-        return (sw, ne)
 
 RADIANT_TO_KM_CONSTANT = 6367
 class BallTreeIndex:
     def __init__(self,lat_longs):
-        from sklearn.neighbors import BallTree
-        import numpy as np
         self.lat_longs = lat_longs
         # print('radians', lat_longs, np.radians(lat_longs))
-        self.ball_tree_index = BallTree(np.radians(lat_longs), metric='haversine')
+        self.ball_tree_index = BallTree(numpy.radians(lat_longs), metric='haversine')
 
     def query_radius(self,lat, lng ,radius_miles):
-        import numpy as np
-        import geopy as geopy
-        from geopy.distance import vincenty
         # radius_km = radius/1e3
         radius_km = radius_miles * 0.6
         radius_radian = radius_km / RADIANT_TO_KM_CONSTANT
-        query = np.radians(np.array([(lat, lng)]))
+        query = numpy.radians(numpy.array([(lat, lng)]))
         indices = self.ball_tree_index.query_radius(query,r=radius_radian)
         pairs = []
         for i in list(indices)[0]:
@@ -153,29 +164,45 @@ class BallTreeIndex:
         return [x[1] for x in pairs][0:5]
 
 
-class _WeatherLoader:
-    def __init__(self, project, bbox, year, month, weather_station_distance, days_before):
-        print("weather-project", project)
+class WeatherStore:
+    def __init__(self, project, bounds, earliest_datetime, latest_datetime):
         self._project = project
         self._dataset = 'bigquery-public-data:noaa_gsod'
-        self._weather_station_distance = weather_station_distance
-        self._bbox = bbox # swLng, swLat, neLng, neLat
-        self._year = int(year)
-        self._month = int(month)
+        self._bounds = bounds # swLng, swLat, neLng, neLat
+        self._earliest_date = earliest_datetime
+        self._latest_date = latest_datetime
+
+        self._position_map = {}
+        i = 0
+        for d in date_range(
+            start=self._earliest_date,
+            end=self._latest_date,
+            freq='D'
+        ).sort_values().tolist():
+            d = str(d.strftime("%Y%m%d"))
+            self._position_map[d] = i
+            i += 1
+
         self._map = {}
-        self._days_before = days_before
         self._load()
 
     # year_dictionary provides {2016: ["01"], 2015: [12]}
-    def _year_dictionary(self, range):
+    def _year_dictionary(self):
+
         res = {}
-        for d in range.tolist():
+
+        for d in date_range(
+            start=self._earliest_date,
+            end=self._latest_date,
+            freq='M'
+        ).tolist():
             if str(d.year) not in res:
                 res[str(d.year)] = set()
             res[str(d.year)].add('{:02d}'.format(d.month))
+
         return res
 
-    def _form_query(self, q_year, q_months, bbox):
+    def _form_query(self, q_year, q_months):
         month_query = ""
         for m in q_months:
             if month_query == "":
@@ -204,17 +231,17 @@ class _WeatherLoader:
                     a.stn=b.usaf
                     AND a.wban=b.wban
                   WHERE
-                     b.lat <= {q_n_lat} AND b.lat >= {q_s_lat}
-                    AND b.lon >= {q_w_lon} AND b.lon <= {q_e_lon}
+                     b.lat <= {north} AND b.lat >= {south}
+                    AND b.lon >= {west} AND b.lon <= {east}
                     AND {q_month}
                   ORDER BY
                     a.da DESC
             """
         values = {
-            'q_n_lat': str(bbox[3]),
-            'q_w_lon': str(bbox[0]),
-            'q_s_lat': str(bbox[1]),
-            'q_e_lon': str(bbox[2]),
+            'north': str(self._bounds.north()),
+            'west': str(self._bounds.west()),
+            'south': str(self._bounds.south()),
+            'east': str(self._bounds.east()),
             'q_year': q_year,
             'q_month': month_query
         }
@@ -222,42 +249,35 @@ class _WeatherLoader:
         return q.format(**values)
 
     def _load(self):
-        from datetime import datetime
-        from pandas import date_range
-        from google.cloud import bigquery
-        from calendar import monthrange
 
         _client = bigquery.Client(project=self._project)
-
-        years = self._year_dictionary(date_range(
-            end=datetime(self._year, self._month, monthrange(self._year, self._month)[1]),
-            periods=5,
-            freq='M'
-        ))
 
         station_placeholder = {}
         stations = []
 
-        for year, months in years.iteritems():
-            query = _client.query(self._form_query(year, months, self._bbox))
+        for year, months in self._year_dictionary().iteritems():
+            q = self._form_query(year, months)
+
+            query = _client.query(q)
 
             # Had some trouble with conflicting versions of this package between local runner and remote.
             #  pip install --upgrade google-cloud-bigquery
 
             for row in query.result(timeout=30000):
 
-                    k = '%.6f-%.6f' % (row[0], row[1])
-                    if k not in station_placeholder:
-                        station_placeholder[k] = 1
-                        stations.append((row[0], row[1]))
-                        self._map[k] = {}
-
-
-                    self._map[k][row[8]+row[6]+row[7]] = {
-                        'PRCP': row[2],
-                        'MIN': row[3],
-                        'MAX': row[4],
-                        'AVG': row[5]
+                k = '%.6f-%.6f' % (row[0], row[1])
+                if k not in station_placeholder:
+                    station_placeholder[k] = 1
+                    stations.append((row[0], row[1]))
+                    self._map[k] = [None] * len(self._position_map.keys())
+                d = str(row[8]+row[6]+row[7])
+                if d in self._position_map:
+                    self._map[k][self._position_map[d]] = {
+                        'PRCP': float(row[2]),
+                        'MIN': float(row[3]),
+                        'MAX': float(row[4]),
+                        'AVG': float(row[5]),
+                        'DATE': d,
                     }
 
         if len(stations) != 0:
@@ -265,34 +285,25 @@ class _WeatherLoader:
         else:
             self._stations_index = None
 
+    def _weather_exists(self, k, start, end):
+        if k in self._map:
+            for i in range(start, end):
+                if self._map[k][i] is None:
+                    return False
+        return True
 
-    def read(self, lat, lng, today):
-        import pandas as pd
-        from datetime import timedelta
+    def read(self, lat, lng, today, max_station_distance, days_before):
 
         if self._stations_index is None:
             return None
 
-        station_list = self._stations_index.query_radius(lat, lng, self._weather_station_distance)
-        date_list = pd.date_range(
-            # Set one day in the past to ensure we have all data.
-            # Should only be relevant to when fetching the daily batch.
-            end = today - timedelta(days=1),
-            periods=self._days_before,
-            freq='D')
+        end = self._position_map[today.strftime("%Y%m%d")]
+        start = end - days_before
+
+        station_list = self._stations_index.query_radius(lat, lng, max_station_distance)
 
         for k in station_list:
-
-            if k in self._map:
-                obj = {}
-                for date in date_list:
-                    d = date.strftime("%Y%m%d")
-                    if d in self._map[k]:
-                        obj[d] = self._map[k][d]
-                    else:
-                        obj = None
-                        break
-                if obj is not None:
-                    return obj
+            if self._weather_exists(k, start, end):
+                return self._map[k][start:end]
 
         return None

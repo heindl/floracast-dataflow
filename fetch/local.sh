@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-python ./main.py \
+python ./fetch.py \
          --runner DirectRunner \
          --data_location /tmp/floracast-models/ \
          --job_name floracast-fetch-examples \
-         --nameusages n9DCwVo5ZxaMDpd9arIgexZBc \
+         --nameusages AHo2IYxvo37RjezIkho6xBWmq \
          --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/fetch/setup.py \
          --requirements_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/fetch/requirements.txt
