@@ -1,28 +1,26 @@
 # from __future__ import absolute_import
 
 import apache_beam as beam
-from .example import Example, Examples
+from .example import Example, Examples, KEY_PRCP, KEY_DAYLIGHT, KEY_DATE, KEY_AVG_TEMP, KEY_MAX_TEMP, KEY_MIN_TEMP
 from multiprocessing.pool import ThreadPool
 import astral
 import logging
 from sklearn.neighbors import BallTree
-import numpy
-from datetime import datetime, timedelta
+import datetime
 from pandas import date_range
 from google.cloud import bigquery
-import geopy as geopy
-from geopy.distance import vincenty
+from numpy import array, radians
+
+MINIMUM_YEAR=1950
 
 @beam.typehints.with_input_types(beam.typehints.KV[str, beam.typehints.Iterable[Example]])
 @beam.typehints.with_output_types(Example)
 class FetchWeatherDoFn(beam.DoFn):
     def __init__(self, project):
         super(FetchWeatherDoFn, self).__init__()
-        self._fetcher = WeatherFetcher(
-            project=project,
-            max_station_distance=100,
-            weather_days_before=90,
-        )
+        self._project = project,
+        self._max_weather_station_distance = 100 # Kilometers
+        self._weather_days_before = 90
 
     def process(self, batch):
 
@@ -35,7 +33,7 @@ class FetchWeatherDoFn(beam.DoFn):
 
         year = int(key_components[0])
 
-        if year < 1950 or year > datetime.now().year:
+        if year < 1950 or year > datetime.datetime.now().year:
             logging.error("Weather Fetcher received invalid Year [%s]", key_components[0])
             return
 
@@ -45,18 +43,9 @@ class FetchWeatherDoFn(beam.DoFn):
 
         examples = Examples(list(batch[1]))
 
-        return self._fetcher.process_batch(examples)
+        return self._process_batch(examples)
 
-
-class WeatherFetcher:
-    def __init__(self, project, max_station_distance, weather_days_before):
-        self._project = project
-        self._dataset = 'bigquery-public-data:noaa_gsod'
-        self._max_weather_station_distance = max_station_distance
-        self._weather_days_before = weather_days_before
-
-    def process_batch(self, examples):
-
+    def _process_batch(self, examples):
         if examples.count() == 0:
             logging.debug("Example batch contains no examples")
             return
@@ -64,39 +53,23 @@ class WeatherFetcher:
         bounds = examples.bounds()
         bounds.extend_radius(self._max_weather_station_distance)
 
-        print("earliest recalc", self._weather_days_before, examples.earliest_datetime() - timedelta(days=self._weather_days_before))
+        if type(self._project) is tuple:
+            project = self._project[0]
+        elif hasattr(self._project, 'get'):
+            project = self._project.get()
+        else:
+            project = self._project
 
         self._weather_store = WeatherStore(
-            project=self._project,
+            project=project,
             bounds=bounds,
-            earliest_datetime=examples.earliest_datetime() - timedelta(days=self._weather_days_before),
+            earliest_datetime=examples.earliest_datetime() - datetime.timedelta(days=self._weather_days_before),
             latest_datetime=examples.latest_datetime()
         )
 
-        pool = ThreadPool(20)
-        #
-        for example_batch in examples.in_batches(20):
-
-            # for e in example_batch:
-            #     print("getting", e.datetime())
-            #     r = self._get_record(e)
-            #     if r is not None:
-            #         yield r
-        #
-            records = pool.imap_unordered(self._get_record, example_batch)
-        #
-            for e in records:
-                # r = self.get_record(e)
-                if e is not None:
-                    yield e
-
-                    # with Pool(20) as p:
-                    # records = p.map(self.get_record, example_batch)
-                    # for e in records:
-                    #     # e = r.get()
-                    #     if e is not None:
-                    #         print("yielding")
-                    #         yield e
+        for e in ThreadPool(20).imap_unordered(self._get_record, examples.as_list()):
+            if e is not None:
+                yield e
 
     def _get_record(self, example):
 
@@ -113,56 +86,16 @@ class WeatherFetcher:
             return None
 
         for r in records:
-            try:
-                a = astral.Astral()
-                a.solar_depression = 'civil'
-                astro = a.sun_utc(
-                    datetime.strptime(r["DATE"], '%Y%m%d').date(),
-                    example.latitude(),
-                    example.longitude()
-                )
-                day_length = (astro['sunset'] - astro['sunrise']).seconds
-            except astral.AstralError as err:
-                if "Sun never reaches 6 degrees below the horizon" in err.message:
-                    day_length = 86400
-                else:
-                    logging.error("Error parsing day[%s] length at [%.6f,%.6f]: %s", r["DATE"], example.latitude(), example.longitude(), err)
-                    return None
-
-            example.append_daylight(day_length)
-            example.append_precipitation(r['PRCP'])
-            example.append_temp_min(r['MIN'])
-            example.append_temp_max(r['MAX'])
-            example.append_temp_avg(r['AVG'])
+            example.append_daylight(r[KEY_DAYLIGHT])
+            example.append_precipitation(r[KEY_PRCP])
+            example.append_temp_min(r[KEY_MIN_TEMP])
+            example.append_temp_max(r[KEY_MAX_TEMP])
+            example.append_temp_avg(r[KEY_AVG_TEMP])
 
         return example
 
-RADIANT_TO_KM_CONSTANT = 6367
-class BallTreeIndex:
-    def __init__(self,lat_longs):
-        self.lat_longs = lat_longs
-        # print('radians', lat_longs, np.radians(lat_longs))
-        self.ball_tree_index = BallTree(numpy.radians(lat_longs), metric='haversine')
 
-    def query_radius(self,lat, lng ,radius_miles):
-        # radius_km = radius/1e3
-        radius_km = radius_miles * 0.6
-        radius_radian = radius_km / RADIANT_TO_KM_CONSTANT
-        query = numpy.radians(numpy.array([(lat, lng)]))
-        indices = self.ball_tree_index.query_radius(query,r=radius_radian)
-        pairs = []
-        for i in list(indices)[0]:
-            # converted_degrees = np.degrees(self.lat_longs[i])
-            # print("converted", converted_degrees)
-            pairs.append(
-                (
-                    vincenty(geopy.Point(lat, lng), geopy.Point(self.lat_longs[i][0], self.lat_longs[i][1])).miles,
-                    '%.6f-%.6f' % (self.lat_longs[i][0], self.lat_longs[i][1])
-                )
-            )
-        pairs = sorted(pairs, key=lambda v: v[0])
-        return [x[1] for x in pairs][0:5]
-
+EARTH_RADIUS_KM = 6371.0
 
 class WeatherStore:
     def __init__(self, project, bounds, earliest_datetime, latest_datetime):
@@ -171,45 +104,37 @@ class WeatherStore:
         self._bounds = bounds # swLng, swLat, neLng, neLat
         self._earliest_date = earliest_datetime
         self._latest_date = latest_datetime
+        self._station_index = []
+        self._station_ball_tree_list = []
+        self._astral = astral.Astral()
+        self._astral.solar_depression = 'civil'
+        self._ball_tree_index = None
 
-        self._position_map = {}
-        i = 0
-        for d in date_range(
+        self._index_position_map = {self._date_key(d): i for i, d in enumerate(date_range(
             start=self._earliest_date,
             end=self._latest_date,
             freq='D'
-        ).sort_values().tolist():
-            d = str(d.strftime("%Y%m%d"))
-            self._position_map[d] = i
-            i += 1
+        ).sort_values().to_pydatetime())}
 
-        self._map = {}
+        self._weather_values = {}
         self._load()
 
-    # year_dictionary provides {2016: ["01"], 2015: [12]}
-    def _year_dictionary(self):
+    def get_stations(self, lat, lng, radius_km):
 
-        res = {}
-
-        for d in date_range(
-            start=self._earliest_date,
-            end=self._latest_date,
-            freq='M'
-        ).tolist():
-            if str(d.year) not in res:
-                res[str(d.year)] = set()
-            res[str(d.year)].add('{:02d}'.format(d.month))
-
-        return res
+        indices, distances = self._ball_tree_index.query_radius(
+            # Note that the haversine distance metric requires data in the form of [latitude, longitude]
+            # and both inputs and outputs are in units of radians
+            radians(array([(lat, lng)])),
+            r=(float(radius_km) / float(EARTH_RADIUS_KM)),
+            return_distance=True,
+            sort_results=True
+        )
+        if len(indices) == 0:
+            return []
+        return [self._station_index[i] for i in indices[0]]
 
     def _form_query(self, q_year, q_months):
-        month_query = ""
-        for m in q_months:
-            if month_query == "":
-                month_query = "(a.mo = '%s'" % m
-            else:
-                month_query += " OR a.mo = '%s'" % m
-        month_query += ")"
+
         q = """
                   SELECT
                     lat,
@@ -237,73 +162,135 @@ class WeatherStore:
                   ORDER BY
                     a.da DESC
             """
+
         values = {
             'north': str(self._bounds.north()),
             'west': str(self._bounds.west()),
             'south': str(self._bounds.south()),
             'east': str(self._bounds.east()),
             'q_year': q_year,
-            'q_month': month_query
+            'q_month': "(" + " OR ".join(["a.mo = '%s'" % m for m in q_months]) + ")"
         }
 
         return q.format(**values)
 
+    @staticmethod
+    def _date_key(dt):
+        if dt.date() < datetime.date(year=MINIMUM_YEAR, month=1,day=1):
+            raise ValueError("Invalid Datetime", dt)
+
+        s = dt.strftime("%Y%m%d")
+        if dt == "":
+            raise ValueError("DateString can not be empty")
+        return s
+
+    @staticmethod
+    def _location_key(lat, lng):
+        if lat == 0 or lng == 0:
+            raise ValueError("Location can not be empty")
+        return '%.6f|%.6f' % (lat, lng)
+
+    def _parse_row(self, row):
+        lat, lng = float(row[0]), float(row[1])
+        date_string = str(row[8]+row[6]+row[7])
+        key = self._location_key(lat, lng)
+
+        if key not in self._station_index:
+            self._station_index.append(key)
+            # Note that the haversine distance metric requires data in the form of [latitude, longitude]
+            # and both inputs and outputs are in units of radians
+            self._station_ball_tree_list.append((lat, lng))
+            # Create an empty array with expected number of weather values.
+            self._weather_values[key] = [None] * len(self._index_position_map)
+
+        if date_string not in self._index_position_map:
+            return
+
+        self._weather_values[key][self._index_position_map[date_string]] = {
+            KEY_PRCP: float(row[2]),
+            KEY_MIN_TEMP: float(row[3]),
+            KEY_MAX_TEMP: float(row[4]),
+            KEY_AVG_TEMP: float(row[5]),
+            KEY_DATE: date_string,
+        }
+
+    def _daylight(self, lat, lng, date_string):
+        if len(date_string) != 8:
+            raise ValueError("Invalid Date", date_string)
+        try:
+            a = self._astral.sun_utc(
+                datetime.datetime.strptime(date_string, '%Y%m%d').date(),
+                lat,
+                lng
+            )
+            return (a['sunset'] - a['sunrise']).seconds
+        except astral.AstralError as err:
+            if "Sun never reaches 6 degrees below the horizon" in err.message:
+                return 86400
+            else:
+                logging.error("Error parsing day[%s] length at [%.6f,%.6f]: %s", date_string, lat, lng, err)
+                return None
+
     def _load(self):
 
-        _client = bigquery.Client(project=self._project)
+        bigquery_client = bigquery.Client(project=self._project)
 
-        station_placeholder = {}
-        stations = []
 
-        for year, months in self._year_dictionary().iteritems():
-            q = self._form_query(year, months)
-
-            query = _client.query(q)
+        # {2016: ["01", "02"], 2015: ["12"]}
+        for year, months in date_range(
+                start=self._earliest_date,
+                end=self._latest_date,
+                freq='D'
+        ).to_series().groupby(lambda x: x.year).apply(lambda x: x.map(lambda d: '{:02d}'.format(d.month)).unique()).items():
 
             # Had some trouble with conflicting versions of this package between local runner and remote.
             #  pip install --upgrade google-cloud-bigquery
+            for row in bigquery_client.query(self._form_query(year, months)).result(timeout=30000):
+                self._parse_row(row)
 
-            for row in query.result(timeout=30000):
+        if len(self._station_ball_tree_list) == 0:
+            logging.warn("No stations returned from query", self._earliest_date, self._latest_date)
+            return
 
-                k = '%.6f-%.6f' % (row[0], row[1])
-                if k not in station_placeholder:
-                    station_placeholder[k] = 1
-                    stations.append((row[0], row[1]))
-                    self._map[k] = [None] * len(self._position_map.keys())
-                d = str(row[8]+row[6]+row[7])
-                if d in self._position_map:
-                    self._map[k][self._position_map[d]] = {
-                        'PRCP': float(row[2]),
-                        'MIN': float(row[3]),
-                        'MAX': float(row[4]),
-                        'AVG': float(row[5]),
-                        'DATE': d,
-                    }
+        self._ball_tree_index = BallTree(
+            radians(self._station_ball_tree_list),
+            metric='haversine'
+        )
 
-        if len(stations) != 0:
-            self._stations_index = BallTreeIndex(stations)
-        else:
-            self._stations_index = None
-
-    def _weather_exists(self, k, start, end):
-        if k in self._map:
-            for i in range(start, end):
-                if self._map[k][i] is None:
-                    return False
+    def _all_weather_dates_accounted_for(self, k, start, end):
+        if k not in self._weather_values:
+            return False
+        for i in range(start, end):
+            if self._weather_values[k][i] is None:
+                return False
         return True
 
-    def read(self, lat, lng, today, max_station_distance, days_before):
+    def read(self, lat, lng, today, max_station_distance_km, days_before):
 
-        if self._stations_index is None:
+        if len(self._station_index) == 0:
             return None
 
-        end = self._position_map[today.strftime("%Y%m%d")]
+        if type(lat) is not float or type(lng) is not float or lat == 0 or lng == 0:
+            raise ValueError("Invalid Location for reading weather", lat, lng)
+
+        if today is None or today.date() < datetime.date(year=MINIMUM_YEAR, month=1,day=1):
+            raise ValueError("Invalid Datetime for reading Weather", today)
+
+        station_locations = self.get_stations(lat, lng, max_station_distance_km)
+
+        end = self._index_position_map[self._date_key(today)]
         start = end - days_before
 
-        station_list = self._stations_index.query_radius(lat, lng, max_station_distance)
+        for k in station_locations:
+            if self._all_weather_dates_accounted_for(k, start, end) is not True:
+                continue
 
-        for k in station_list:
-            if self._weather_exists(k, start, end):
-                return self._map[k][start:end]
+            key_lat = float(k.split("|")[0])
+            key_lng = float(k.split("|")[1])
+            for i in range(start, end):
+                if KEY_DAYLIGHT not in self._weather_values[k][i]:
+                    self._weather_values[k][i][KEY_DAYLIGHT] = self._daylight(key_lat, key_lng, self._weather_values[k][i][KEY_DATE])
+
+            return self._weather_values[k][start:end]
 
         return None

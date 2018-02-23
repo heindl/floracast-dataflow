@@ -19,7 +19,7 @@ KEY_PRCP = 'precipitation'
 KEY_DAYLIGHT = 'daylight'
 KEY_S2_CELLS = 's2_cells'
 KEY_ECO_BIOME = 'eco_biome'
-# KEY_ECO_REALM = 'eco_realm'
+KEY_ECO_REALM = 'eco_realm'
 KEY_ECO_NUM = 'eco_num'
 
 class ExampleCoder(beam.coders.Coder):
@@ -83,14 +83,14 @@ class Season:
 
 class Examples:
 
-    _list = []
-
     def __init__(self, example_list=None):
+
         if type(example_list) is not list:
             raise ValueError('Expected type list to create Examples')
 
         if len(example_list) == 0:
             raise ValueError('Expected at least one example in list to create Examples')
+        self._list = []
 
         self._list = example_list
         self._parse()
@@ -99,7 +99,6 @@ class Examples:
         return len(self._list)
 
     def write(self, filepath):
-        print("WRITING TO FILE", filepath)
         options = tf.python_io.TFRecordOptions(
             compression_type=tf.python_io.TFRecordCompressionType.GZIP
         )
@@ -142,6 +141,9 @@ class Examples:
 
     def latest_datetime(self):
         return datetime.strptime(str(self._latest_date), '%Y%m%d')
+
+    def as_list(self):
+        return self._list
 
     def in_batches(self, n):
         """Yield successive n-sized chunks from l."""
@@ -309,14 +311,20 @@ class Example:
     def season(self):
         return Season().from_month(self.month())
 
-    def season_key(self):
+    def season_region_key(self):
         return '%s-%d-%s' % (self.year_string(), self.season().as_int(), self.s2_cell(2))
 
-    def set_s2_cell(self, cellDict):
-        if len(cellDict) != 8:
+    def set_s2_cell(self, cells):
+        if len(cells) != 7:
             raise ValueError('Example requires eight S2 cells')
-        for k in cellDict:
-            self._set_value(KEY_S2_CELLS, LIST_TYPE_BYTES, str(cellDict[k]), int(k))
+
+        if type(cells) == list:
+            for i, c in enumerate(cells):
+                self._set_value(KEY_S2_CELLS, LIST_TYPE_BYTES, c, int(i))
+            return
+
+        for k in cells:
+            self._set_value(KEY_S2_CELLS, LIST_TYPE_BYTES, str(cells[k]), int(k))
 
     def s2_cell(self, level):
         cell = self._get_value(KEY_S2_CELLS, LIST_TYPE_BYTES, level)
@@ -324,10 +332,20 @@ class Example:
             raise ValueError("S2Cell missing at level:", level)
         return cell
 
+    def s2_cells(self):
+        return self._get_values(KEY_S2_CELLS, LIST_TYPE_BYTES)
+
+    def eco_region(self):
+        return (
+            int(self._get_value(KEY_ECO_REALM, LIST_TYPE_INT64)),
+            int(self._get_value(KEY_ECO_BIOME, LIST_TYPE_INT64)),
+            int(self._get_value(KEY_ECO_NUM, LIST_TYPE_INT64))
+        )
+
     def set_eco_region(self, realm, biome, num):
         if realm == 0 or biome == 0 or num == 0:
             raise ValueError('Realm, Biome and EcoNum can not be empty')
-        # self._set_value(KEY_ECO_REALM, LIST_TYPE_BYTES, realm)
+        self._set_value(KEY_ECO_REALM, LIST_TYPE_INT64, realm)
         self._set_value(KEY_ECO_BIOME, LIST_TYPE_INT64, biome)
         self._set_value(KEY_ECO_NUM, LIST_TYPE_INT64, num)
 
@@ -335,7 +353,7 @@ class Example:
         return self.latitude(), self.longitude()
 
     def elevation(self):
-        return self._get_value(KEY_ELEVATION, LIST_TYPE_INT64)
+        return int(self._get_value(KEY_ELEVATION, LIST_TYPE_INT64))
 
     def set_elevation(self, elevation):
         self._set_value(KEY_ELEVATION, LIST_TYPE_INT64, elevation)
@@ -360,43 +378,6 @@ class Example:
             self.date()
         )
 
-    # def set_random_location_values(self):
-    #     import random
-    #     from datetime import datetime
-    #
-    #     NORTHERNMOST = 49.
-    #     SOUTHERNMOST = 25.
-    #     EASTERNMOST = -66.
-    #     WESTERNMOST = -124.
-    #
-    #     date = datetime(
-    #         random.randint(2015, 2017),
-    #         random.randint(1, 12),
-    #         random.randint(1, 28)
-    #     )
-    #
-    #     self.set_taxon(0)
-    #     self.set_occurrence_id(str(random.randint(100000,900000)))
-    #     self.set_longitude(round(random.uniform(EASTERNMOST, WESTERNMOST), 6))
-    #     self.set_latitude(round(random.uniform(SOUTHERNMOST, NORTHERNMOST), 6))
-    #     self.set_date(int(date.strftime("%s")))
-        # while True:
-        #     lat = round(random.uniform(self.SOUTHERNMOST, self.NORTHERNMOST), 6)
-        #     lng = round(random.uniform(self.EASTERNMOST, self.WESTERNMOST), 6)
-        #     try:
-        #         gcode = Geocoder.reverse_geocode(lat, lng)
-        #
-        #         if gcode[0].data[0]['formatted_address'][-6:] in ('Canada', 'Mexico'):
-        #             continue
-        #         elif 'unnamed road' in gcode[0].data[0]['formatted_address']:
-        #             continue
-        #         elif 'Unnamed Road' in gcode[0].data[0]['formatted_address']:
-        #             continue
-        #         else:
-        #             return gcode[0].coordinates[0], gcode[0].coordinates[1], date
-        #     except GeocoderError:
-        #         continue
-
 
     def append_temp_avg(self, value):
         self._append_value(KEY_AVG_TEMP, LIST_TYPE_FLOAT, value)
@@ -413,11 +394,6 @@ class Example:
     def append_daylight(self, value):
         self._append_value(KEY_DAYLIGHT, LIST_TYPE_FLOAT, value)
 
-
-# def RandomExample():
-#     e = Example()
-#     e.set_random_location_values()
-#     return e
 
 
 def FromSerialized(serialized):

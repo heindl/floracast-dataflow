@@ -7,7 +7,8 @@ from datetime import datetime
 from os import path, makedirs
 import logging
 
-@beam.typehints.with_input_types(beam.typehints.KV[str, beam.typehints.Iterable[Example]])
+
+# @beam.typehints.with_input_types(beam.typehints.KV[str, beam.typehints.List[Example]])
 class WriteTFRecords(beam.DoFn):
     def __init__(self, project, dir, timestamp=None):
         super(WriteTFRecords, self).__init__()
@@ -15,13 +16,19 @@ class WriteTFRecords(beam.DoFn):
         self._directory = dir
         self._time = timestamp if timestamp is not None else datetime.now().strftime("%s")
 
+    def _provided_directory(self):
+        dr = self._directory.get() if hasattr(self._directory, 'get') else self._directory
+        if dr is None or dr == "":
+            raise ValueError("Invalid provided write directory:", self._provided_directory())
+        return dr
+
     def _use_cloud_storage(self):
-        return self._directory.startswith("gs://")
+        return self._provided_directory().startswith("gs://")
 
     def _bucket_name(self):
         if not self._use_cloud_storage():
-            raise ValueError("Can not parse bucket from invalid CloudStorage Path:", self._directory)
-        return self._directory[len("gs://"):].split("/")[0]
+            raise ValueError("Can not parse bucket from invalid CloudStorage Path:", self._provided_directory())
+        return self._provided_directory()[len("gs://"):].split("/")[0]
 
     def _cloud_storage_path(self, category):
         if not self._use_cloud_storage():
@@ -44,12 +51,12 @@ class WriteTFRecords(beam.DoFn):
 
     def _local_path(self, category):
 
-        if self._directory.strip("/").strip(" ") == "":
+        if self._provided_directory().strip("/").strip(" ") == "":
             raise ValueError("Invalid Directory")
 
-        directory = self._directory
+        directory = self._provided_directory()
         if self._use_cloud_storage():
-            directory = "/tmp/" + self._directory[len("gs://")-1:]
+            directory = "/tmp/" + self._provided_directory()[len("gs://")-1:]
 
         directory = path.join(directory, self._sub_path(category))
 
@@ -60,8 +67,6 @@ class WriteTFRecords(beam.DoFn):
 
     def _file_name(self):
         return "%s.tfrecord.gz" % self._time
-
-
 
     def _upload(self, category):
         cloud_path = self._cloud_storage_path(category)

@@ -4,13 +4,14 @@
     <list default="true" id="d5d946e7-fd45-4ccd-884b-e8aec6a492d9" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change beforePath="$PROJECT_DIR$/fetch/build.sh" afterPath="$PROJECT_DIR$/fetch/build.sh" />
+      <change beforePath="$PROJECT_DIR$/fetch/fetch.py" afterPath="$PROJECT_DIR$/fetch/fetch.py" />
+      <change beforePath="$PROJECT_DIR$/fetch/fetch_test.py" afterPath="$PROJECT_DIR$/fetch/fetch_test.py" />
       <change beforePath="$PROJECT_DIR$/fetch/functions/example.py" afterPath="$PROJECT_DIR$/fetch/functions/example.py" />
       <change beforePath="$PROJECT_DIR$/fetch/functions/weather.py" afterPath="$PROJECT_DIR$/fetch/functions/weather.py" />
       <change beforePath="$PROJECT_DIR$/fetch/functions/write.py" afterPath="$PROJECT_DIR$/fetch/functions/write.py" />
       <change beforePath="$PROJECT_DIR$/fetch/local.sh" afterPath="$PROJECT_DIR$/fetch/local.sh" />
-      <change beforePath="$PROJECT_DIR$/fetch/main.py" afterPath="$PROJECT_DIR$/fetch/fetch.py" />
-      <change beforePath="$PROJECT_DIR$/fetch_shared/tests/__init__.py" afterPath="$PROJECT_DIR$/fetch/functions/geospatial.py" />
-      <change beforePath="$PROJECT_DIR$/fetch_shared/tests/weather_test.py" afterPath="$PROJECT_DIR$/fetch/fetch_test.py" />
+      <change beforePath="$PROJECT_DIR$/fetch/requirements.txt" afterPath="$PROJECT_DIR$/fetch/requirements.txt" />
+      <change beforePath="$PROJECT_DIR$/fetch/setup.py" afterPath="$PROJECT_DIR$/fetch/setup.py" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -42,67 +43,75 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="example.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/fetch/functions/example.py">
+      <file leaf-file-name="weather.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/fetch/functions/weather.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="225">
-              <caret line="15" column="21" lean-forward="false" selection-start-line="15" selection-start-column="21" selection-end-line="15" selection-end-column="21" />
+            <state relative-caret-position="150">
+              <caret line="10" column="33" lean-forward="true" selection-start-line="10" selection-start-column="33" selection-end-line="10" selection-end-column="33" />
               <folding>
-                <element signature="e#41#67#0" expanded="true" />
+                <marker date="1519347620703" expanded="true" signature="4713:5499" ph="SELECT lat, " />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="geospatial.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/fetch/functions/geospatial.py">
+      <file leaf-file-name="__init__.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/venv/lib/python2.7/site-packages/sklearn/neighbors/__init__.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="105">
+              <caret line="17" column="0" lean-forward="false" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="multiarray.py" pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/Library/Caches/IntelliJIdea2017.3/python_stubs/1096474504/numpy/core/multiarray.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="448">
+              <caret line="118" column="4" lean-forward="false" selection-start-line="118" selection-start-column="4" selection-end-line="118" selection-end-column="4" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="weather.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/fetch_shared/fetch_shared/weather.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="573">
+              <caret line="263" column="43" lean-forward="true" selection-start-line="263" selection-start-column="43" selection-end-line="263" selection-end-column="43" />
+              <folding>
+                <marker date="1518712830707" expanded="true" signature="7207:8003" ph="SELECT lat, " />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="fetch.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/fetch/functions/fetch.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="0">
               <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding>
-                <element signature="e#0#23#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="write.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/fetch/functions/write.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-70">
-              <caret line="25" column="43" lean-forward="true" selection-start-line="25" selection-start-column="43" selection-end-line="25" selection-end-column="43" />
-              <folding>
-                <element signature="e#42#68#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="blob.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/venv/lib/python2.7/site-packages/google/cloud/storage/blob.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="209">
-              <caret line="950" column="8" lean-forward="false" selection-start-line="950" selection-start-column="8" selection-end-line="950" selection-end-column="8" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="os.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/venv/lib/python2.7/os.py">
+      <file leaf-file-name="astral.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/venv/lib/python2.7/site-packages/astral.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="225">
-              <caret line="135" column="4" lean-forward="false" selection-start-line="135" selection-start-column="4" selection-end-line="135" selection-end-column="4" />
+            <state relative-caret-position="199">
+              <caret line="1558" column="8" lean-forward="false" selection-start-line="1558" selection-start-column="8" selection-end-line="1558" selection-end-column="8" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="fetch_test.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="fetch_test.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/fetch/fetch_test.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="445">
-              <caret line="32" column="19" lean-forward="true" selection-start-line="32" selection-start-column="19" selection-end-line="32" selection-end-column="19" />
+            <state relative-caret-position="483">
+              <caret line="42" column="21" lean-forward="false" selection-start-line="42" selection-start-column="21" selection-end-line="42" selection-end-column="21" />
               <folding>
                 <element signature="e#0#44#0" expanded="true" />
               </folding>
@@ -110,32 +119,26 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="local.sh" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/fetch/local.sh">
+      <file leaf-file-name="example.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/fetch/functions/example.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="0">
               <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
+              <folding>
+                <element signature="e#41#67#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="__builtin__.py" pinned="false" current-in-tab="false">
-        <entry file="file://$USER_HOME$/Library/Caches/IntelliJIdea2017.3/python_stubs/1096474504/__builtin__.py">
+      <file leaf-file-name="write.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/fetch/functions/write.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="218">
-              <caret line="1966" column="8" lean-forward="false" selection-start-line="1966" selection-start-column="8" selection-end-line="1966" selection-end-column="8" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="tempfile.py" pinned="false" current-in-tab="false">
-        <entry file="file:///Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/tempfile.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="218">
-              <caret line="267" column="4" lean-forward="false" selection-start-line="267" selection-start-column="4" selection-end-line="267" selection-end-column="4" />
-              <folding />
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding>
+                <element signature="e#42#68#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -151,18 +154,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>googlemaps</find>
-      <find>tens</find>
-      <find>transform</find>
-      <find>tensorflow</find>
-      <find>ven</find>
-      <find>python</find>
-      <find>try</find>
-      <find>tft</find>
-      <find>yield</find>
-      <find>phenograph</find>
-      <find>phenograph/infra/src/bitbucket.org/heindl/dataflow</find>
-      <find>pd.</find>
       <find>scyp</find>
       <find>WeatherLoader</find>
       <find>_bounding_box</find>
@@ -170,17 +161,29 @@
       <find>bounding_box</find>
       <find>date</find>
       <find>np.</find>
-      <find>timedelta</find>
       <find>timedel</find>
       <find>import</find>
       <find>- 1</find>
-      <find>print(</find>
-      <find>print</find>
-      <find>datetime</find>
       <find>ValueEr</find>
       <find>encode(</find>
       <find>sub_di</find>
       <find>create</find>
+      <find>break</find>
+      <find>s2ce</find>
+      <find>print(</find>
+      <find>timedelta</find>
+      <find>date_range</find>
+      <find>strftime</find>
+      <find>elevation(</find>
+      <find>has</find>
+      <find>datetime</find>
+      <find>geocoder</find>
+      <find>query_rad</find>
+      <find>radians</find>
+      <find>parse_ro</find>
+      <find>array</find>
+      <find>query</find>
+      <find>print</find>
     </findStrings>
     <replaceStrings>
       <replace />
@@ -259,9 +262,6 @@
         <option value="$PROJECT_DIR$/fetch_examples/main.py" />
         <option value="$PROJECT_DIR$/fetch_examples/setup.py" />
         <option value="$PROJECT_DIR$/fetch/functions/elevation.py" />
-        <option value="$PROJECT_DIR$/fetch/setup.py" />
-        <option value="$PROJECT_DIR$/fetch/requirements.txt" />
-        <option value="$PROJECT_DIR$/fetch/functions/fetch.py" />
         <option value="$PROJECT_DIR$/venv/bin/activate" />
         <option value="$PROJECT_DIR$/fetch/tests/weather_test.py" />
         <option value="$PROJECT_DIR$/fetch/functions/weather_test.py" />
@@ -269,12 +269,15 @@
         <option value="$PROJECT_DIR$/fetch/main.py" />
         <option value="$PROJECT_DIR$/fetch/functions/geospatial.py" />
         <option value="$PROJECT_DIR$/fetch/local.sh" />
+        <option value="$PROJECT_DIR$/fetch/requirements.txt" />
         <option value="$PROJECT_DIR$/fetch/build.sh" />
-        <option value="$PROJECT_DIR$/fetch/functions/weather.py" />
-        <option value="$PROJECT_DIR$/fetch/functions/example.py" />
         <option value="$PROJECT_DIR$/fetch/fetch.py" />
-        <option value="$PROJECT_DIR$/fetch/fetch_test.py" />
+        <option value="$PROJECT_DIR$/fetch/setup.py" />
+        <option value="$PROJECT_DIR$/fetch/functions/fetch.py" />
+        <option value="$PROJECT_DIR$/fetch/functions/example.py" />
         <option value="$PROJECT_DIR$/fetch/functions/write.py" />
+        <option value="$PROJECT_DIR$/fetch/functions/weather.py" />
+        <option value="$PROJECT_DIR$/fetch/fetch_test.py" />
       </list>
     </option>
   </component>
@@ -376,6 +379,17 @@
               <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
               <item name="train_shared" type="cbb8eebc:String" user="train_shared" />
               <item name="train_shared" type="cbb8eebc:String" user="train_shared" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
+              <item name="transform" type="cbb8eebc:String" user="transform" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="dataflow" type="cbb8eebc:String" user="dataflow" />
+              <item name="transform" type="cbb8eebc:String" user="transform" />
+              <item name="transform" type="cbb8eebc:String" user="transform" />
             </path>
           </expand>
           <select />
@@ -701,12 +715,12 @@
       <workItem from="1519055017175" duration="12343000" />
       <workItem from="1519083078002" duration="1029000" />
       <workItem from="1519090260521" duration="19000" />
-      <workItem from="1519097816205" duration="50945000" />
+      <workItem from="1519097816205" duration="90291000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1076238000" />
+    <option name="totallyTimeSpent" value="1115584000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1280" height="800" extended-state="0" />
@@ -762,63 +776,6 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/google/cloud/storage/blob.py" />
-    <entry file="file://$APPLICATION_PLUGINS_DIR$/python/helpers/pydev/pydevd.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="225">
-          <caret line="1071" column="0" lean-forward="false" selection-start-line="1071" selection-start-column="0" selection-end-line="1071" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetch_protected_areas/call.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="360">
-          <caret line="24" column="29" lean-forward="true" selection-start-line="24" selection-start-column="29" selection-end-line="24" selection-end-column="29" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetch_shared/fetch_shared/weather.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="45">
-          <caret line="5" column="74" lean-forward="false" selection-start-line="5" selection-start-column="74" selection-end-line="5" selection-end-column="74" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/apache_beam/typehints/typehints.py" />
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/apache_beam/transforms/core.py" />
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/apache_beam/transforms/ptransform.py" />
-    <entry file="file://$PROJECT_DIR$/fetch_protected_areas/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="396">
-          <caret line="93" column="58" lean-forward="false" selection-start-line="93" selection-start-column="58" selection-end-line="93" selection-end-column="58" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/apache_beam/io/tfrecordio.py" />
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/apache_beam/io/iobase.py" />
-    <entry file="file://$PROJECT_DIR$/../../../../../../pyenv/lib/python2.7/site-packages/apache_beam/runners/dataflow/native_io/iobase.py" />
-    <entry file="file://$PROJECT_DIR$/fetch_shared/setup.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="421">
-          <caret line="37" column="12" lean-forward="false" selection-start-line="37" selection-start-column="12" selection-end-line="48" selection-end-column="25" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Library/Caches/IntelliJIdea2017.3/python_stubs/-1373860383/tensorflow/python/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/lib/python2.7/site-packages/google/cloud/firestore_v1beta1/client.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1050">
-          <caret line="82" column="8" lean-forward="false" selection-start-line="82" selection-start-column="8" selection-end-line="82" selection-end-column="8" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1905">
@@ -899,34 +856,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/Library/Caches/IntelliJIdea2017.3/python_stubs/1096474504/datetime.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="225">
-          <caret line="213" column="8" lean-forward="false" selection-start-line="213" selection-start-column="8" selection-end-line="213" selection-end-column="8" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$APPLICATION_PLUGINS_DIR$/python/helpers/python-skeletons/datetime.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="225">
           <caret line="361" column="8" lean-forward="false" selection-start-line="361" selection-start-column="8" selection-end-line="361" selection-end-column="8" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/lib/python2.7/site-packages/pandas/core/indexes/datetimelike.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1893">
-          <caret line="465" column="8" lean-forward="false" selection-start-line="465" selection-start-column="8" selection-end-line="465" selection-end-column="8" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/venv/lib/python2.7/site-packages/pandas/core/indexes/base.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="209">
-          <caret line="2098" column="8" lean-forward="false" selection-start-line="2098" selection-start-column="8" selection-end-line="2098" selection-end-column="8" />
           <folding />
         </state>
       </provider>
@@ -947,44 +880,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/fetch/requirements.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetch/call.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="30">
-          <caret line="2" column="14" lean-forward="false" selection-start-line="2" selection-start-column="14" selection-end-line="2" selection-end-column="14" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetch/call.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="23">
-          <caret line="5" column="15" lean-forward="true" selection-start-line="5" selection-start-column="15" selection-end-line="5" selection-end-column="15" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetch/build.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="165">
-          <caret line="11" column="95" lean-forward="false" selection-start-line="11" selection-start-column="95" selection-end-line="11" selection-end-column="95" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/train/task.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-3">
           <caret line="27" column="20" lean-forward="true" selection-start-line="27" selection-start-column="20" selection-end-line="27" selection-end-column="20" />
           <folding>
-            <element signature="e#713#744#0" expanded="true" />
+            <element signature="e#713#744#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -994,25 +895,7 @@
         <state relative-caret-position="319">
           <caret line="23" column="34" lean-forward="false" selection-start-line="23" selection-start-column="34" selection-end-line="23" selection-end-column="34" />
           <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetch/setup.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="270">
-          <caret line="18" column="66" lean-forward="false" selection-start-line="18" selection-start-column="66" selection-end-line="18" selection-end-column="66" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetch/functions/fetch.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#76#102#0" expanded="true" />
+            <element signature="e#0#23#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -1025,41 +908,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file:///Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/multiprocessing/pool.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="279">
-          <caret line="730" column="8" lean-forward="false" selection-start-line="730" selection-start-column="8" selection-end-line="730" selection-end-column="8" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetch/functions/weather.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="235">
-          <caret line="81" column="41" lean-forward="true" selection-start-line="81" selection-start-column="41" selection-end-line="81" selection-end-column="41" />
-          <folding>
-            <element signature="e#42#68#0" expanded="true" />
-            <marker date="1519231609849" expanded="true" signature="7361:8147" ph="SELECT lat, " />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/fetch/functions/geospatial.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetch/functions/example.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="225">
-          <caret line="15" column="21" lean-forward="false" selection-start-line="15" selection-start-column="21" selection-end-line="15" selection-end-column="21" />
-          <folding>
-            <element signature="e#41#67#0" expanded="true" />
+            <element signature="e#0#23#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -1088,11 +942,240 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/fetch/local.sh">
+    <entry file="file://$PROJECT_DIR$/venv/lib/python2.7/site-packages/google/cloud/storage/blob.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="209">
+          <caret line="950" column="8" lean-forward="false" selection-start-line="950" selection-start-column="8" selection-end-line="950" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python2.7/site-packages/apache_beam/typehints/typed_pipeline_test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="225">
+          <caret line="232" column="8" lean-forward="false" selection-start-line="232" selection-start-column="8" selection-end-line="232" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetch/call.sh">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetch/requirements.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="7" selection-end-column="20" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/train/train.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="135">
+          <caret line="9" column="0" lean-forward="true" selection-start-line="9" selection-start-column="0" selection-end-line="9" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetch/local.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="120">
+          <caret line="8" column="33" lean-forward="false" selection-start-line="8" selection-start-column="33" selection-end-line="8" selection-end-column="33" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/transform/transform/functions.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="495">
+          <caret line="33" column="0" lean-forward="true" selection-start-line="33" selection-start-column="0" selection-end-line="33" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetch/call.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="174">
+          <caret line="21" column="0" lean-forward="true" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#43#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python2.7/site-packages/apache_beam/transforms/core.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="209">
+          <caret line="1285" column="6" lean-forward="false" selection-start-line="1285" selection-start-column="6" selection-end-line="1285" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python2.7/site-packages/apache_beam/typehints/typehints.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="225">
+          <caret line="1017" column="0" lean-forward="false" selection-start-line="1017" selection-start-column="0" selection-end-line="1017" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python2.7/site-packages/google/cloud/bigquery/client.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="11114">
+          <caret line="1042" column="34" lean-forward="false" selection-start-line="1042" selection-start-column="34" selection-end-line="1042" selection-end-column="34" />
+          <folding>
+            <marker date="1519262301888" expanded="true" signature="0:24" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python2.7/site-packages/google/cloud/bigquery/query.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="209">
+          <caret line="643" column="0" lean-forward="false" selection-start-line="643" selection-start-column="0" selection-end-line="643" selection-end-column="0" />
+          <folding>
+            <marker date="1519262301887" expanded="true" signature="0:24" ph="..." />
+            <marker date="1519262301887" expanded="true" signature="21347:21349" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetch/setup.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetch/build.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="315">
+          <caret line="21" column="66" lean-forward="true" selection-start-line="21" selection-start-column="66" selection-end-line="21" selection-end-column="66" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/multiprocessing/pool.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="225">
+          <caret line="272" column="8" lean-forward="false" selection-start-line="272" selection-start-column="8" selection-end-line="272" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python2.7/site-packages/pandas/core/indexes/datetimelike.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="225">
+          <caret line="465" column="8" lean-forward="false" selection-start-line="465" selection-start-column="8" selection-end-line="465" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Library/Caches/IntelliJIdea2017.3/python_stubs/1096474504/math.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="225">
+          <caret line="291" column="4" lean-forward="false" selection-start-line="291" selection-start-column="4" selection-end-line="291" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetch_shared/fetch_shared/ex.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="199" column="39" lean-forward="true" selection-start-line="199" selection-start-column="39" selection-end-line="199" selection-end-column="39" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Library/Caches/IntelliJIdea2017.3/python_stubs/1096474504/datetime.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="364">
+          <caret line="447" column="44" lean-forward="true" selection-start-line="447" selection-start-column="44" selection-end-line="447" selection-end-column="44" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python2.7/site-packages/pandas/core/indexes/datetimes.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="86">
+          <caret line="880" column="8" lean-forward="false" selection-start-line="880" selection-start-column="8" selection-end-line="880" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python2.7/site-packages/pandas/core/indexes/base.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="209">
+          <caret line="1006" column="8" lean-forward="false" selection-start-line="1006" selection-start-column="8" selection-end-line="1006" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetch/functions/example.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#41#67#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python2.7/site-packages/astral.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="199">
+          <caret line="1558" column="8" lean-forward="false" selection-start-line="1558" selection-start-column="8" selection-end-line="1558" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetch/functions/fetch.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Library/Caches/IntelliJIdea2017.3/python_stubs/1096474504/numpy/core/multiarray.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="448">
+          <caret line="118" column="4" lean-forward="false" selection-start-line="118" selection-start-column="4" selection-end-line="118" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/lib/python2.7/site-packages/sklearn/neighbors/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="105">
+          <caret line="17" column="0" lean-forward="false" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetch_shared/fetch_shared/weather.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="573">
+          <caret line="263" column="43" lean-forward="true" selection-start-line="263" selection-start-column="43" selection-end-line="263" selection-end-column="43" />
+          <folding>
+            <marker date="1518712830707" expanded="true" signature="7207:8003" ph="SELECT lat, " />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fetch/functions/write.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#42#68#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -1106,30 +1189,22 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/fetch/fetch_test.py">
+    <entry file="file://$PROJECT_DIR$/fetch/functions/weather.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="445">
-          <caret line="32" column="19" lean-forward="true" selection-start-line="32" selection-start-column="19" selection-end-line="32" selection-end-column="19" />
+        <state relative-caret-position="150">
+          <caret line="10" column="33" lean-forward="true" selection-start-line="10" selection-start-column="33" selection-end-line="10" selection-end-column="33" />
           <folding>
-            <element signature="e#0#44#0" expanded="true" />
+            <marker date="1519347620703" expanded="true" signature="4713:5499" ph="SELECT lat, " />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/venv/lib/python2.7/site-packages/google/cloud/storage/blob.py">
+    <entry file="file://$PROJECT_DIR$/fetch/fetch_test.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="209">
-          <caret line="950" column="8" lean-forward="false" selection-start-line="950" selection-start-column="8" selection-end-line="950" selection-end-column="8" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fetch/functions/write.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-70">
-          <caret line="25" column="43" lean-forward="true" selection-start-line="25" selection-start-column="43" selection-end-line="25" selection-end-column="43" />
+        <state relative-caret-position="483">
+          <caret line="42" column="21" lean-forward="false" selection-start-line="42" selection-start-column="21" selection-end-line="42" selection-end-column="21" />
           <folding>
-            <element signature="e#42#68#0" expanded="true" />
+            <element signature="e#0#44#0" expanded="true" />
           </folding>
         </state>
       </provider>

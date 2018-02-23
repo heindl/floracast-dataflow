@@ -82,32 +82,58 @@ def run(argv=None):
 
             random = pipeline \
                      | 'SetRandomInMotion' >> beam.Create([1]).with_output_types(int) \
-                     | 'FetchRandom' >> beam.ParDo(FetchRandom(
-                            project=cloud_options.project,
-                            should_fetch=local_pipeline_options.random))
+                     | 'FetchRandom' >> beam.ParDo(
+                            FetchRandom(
+                                project=cloud_options.project,
+                                should_fetch=local_pipeline_options.random
+                            )
+                        )
 
             protected_areas = pipeline \
                               | 'SetProtectedAreasInMotion' >> beam.Create([1]).with_output_types(int) \
-                              | 'FetchProtectedAreas' >> beam.ParDo(FetchProtectedAreas(
-                                project=cloud_options.project,
-                                protected_area_dates=local_pipeline_options.protected_areas))
+                              | 'FetchProtectedAreas' >> beam.ParDo(
+                                    FetchProtectedAreas(
+                                        project=cloud_options.project,
+                                        protected_area_dates=local_pipeline_options.protected_areas
+                                    )
+                                )
 
             occurrences = pipeline \
                           | 'SetOccurrencesInMotion' >> beam.Create([1]).with_output_types(int) \
-                          | 'FetchNameUsages' >> beam.ParDo(FetchNameUsages(
-                                project=cloud_options.project,
-                                nameusages=local_pipeline_options.nameusages)) \
-                          | 'FetchOccurrences' >> beam.ParDo(FetchOccurrences(cloud_options.project))
+                          | 'FetchNameUsages' >> beam.ParDo(
+                                FetchNameUsages(
+                                    project=cloud_options.project,
+                                    nameusages=local_pipeline_options.nameusages
+                                )
+                            ) \
+                          | 'FetchOccurrences' >> beam.ParDo(
+                                FetchOccurrences(cloud_options.project)
+                            )
 
             examples = (occurrences, protected_areas, random) | beam.Flatten()
 
             _ = examples \
-                   | 'ProjectMonthRegionKV' >> beam.Map(lambda e: (e.month_region_key(), e)).with_input_types(Example) \
-                   | 'GroupByMonthRegion' >> beam.GroupByKey() \
-                   | 'FetchWeather' >> beam.ParDo(FetchWeatherDoFn(cloud_options.project)) \
-                   | 'ProtoForWrite' >> beam.Map(lambda e: (e.category(), e.encode())) \
-                   | 'GroupByCategory' >> beam.GroupByKey() \
-                   | 'WriteRecords' >> beam.ParDo(WriteTFRecords(cloud_options.project, local_pipeline_options.data_location))
+                   | 'ProjectSeasonRegionKV' >> beam.Map(
+                            lambda e: (e.season_region_key(), e)
+                    ).with_input_types(Example).with_output_types(beam.typehints.KV[str, Example]) \
+                   | 'GroupSeasonRegion' >> beam.GroupByKey().with_input_types(beam.typehints.KV[str, Example]).with_output_types(beam.typehints.KV[str, beam.typehints.Iterable[Example]]) \
+                   | 'FetchWeather' >> beam.ParDo(
+                        FetchWeatherDoFn(project=cloud_options.project)
+                      ) \
+                   | 'ProjectCategoryKV' >> beam.Map(
+                        lambda e: (e.category(), e)
+                    ).with_input_types(Example).with_output_types(beam.typehints.KV[str, Example]) \
+                   | 'GroupByCategory' >> beam.GroupByKey().with_input_types(beam.typehints.KV[str, Example]).with_output_types(beam.typehints.KV[str, beam.typehints.Iterable[Example]]) \
+                   | 'WriteRecords' >> beam.ParDo(
+                        WriteTFRecords(
+                            project=cloud_options.project,
+                            dir=local_pipeline_options.data_location
+                        )
+                    )
+
+                    # | 'ProtoForWrite' >> beam.Map(
+                    #      lambda e: (e.category(), e.encode())
+                    #  ).with_input_types(Example).with_output_types(beam.typehints.Tuple[str, Example]) \
                    # | 'DivideByTaxon' >> beam.ParDo(_DivideByTaxon()).with_outputs(*taxa_list)
 
             # for taxon in taxa_list:
@@ -129,5 +155,5 @@ def run(argv=None):
 
 
 if __name__ == '__main__':
-    logging.getLogger().setLevel(logging.DEBUG)
+    # logging.getLogger().setLevel(logging.DEBUG)
     run()
