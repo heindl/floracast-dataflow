@@ -111,7 +111,7 @@ def main(argv=None):
 
     _project = utils.default_project()
 
-    if len(args.date) != 8:
+    if len(args.date_string) != 8:
         sys.exit("Date must be in format YYYYMMDD.")
 
     if len(args.taxon) == 0:
@@ -141,7 +141,7 @@ def main(argv=None):
 
     model_path = get_latest_local(os.path.join("/tmp", args.bucket, "models", args.taxon))
     transformed_path = get_latest_local(os.path.join("/tmp", args.bucket, "transformed", args.taxon))
-    protected_area_path = get_latest_local(os.path.join("/tmp", args.bucket, "protected_areas", args.date))
+    protected_area_path = get_latest_local(os.path.join("/tmp", args.bucket, "protected_areas", args.date_string))
 
     print(model_path, transformed_path, protected_area_path)
 
@@ -177,9 +177,9 @@ def main(argv=None):
 
                 values.append("%s,%.8f,%.8f" % (p['occurrence_id'].replace("|", ","), target_point, random_point))
 
-    print("count", args.date, random_count, target_count)
+    print("count", args.date_string, random_count, target_count)
 
-    csv_path = os.path.join("predictions", args.taxon, args.date)
+    csv_path = os.path.join("predictions", args.taxon, args.date_string)
     local_dir = os.path.join("/tmp", args.bucket, csv_path)
     csv_file = datetime.now().strftime("%s") + ".csv"
 

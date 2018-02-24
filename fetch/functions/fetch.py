@@ -88,7 +88,6 @@ class FetchNameUsages(beam.DoFn):
                         res = str("%s-|-%s-|-%s" % (nameusage_id, source_type, target_id))
                         logging.debug("Yielding Occurrence Source: %s", res)
                         yield res
-        return
 
 @beam.typehints.with_input_types(int)
 @beam.typehints.with_output_types(Example)

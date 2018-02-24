@@ -86,7 +86,7 @@ def run(argv=None):
 
             _ = pipeline \
                 | _ReadProtectedAreas(project=cloud_options.project, protected_area_count=local_options.protected_area_count) \
-                | 'ConvertProtectedAreaDictToExample' >> beam.ParDo(_ProtectedAreaDictToExample(local_options.date)) \
+                | 'ConvertProtectedAreaDictToExample' >> beam.ParDo(_ProtectedAreaDictToExample(local_options.date_string)) \
                 | 'GroupByStateToFetchWeather' >> beam.GroupByKey() \
                 | 'FetchWeather' >> beam.ParDo(weather.FetchWeatherDoFn(cloud_options.project, local_options.max_weather_station_distance)) \
                 | 'EnsureElevation' >> beam.ParDo(elevation.ElevationBundleDoFn(cloud_options.project)) \

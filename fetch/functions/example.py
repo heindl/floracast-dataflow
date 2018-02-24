@@ -17,7 +17,7 @@ KEY_MAX_TEMP = 'max_temp'
 KEY_MIN_TEMP = 'min_temp'
 KEY_PRCP = 'precipitation'
 KEY_DAYLIGHT = 'daylight'
-KEY_S2_CELLS = 's2_cells'
+KEY_S2_TOKENS = 's2_tokens'
 KEY_ECO_BIOME = 'eco_biome'
 KEY_ECO_REALM = 'eco_realm'
 KEY_ECO_NUM = 'eco_num'
@@ -125,7 +125,7 @@ class Examples:
             if self._west is 0 or e.longitude() < self._west:
                 self._west = e.longitude()
 
-            date_int = int(e.date())
+            date_int = int(e.date_string())
 
             if self._earliest_date is 0 or date_int < self._earliest_date:
                 self._earliest_date = date_int
@@ -158,44 +158,47 @@ class Example:
         else:
             self._example = example_pb2.Example()
 
-    def _append_value(self, feature, typer, value):
-        if typer == LIST_TYPE_INT64:
-            self._example.features.feature[feature].int64_list.value.append(value)
-        elif typer == LIST_TYPE_FLOAT:
-            self._example.features.feature[feature].float_list.value.append(value)
-        elif typer == LIST_TYPE_BYTES:
-            self._example.features.feature[feature].bytes_list.value.append(value)
+    def _pad_array(self, feature, typer, length):
+        while self._array_length(feature, typer) < length:
+            if typer == LIST_TYPE_INT64:
+                self._example.features.feature[feature].int64_list.value.append(0)
+            elif typer == LIST_TYPE_FLOAT:
+                self._example.features.feature[feature].float_list.value.append(0)
+            elif typer == LIST_TYPE_BYTES:
+                self._example.features.feature[feature].bytes_list.value.append('')
 
-    def as_map(self):
-        v = {}
-        for k in self._example.features.feature:
-            if len(self._example.features.feature[k].int64_list.value) > 0:
-                v[k] = self._example.features.feature[k].int64_list.value
-                continue
-            if len(self._example.features.feature[k].float_list.value) > 0:
-                v[k] = self._example.features.feature[k].float_list.value
-                continue
-            if len(self._example.features.feature[k].bytes_list.value) > 0:
-                v[k] = self._example.features.feature[k].bytes_list.value
-                continue
-        return v
+    # def as_map(self):
+    #     v = {}
+    #     for k in self._example.features.feature:
+    #         if len(self._example.features.feature[k].int64_list.value) > 0:
+    #             v[k] = self._example.features.feature[k].int64_list.value
+    #             continue
+    #         if len(self._example.features.feature[k].float_list.value) > 0:
+    #             v[k] = self._example.features.feature[k].float_list.value
+    #             continue
+    #         if len(self._example.features.feature[k].bytes_list.value) > 0:
+    #             v[k] = self._example.features.feature[k].bytes_list.value
+    #             continue
+    #     return v
 
-    def _set_value(self, feature, typer, value, i=0):
+    def _array_length(self, feature, typer):
         if typer == LIST_TYPE_INT64:
-            if len(self._example.features.feature[feature].int64_list.value) <= i:
-                self._append_value(feature, typer, value)
-            else:
-                self._example.features.feature[feature].int64_list.value[i] = value
+            return len(self._example.features.feature[feature].int64_list.value)
         elif typer == LIST_TYPE_FLOAT:
-            if len(self._example.features.feature[feature].float_list.value) <= i:
-                self._append_value(feature, typer, value)
-            else:
-                self._example.features.feature[feature].float_list.value[i] = value
+            return len(self._example.features.feature[feature].float_list.value)
         elif typer == LIST_TYPE_BYTES:
-            if len(self._example.features.feature[feature].bytes_list.value) <= i:
-                self._append_value(feature, typer, value)
-            else:
-                self._example.features.feature[feature].bytes_list.value[i] = value
+            return len(self._example.features.feature[feature].bytes_list.value)
+
+    def _set_value(self, feature, typer, value, position=0):
+
+        self._pad_array(feature, typer, position+1)
+
+        if typer == LIST_TYPE_INT64:
+            self._example.features.feature[feature].int64_list.value[position] = value
+        elif typer == LIST_TYPE_FLOAT:
+            self._example.features.feature[feature].float_list.value[position] = value
+        elif typer == LIST_TYPE_BYTES:
+            self._example.features.feature[feature].bytes_list.value[position] = value
 
     def _get_value(self, feature, typer, i=0):
         v = self._get_values(feature, typer)
@@ -204,23 +207,14 @@ class Example:
         return None
 
     def _get_values(self, feature, typer):
-
-        f = self._example.features.feature[feature]
-
-        v = []
         if typer == LIST_TYPE_INT64:
-            v = f.int64_list.value
+            return self._example.features.feature[feature].int64_list.value
         elif typer == LIST_TYPE_FLOAT:
-            v = f.float_list.value
+            return self._example.features.feature[feature].float_list.value
         elif typer == LIST_TYPE_BYTES:
-            v = f.bytes_list.value
+            return self._example.features.feature[feature].bytes_list.value
         else:
             return None
-
-        if len(v) == 0:
-            return None
-
-        return v
 
     def example_id(self):
         return self._get_value(KEY_EXAMPLE_ID, LIST_TYPE_BYTES)
@@ -268,14 +262,14 @@ class Example:
     #     if lat is not None and lng is not None:
     #         self._set_value(KEY_GRID_ZONE, LIST_TYPE_BYTES, mgrs.MGRS().toMGRS(lat, lng)[:2].encode())
 
-    def date(self):
+    def date_string(self):
         date = self._get_value(KEY_DATE, LIST_TYPE_BYTES)
         if len(date) != 8:
             raise ValueError('Example date should be in format 20060102')
         return date
 
     def datetime(self):
-        return datetime.strptime(self.date(), '%Y%m%d')
+        return datetime.strptime(self.date_string(), '%Y%m%d')
 
     def set_date(self, date):
         if len(date) != 8:
@@ -283,12 +277,11 @@ class Example:
         self._set_value(KEY_DATE, LIST_TYPE_BYTES, date)
 
     def date_split(self):
-        d = self.date()
+        d = self.date_string()
         return (d[0:4], d[4:6], d[6:8])
 
     def year(self):
-        d = self.date_split()
-        return int(d[0])
+        return int(self.year_string())
 
     def year_string(self):
         d = self.date_split()
@@ -299,41 +292,40 @@ class Example:
         return d[1]
 
     def month(self):
-        d = self.date_split()
-        return int(d[1])
+        return int(self.month_string())
 
     def month_name(self):
         return calendar.month_name[self.month()]
 
-    def month_region_key(self):
-        return self.year_string() + "-" + self.month_string() + "-" + self.s2_cell(3)
+    def month_region_key(self, cell_level=2):
+        return self.year_string() + "-" + self.month_string() + "-" + self.s2_token(cell_level)
 
     def season(self):
         return Season().from_month(self.month())
 
-    def season_region_key(self):
-        return '%s-%d-%s' % (self.year_string(), self.season().as_int(), self.s2_cell(2))
+    def season_region_key(self, cell_level=2):
+        return '%s-%d-%s' % (self.year_string(), self.season().as_int(), self.s2_token(cell_level))
 
-    def set_s2_cell(self, cells):
-        if len(cells) != 7:
+    def set_s2_tokens(self, cells):
+        if len(cells) != 8:
             raise ValueError('Example requires eight S2 cells')
 
         if type(cells) == list:
             for i, c in enumerate(cells):
-                self._set_value(KEY_S2_CELLS, LIST_TYPE_BYTES, c, int(i))
+                self._set_value(KEY_S2_TOKENS, LIST_TYPE_BYTES, c, int(i))
             return
 
         for k in cells:
-            self._set_value(KEY_S2_CELLS, LIST_TYPE_BYTES, str(cells[k]), int(k))
+            self._set_value(KEY_S2_TOKENS, LIST_TYPE_BYTES, str(cells[k]), int(k))
 
-    def s2_cell(self, level):
-        cell = self._get_value(KEY_S2_CELLS, LIST_TYPE_BYTES, level)
+    def s2_token(self, level):
+        cell = self._get_value(KEY_S2_TOKENS, LIST_TYPE_BYTES, level)
         if cell == "":
             raise ValueError("S2Cell missing at level:", level)
         return cell
 
-    def s2_cells(self):
-        return self._get_values(KEY_S2_CELLS, LIST_TYPE_BYTES)
+    def s2_tokens(self):
+        return self._get_values(KEY_S2_TOKENS, LIST_TYPE_BYTES)
 
     def eco_region(self):
         return (
@@ -375,24 +367,23 @@ class Example:
             self.category(),
             self.latitude(),
             self.longitude(),
-            self.date()
+            self.date_string()
         )
 
+    def get_max_temp(self):
+        return self._get_values(KEY_MAX_TEMP, LIST_TYPE_FLOAT)
 
-    def append_temp_avg(self, value):
-        self._append_value(KEY_AVG_TEMP, LIST_TYPE_FLOAT, value)
+    def get_min_temp(self):
+        return self._get_values(KEY_MIN_TEMP, LIST_TYPE_FLOAT)
 
-    def append_temp_max(self, value):
-        self._append_value(KEY_MAX_TEMP, LIST_TYPE_FLOAT, value)
-
-    def append_temp_min(self, value):
-        self._append_value(KEY_MIN_TEMP, LIST_TYPE_FLOAT, value)
-
-    def append_precipitation(self, value):
-        self._append_value(KEY_PRCP, LIST_TYPE_FLOAT, value)
-
-    def append_daylight(self, value):
-        self._append_value(KEY_DAYLIGHT, LIST_TYPE_FLOAT, value)
+    def set_weather(self, position, avg_temp, max_temp, min_temp, prcp, daylight):
+        if daylight == 0:
+            raise ValueError("Invalid Daylight value")
+        self._set_value(KEY_AVG_TEMP, LIST_TYPE_FLOAT, avg_temp, position)
+        self._set_value(KEY_MAX_TEMP, LIST_TYPE_FLOAT, max_temp, position)
+        self._set_value(KEY_MIN_TEMP, LIST_TYPE_FLOAT, min_temp, position)
+        self._set_value(KEY_PRCP, LIST_TYPE_FLOAT, prcp, position)
+        self._set_value(KEY_DAYLIGHT, LIST_TYPE_FLOAT, daylight, position)
 
 
 
@@ -423,7 +414,7 @@ def ParseExampleFromFirestore(category_id, example_id, o):
 
     e.set_eco_region(int(o["EcoRealm"]), int(o["EcoBiome"]), int(o["EcoNum"]))
 
-    e.set_s2_cell(o['S2Tokens'])
+    e.set_s2_tokens(o['S2Tokens'])
 
     return e
 

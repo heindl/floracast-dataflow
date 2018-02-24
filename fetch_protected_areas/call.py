@@ -26,14 +26,14 @@ if args.template is None:
 else:
     TEMPLATE = args.template
 
-if len(args.date) != 8:
+if len(args.date_string) != 8:
     sys.exit("Date must be in format YYYYMMDD")
 
 BODY = {
-    "jobName": "fetch-protected-areas-%s" % args.date,
+    "jobName": "fetch-protected-areas-%s" % args.date_string,
     "parameters": {
-        "date" : args.date,
-        "data_location": "gs://%s/protected_areas/%s/%s/" % (args.bucket, args.date, datetime.now().strftime("%s")),
+        "date" : args.date_string,
+        "data_location": "gs://%s/protected_areas/%s/%s/" % (args.bucket, args.date_string, datetime.now().strftime("%s")),
     },
     "environment": {
         "tempLocation": "gs://%s/temp" % args.bucket,

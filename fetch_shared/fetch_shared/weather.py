@@ -84,7 +84,7 @@ class WeatherFetcher:
         import logging
         from datetime import datetime
 
-        records = self._weather_store.read(example.latitude(), example.longitude(), datetime.fromtimestamp(example.date()))
+        records = self._weather_store.read(example.latitude(), example.longitude(), datetime.fromtimestamp(example.date_string()))
 
         if records is None or len(records.keys()) < self._weather_days_before:
             return None

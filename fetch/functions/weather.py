@@ -67,9 +67,14 @@ class FetchWeatherDoFn(beam.DoFn):
             latest_datetime=examples.latest_datetime()
         )
 
-        for e in ThreadPool(20).imap_unordered(self._get_record, examples.as_list()):
-            if e is not None:
-                yield e
+        for e in examples.as_list():
+            r = self._get_record(e)
+            if r is not None:
+                yield r
+
+        # for e in ThreadPool(20).imap_unordered(self._get_record, examples.as_list()):
+        #     if e is not None:
+        #         yield e
 
     def _get_record(self, example):
 
@@ -85,12 +90,8 @@ class FetchWeatherDoFn(beam.DoFn):
         if records is None or len(records) < self._weather_days_before:
             return None
 
-        for r in records:
-            example.append_daylight(r[KEY_DAYLIGHT])
-            example.append_precipitation(r[KEY_PRCP])
-            example.append_temp_min(r[KEY_MIN_TEMP])
-            example.append_temp_max(r[KEY_MAX_TEMP])
-            example.append_temp_avg(r[KEY_AVG_TEMP])
+        for i, r in enumerate(records):
+            example.set_weather(i, r[KEY_AVG_TEMP], r[KEY_MAX_TEMP], r[KEY_MIN_TEMP], r[KEY_PRCP], r[KEY_DAYLIGHT])
 
         return example
 
@@ -176,7 +177,7 @@ class WeatherStore:
 
     @staticmethod
     def _date_key(dt):
-        if dt.date() < datetime.date(year=MINIMUM_YEAR, month=1,day=1):
+        if dt.date() < datetime.date(year=MINIMUM_YEAR, month=1, day=1):
             raise ValueError("Invalid Datetime", dt)
 
         s = dt.strftime("%Y%m%d")
@@ -273,7 +274,7 @@ class WeatherStore:
         if type(lat) is not float or type(lng) is not float or lat == 0 or lng == 0:
             raise ValueError("Invalid Location for reading weather", lat, lng)
 
-        if today is None or today.date() < datetime.date(year=MINIMUM_YEAR, month=1,day=1):
+        if today is None or today.date() < datetime.date(year=MINIMUM_YEAR, month=1, day=1):
             raise ValueError("Invalid Datetime for reading Weather", today)
 
         station_locations = self.get_stations(lat, lng, max_station_distance_km)
