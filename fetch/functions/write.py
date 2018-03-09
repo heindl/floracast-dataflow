@@ -2,7 +2,7 @@
 
 import apache_beam as beam
 from google.cloud import storage, exceptions
-from example import Example, Examples
+from example import Examples
 from datetime import datetime
 from os import path, makedirs
 import logging
@@ -45,7 +45,7 @@ class WriteTFRecords(beam.DoFn):
         if "random" in category:
             return "random"
         elif "protectedarea" in category:
-            return "protected_areas"
+            return "protected_areas/"+category.split("-")[1]
         else:
             return "occurrences/%s" % category
 
@@ -66,7 +66,8 @@ class WriteTFRecords(beam.DoFn):
         return path.join(directory, self._file_name())
 
     def _file_name(self):
-        return "%s.tfrecord.gz" % self._time
+        # return "%s.tfrecord.gz" % self._time
+        return "%s.tfrecords" % self._time
 
     def _upload(self, category):
         cloud_path = self._cloud_storage_path(category)
@@ -76,7 +77,13 @@ class WriteTFRecords(beam.DoFn):
             except exceptions.NotFound:
                 logging.error('GCS Bucket [%s] does not exist', self._bucket_name())
                 return
-            storage.Blob(cloud_path, bucket).upload_from_filename(self._local_path(category))
+            record = storage.Blob(cloud_path, bucket)
+            # There is a problem with gzip, so avoid using it.
+            # The go reader requires Content-Encoding: gzip in order to read, however the
+            # dataflow reader requires it to be there. So save as unencoded for now, though
+            # the file is at least three times larger.
+            # record.content_encoding = "gzip"
+            record.upload_from_filename(self._local_path(category))
 
     def _write(self, category, examples):
         fpath = self._local_path(category)
@@ -87,9 +94,6 @@ class WriteTFRecords(beam.DoFn):
         examples = Examples(list(iter))
         _ = self._write(category, examples)
         self._upload(category)
-
-
-
 
 
 def fetch_latest(project, bucket_name, parent_path):

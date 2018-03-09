@@ -3,8 +3,9 @@
 
 import apache_beam as beam
 from google.cloud import firestore
-from .example import Example, ParseExampleFromFirestore
+from example import Example, ParseExampleFromFirestore
 import logging
+from utils import parse_pipeline_argument
 
 # @beam.typehints.with_input_types(beam.typehints.Tuple[str, str, str])
 @beam.typehints.with_input_types(str)
@@ -27,7 +28,7 @@ class FetchOccurrences(beam.DoFn):
         source_type = data[1]
         target_id = data[2]
 
-        logging.debug("Fetching Occurrences from Firestore: %s, %s, %s", nameusage_id, source_type, target_id)
+        logging.debug("Fetching Occurrences from FireStore: %s, %s, %s", nameusage_id, source_type, target_id)
 
         db = firestore.Client(project=self._project)
         col = db.collection(u'Occurrences')
@@ -56,7 +57,8 @@ class FetchNameUsages(beam.DoFn):
 
     def process(self, i):
 
-        nameusages = self._nameusages.get()
+        nameusages = parse_pipeline_argument(self._nameusages)
+
         if nameusages is None or nameusages == "":
             return
 
@@ -99,7 +101,7 @@ class FetchRandom(beam.DoFn):
 
     def process(self, i):
 
-        should_fetch = self._should_fetch.get()
+        should_fetch = parse_pipeline_argument(self._should_fetch)
         if should_fetch is None or should_fetch is False:
             return
 
@@ -129,7 +131,7 @@ class FetchProtectedAreas(beam.DoFn):
 
     def process(self, i):
 
-        dates = self._protected_area_dates.get()
+        dates = parse_pipeline_argument(self._protected_area_dates)
         if dates is None or dates.strip() == "":
             return
 
@@ -137,17 +139,12 @@ class FetchProtectedAreas(beam.DoFn):
 
         logging.debug("Fetching ProtectedAreas from Firestore with %d dates", len(date_list))
 
-        db = firestore.Client(project=self._project)
-        col = db.collection(u'ProtectedArea')
-
-        # logging.debug("Received %s ProtectedAreas from Firestore", len(areas))
-
-        for o in col.get():
-            area_fields = o.to_dict()
+        for o in firestore.Client(project=self._project).collection(u'ProtectedAreas').get():
             for d in date_list:
+                area_fields = o.to_dict()
                 area_fields["FormattedDate"] = d
                 try:
-                    e = ParseExampleFromFirestore("ProtectedArea-"+d, o.id, o.to_dict())
+                    e = ParseExampleFromFirestore("ProtectedArea-"+d, o.id, area_fields)
                 except ValueError as error:
                     logging.error('ProtectedArea [%s] could not be parsed into Example: %s', o.id, error)
                     continue

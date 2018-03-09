@@ -3,24 +3,10 @@ import apache_beam as beam
 import calendar
 from tensorflow.core.example import example_pb2
 from datetime import datetime
-from .geospatial import GeospatialBounds
+from geospatial import GeospatialBounds
 import tensorflow as tf
+import constants
 
-KEY_EXAMPLE_ID = 'example_id'
-KEY_CATEGORY = 'nameusage'
-KEY_LATITUDE = 'latitude'
-KEY_LONGITUDE = 'longitude'
-KEY_ELEVATION = 'elevation'
-KEY_DATE ='date'
-KEY_AVG_TEMP = 'avg_temp'
-KEY_MAX_TEMP = 'max_temp'
-KEY_MIN_TEMP = 'min_temp'
-KEY_PRCP = 'precipitation'
-KEY_DAYLIGHT = 'daylight'
-KEY_S2_TOKENS = 's2_tokens'
-KEY_ECO_BIOME = 'eco_biome'
-KEY_ECO_REALM = 'eco_realm'
-KEY_ECO_NUM = 'eco_num'
 
 class ExampleCoder(beam.coders.Coder):
 
@@ -100,7 +86,7 @@ class Examples:
 
     def write(self, filepath):
         options = tf.python_io.TFRecordOptions(
-            compression_type=tf.python_io.TFRecordCompressionType.GZIP
+            compression_type=tf.python_io.TFRecordCompressionType.NONE
         )
         record_writer = tf.python_io.TFRecordWriter(path=filepath, options=options)
         for e in self._list:
@@ -217,13 +203,13 @@ class Example:
             return None
 
     def example_id(self):
-        return self._get_value(KEY_EXAMPLE_ID, LIST_TYPE_BYTES)
+        return self._get_value(constants.KEY_EXAMPLE_ID, LIST_TYPE_BYTES)
 
     def set_example_id(self, example_id):
-        self._set_value(KEY_EXAMPLE_ID, LIST_TYPE_BYTES, example_id)
+        self._set_value(constants.KEY_EXAMPLE_ID, LIST_TYPE_BYTES, example_id)
 
     def category(self):
-        c = self._get_value(KEY_CATEGORY, LIST_TYPE_BYTES)
+        c = self._get_value(constants.KEY_CATEGORY, LIST_TYPE_BYTES)
         if c is None or c == "":
             raise ValueError('Invalid example category')
         return c
@@ -231,10 +217,10 @@ class Example:
     def set_category(self, category):
         if category == "":
             raise ValueError('Invalid example category')
-        self._set_value(KEY_CATEGORY, LIST_TYPE_BYTES, category)
+        self._set_value(constants.KEY_CATEGORY, LIST_TYPE_BYTES, category)
 
     def latitude(self):
-        lat = self._get_value(KEY_LATITUDE, LIST_TYPE_FLOAT)
+        lat = self._get_value(constants.KEY_LATITUDE, LIST_TYPE_FLOAT)
         if lat == 0:
             raise ValueError('Invalid example latitude')
         return lat
@@ -242,10 +228,10 @@ class Example:
     def set_latitude(self, lat):
         if lat == 0:
             raise ValueError('Invalid example latitude')
-        self._set_value(KEY_LATITUDE, LIST_TYPE_FLOAT, lat)
+        self._set_value(constants.KEY_LATITUDE, LIST_TYPE_FLOAT, lat)
 
     def longitude(self):
-        lng = self._get_value(KEY_LONGITUDE, LIST_TYPE_FLOAT)
+        lng = self._get_value(constants.KEY_LONGITUDE, LIST_TYPE_FLOAT)
         if lng == 0:
             raise ValueError('Invalid example longitude')
         return lng
@@ -253,7 +239,7 @@ class Example:
     def set_longitude(self, lng):
         if lng == 0:
             raise ValueError('Invalid example longitude')
-        self._set_value(KEY_LONGITUDE, LIST_TYPE_FLOAT, lng)
+        self._set_value(constants.KEY_LONGITUDE, LIST_TYPE_FLOAT, lng)
 
     # def _set_grid_zone(self):
     #     import mgrs
@@ -263,7 +249,7 @@ class Example:
     #         self._set_value(KEY_GRID_ZONE, LIST_TYPE_BYTES, mgrs.MGRS().toMGRS(lat, lng)[:2].encode())
 
     def date_string(self):
-        date = self._get_value(KEY_DATE, LIST_TYPE_BYTES)
+        date = self._get_value(constants.KEY_DATE, LIST_TYPE_BYTES)
         if len(date) != 8:
             raise ValueError('Example date should be in format 20060102')
         return date
@@ -274,7 +260,7 @@ class Example:
     def set_date(self, date):
         if len(date) != 8:
             raise ValueError('Example date should be in format 20060102')
-        self._set_value(KEY_DATE, LIST_TYPE_BYTES, date)
+        self._set_value(constants.KEY_DATE, LIST_TYPE_BYTES, date)
 
     def date_split(self):
         d = self.date_string()
@@ -312,43 +298,43 @@ class Example:
 
         if type(cells) == list:
             for i, c in enumerate(cells):
-                self._set_value(KEY_S2_TOKENS, LIST_TYPE_BYTES, c, int(i))
+                self._set_value(constants.KEY_S2_TOKENS, LIST_TYPE_BYTES, c, int(i))
             return
 
         for k in cells:
-            self._set_value(KEY_S2_TOKENS, LIST_TYPE_BYTES, str(cells[k]), int(k))
+            self._set_value(constants.KEY_S2_TOKENS, LIST_TYPE_BYTES, str(cells[k]), int(k))
 
     def s2_token(self, level):
-        cell = self._get_value(KEY_S2_TOKENS, LIST_TYPE_BYTES, level)
+        cell = self._get_value(constants.KEY_S2_TOKENS, LIST_TYPE_BYTES, level)
         if cell == "":
             raise ValueError("S2Cell missing at level:", level)
         return cell
 
     def s2_tokens(self):
-        return self._get_values(KEY_S2_TOKENS, LIST_TYPE_BYTES)
+        return self._get_values(constants.KEY_S2_TOKENS, LIST_TYPE_BYTES)
 
     def eco_region(self):
         return (
-            int(self._get_value(KEY_ECO_REALM, LIST_TYPE_INT64)),
-            int(self._get_value(KEY_ECO_BIOME, LIST_TYPE_INT64)),
-            int(self._get_value(KEY_ECO_NUM, LIST_TYPE_INT64))
+            str(self._get_value(constants.KEY_ECO_REALM, LIST_TYPE_BYTES)),
+            str(self._get_value(constants.KEY_ECO_BIOME, LIST_TYPE_BYTES)),
+            str(self._get_value(constants.KEY_ECO_NUM, LIST_TYPE_BYTES))
         )
 
     def set_eco_region(self, realm, biome, num):
         if realm == 0 or biome == 0 or num == 0:
             raise ValueError('Realm, Biome and EcoNum can not be empty')
-        self._set_value(KEY_ECO_REALM, LIST_TYPE_INT64, realm)
-        self._set_value(KEY_ECO_BIOME, LIST_TYPE_INT64, biome)
-        self._set_value(KEY_ECO_NUM, LIST_TYPE_INT64, num)
+        self._set_value(constants.KEY_ECO_REALM, LIST_TYPE_BYTES, str(realm))
+        self._set_value(constants.KEY_ECO_BIOME, LIST_TYPE_BYTES, str(biome))
+        self._set_value(constants.KEY_ECO_NUM, LIST_TYPE_BYTES, str(num))
 
     def coordinates(self):
         return self.latitude(), self.longitude()
 
     def elevation(self):
-        return int(self._get_value(KEY_ELEVATION, LIST_TYPE_INT64))
+        return int(self._get_value(constants.KEY_ELEVATION, LIST_TYPE_INT64))
 
     def set_elevation(self, elevation):
-        self._set_value(KEY_ELEVATION, LIST_TYPE_INT64, elevation)
+        self._set_value(constants.KEY_ELEVATION, LIST_TYPE_INT64, elevation)
 
     def as_pb2(self):
         return self._example
@@ -371,19 +357,19 @@ class Example:
         )
 
     def get_max_temp(self):
-        return self._get_values(KEY_MAX_TEMP, LIST_TYPE_FLOAT)
+        return self._get_values(constants.KEY_MAX_TEMP, LIST_TYPE_FLOAT)
 
     def get_min_temp(self):
-        return self._get_values(KEY_MIN_TEMP, LIST_TYPE_FLOAT)
+        return self._get_values(constants.KEY_MIN_TEMP, LIST_TYPE_FLOAT)
 
     def set_weather(self, position, avg_temp, max_temp, min_temp, prcp, daylight):
         if daylight == 0:
             raise ValueError("Invalid Daylight value")
-        self._set_value(KEY_AVG_TEMP, LIST_TYPE_FLOAT, avg_temp, position)
-        self._set_value(KEY_MAX_TEMP, LIST_TYPE_FLOAT, max_temp, position)
-        self._set_value(KEY_MIN_TEMP, LIST_TYPE_FLOAT, min_temp, position)
-        self._set_value(KEY_PRCP, LIST_TYPE_FLOAT, prcp, position)
-        self._set_value(KEY_DAYLIGHT, LIST_TYPE_FLOAT, daylight, position)
+        self._set_value(constants.KEY_AVG_TEMP, LIST_TYPE_FLOAT, avg_temp, position)
+        self._set_value(constants.KEY_MAX_TEMP, LIST_TYPE_FLOAT, max_temp, position)
+        self._set_value(constants.KEY_MIN_TEMP, LIST_TYPE_FLOAT, min_temp, position)
+        self._set_value(constants.KEY_PRCP, LIST_TYPE_FLOAT, prcp, position)
+        self._set_value(constants.KEY_DAYLIGHT, LIST_TYPE_FLOAT, daylight, position)
 
 
 
@@ -402,19 +388,22 @@ def ParseExampleFromFirestore(category_id, example_id, o):
     # 20170215: Should already be done.
     # if int(occurrence['FormattedDate']) < 19700101:
     #     continue
+    if 'GeoFeatureSet' not in o:
+        raise ValueError('GeoFeatureSet not in Firestore Dict')
+
     e.set_date(str(o['FormattedDate']))
 
-    e.set_latitude(float(o['GeoPoint']['latitude']))
-    e.set_longitude(float(o['GeoPoint']['longitude']))
+    e.set_latitude(float(o['GeoFeatureSet']['GeoPoint']['latitude']))
+    e.set_longitude(float(o['GeoFeatureSet']['GeoPoint']['longitude']))
 
-    if 'Elevation' not in o:
+    if 'Elevation' not in o['GeoFeatureSet']:
         raise ValueError('Elevation must be set in Firestore Occurrence')
 
-    e.set_elevation(int(o['Elevation']))
+    e.set_elevation(int(o['GeoFeatureSet']['Elevation']))
 
-    e.set_eco_region(int(o["EcoRealm"]), int(o["EcoBiome"]), int(o["EcoNum"]))
+    e.set_eco_region(int(o['GeoFeatureSet']["EcoRealm"]), int(o['GeoFeatureSet']["EcoBiome"]), int(o['GeoFeatureSet']["EcoNum"]))
 
-    e.set_s2_tokens(o['S2Tokens'])
+    e.set_s2_tokens(o['GeoFeatureSet']['S2Tokens'])
 
     return e
 

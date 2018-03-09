@@ -1,7 +1,16 @@
 # from __future__ import absolute_import
 
 import apache_beam as beam
+import constants
 
+
+def parse_pipeline_argument(arg):
+    if type(arg) is tuple:
+        return arg[0]
+    elif hasattr(arg, 'get'):
+        return arg.get()
+    else:
+        return arg
 
 # def encode_as_b64_json(serialized_example):
 #     import base64  # pylint: disable=g-import-not-at-top
@@ -46,6 +55,33 @@ def RemoveOccurrenceExampleLocationDuplicates(pcoll):  # pylint: disable=invalid
            | 'GroupByKey' >> beam.GroupByKey() \
            | 'Combine' >> beam.Map(lambda (key, examples): list(examples)[0])
 
+
+@beam.typehints.with_input_types(beam.typehints.Tuple[str, beam.typehints.Iterable[beam.typehints.Any]])
+@beam.typehints.with_output_types(beam.typehints.Any)
+class Truncate(beam.DoFn):
+    def process(self, kv, occurrence_total=0):
+        count = 0
+        for e in kv[1]:
+            count = count + 1
+            yield e
+            if count > occurrence_total:
+                return
+
+@beam.ptransform_fn
+def Shuffle(pcoll):  # pylint: disable=invalid-name
+    import random
+    return (pcoll
+            | 'PairWithRandom' >> beam.Map(lambda x: (random.random(), x))
+            | 'GroupByRandom' >> beam.GroupByKey()
+            | 'DropRandom' >> beam.FlatMap(lambda (k, vs): vs))
+
+# def partition_fn(user_id, partition_random_seed, percent_eval):
+# I hope taxon_id will provide wide enough variation between results.
+def partition_fn(ex, partition_random_seed, percent_eval):
+    import hashlib
+    m = hashlib.md5(str(ex[constants.KEY_EXAMPLE_ID]) + str(partition_random_seed))
+    hash_value = int(m.hexdigest(), 16) % 100
+    return 0 if hash_value >= percent_eval else 1
 
 # class NoOperation(beam.DoFn):
 #     def __init__(self):

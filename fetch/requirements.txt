@@ -1,8 +1,0 @@
-apache-beam==2.2.0
-google-cloud==0.32.0
-tensorflow
-astral==1.5
-geopy==1.11.0
-numpy==1.14.0
-pandas==0.22.0
-scikit-learn==0.19.1

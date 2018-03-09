@@ -1,7 +1,8 @@
 # from __future__ import absolute_import
 
 import apache_beam as beam
-from .example import Example, Examples, KEY_PRCP, KEY_DAYLIGHT, KEY_DATE, KEY_AVG_TEMP, KEY_MAX_TEMP, KEY_MIN_TEMP
+from example import Example, Examples
+import constants
 from multiprocessing.pool import ThreadPool
 import astral
 import logging
@@ -10,6 +11,7 @@ import datetime
 from pandas import date_range
 from google.cloud import bigquery
 from numpy import array, radians
+from utils import parse_pipeline_argument
 
 MINIMUM_YEAR=1950
 
@@ -53,28 +55,21 @@ class FetchWeatherDoFn(beam.DoFn):
         bounds = examples.bounds()
         bounds.extend_radius(self._max_weather_station_distance)
 
-        if type(self._project) is tuple:
-            project = self._project[0]
-        elif hasattr(self._project, 'get'):
-            project = self._project.get()
-        else:
-            project = self._project
-
         self._weather_store = WeatherStore(
-            project=project,
+            project=parse_pipeline_argument(self._project),
             bounds=bounds,
-            earliest_datetime=examples.earliest_datetime() - datetime.timedelta(days=self._weather_days_before),
+            earliest_datetime=examples.earliest_datetime() - datetime.timedelta(days=self._weather_days_before + 2),
             latest_datetime=examples.latest_datetime()
         )
 
-        for e in examples.as_list():
-            r = self._get_record(e)
-            if r is not None:
-                yield r
+        # for e in examples.as_list():
+        #     r = self._get_record(e)
+        #     if r is not None:
+        #         yield r
 
-        # for e in ThreadPool(20).imap_unordered(self._get_record, examples.as_list()):
-        #     if e is not None:
-        #         yield e
+        for e in ThreadPool(20).imap_unordered(self._get_record, examples.as_list()):
+            if e is not None:
+                yield e
 
     def _get_record(self, example):
 
@@ -82,7 +77,10 @@ class FetchWeatherDoFn(beam.DoFn):
         records = self._weather_store.read(
             example.latitude(),
             example.longitude(),
-            example.datetime(),
+            # Intentionally shift the occurrence date two days into the past when fetching weather.
+            # There is a delay in how often the BigQuery GSOD records are updated, so two days should
+            # cover that amount and ensure consistency.
+            example.datetime() - datetime.timedelta(days=2),
             self._max_weather_station_distance,
             self._weather_days_before
         )
@@ -91,7 +89,14 @@ class FetchWeatherDoFn(beam.DoFn):
             return None
 
         for i, r in enumerate(records):
-            example.set_weather(i, r[KEY_AVG_TEMP], r[KEY_MAX_TEMP], r[KEY_MIN_TEMP], r[KEY_PRCP], r[KEY_DAYLIGHT])
+            example.set_weather(
+                i,
+                r[constants.KEY_AVG_TEMP],
+                r[constants.KEY_MAX_TEMP],
+                r[constants.KEY_MIN_TEMP],
+                r[constants.KEY_PRCP],
+                r[constants.KEY_DAYLIGHT],
+            )
 
         return example
 
@@ -101,7 +106,7 @@ EARTH_RADIUS_KM = 6371.0
 class WeatherStore:
     def __init__(self, project, bounds, earliest_datetime, latest_datetime):
         self._project = project
-        self._dataset = 'bigquery-public-data:noaa_gsod'
+        self._data_set = 'bigquery-public-data:noaa_gsod'
         self._bounds = bounds # swLng, swLat, neLng, neLat
         self._earliest_date = earliest_datetime
         self._latest_date = latest_datetime
@@ -208,11 +213,11 @@ class WeatherStore:
             return
 
         self._weather_values[key][self._index_position_map[date_string]] = {
-            KEY_PRCP: float(row[2]),
-            KEY_MIN_TEMP: float(row[3]),
-            KEY_MAX_TEMP: float(row[4]),
-            KEY_AVG_TEMP: float(row[5]),
-            KEY_DATE: date_string,
+            constants.KEY_PRCP: float(row[2]),
+            constants.KEY_MIN_TEMP: float(row[3]),
+            constants.KEY_MAX_TEMP: float(row[4]),
+            constants.KEY_AVG_TEMP: float(row[5]),
+            constants.KEY_DATE: date_string,
         }
 
     def _daylight(self, lat, lng, date_string):
@@ -289,8 +294,8 @@ class WeatherStore:
             key_lat = float(k.split("|")[0])
             key_lng = float(k.split("|")[1])
             for i in range(start, end):
-                if KEY_DAYLIGHT not in self._weather_values[k][i]:
-                    self._weather_values[k][i][KEY_DAYLIGHT] = self._daylight(key_lat, key_lng, self._weather_values[k][i][KEY_DATE])
+                if constants.KEY_DAYLIGHT not in self._weather_values[k][i]:
+                    self._weather_values[k][i][constants.KEY_DAYLIGHT] = self._daylight(key_lat, key_lng, self._weather_values[k][i][constants.KEY_DATE])
 
             return self._weather_values[k][start:end]
 

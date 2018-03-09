@@ -10,7 +10,7 @@ from functions.weather import FetchWeatherDoFn
 from functions.write import WriteTFRecords
 from functions.example import Example
 
-# If error after upgradeing apache beam: metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases
+# If error after upgrading apache beam: metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases
 # then: pip install six==1.10.0
 
 logging.basicConfig()
@@ -41,7 +41,7 @@ class LocalPipelineOptions(PipelineOptions):
         parser.add_value_provider_argument(
             '--random',
             required=False,
-            default=None,
+            default=False,
             type=bool,
             help='Restrict example fetch to this taxon')
 
