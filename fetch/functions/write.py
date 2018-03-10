@@ -6,94 +6,109 @@ from example import Examples
 from datetime import datetime
 from os import path, makedirs
 import logging
+import random
+import string
+import shutil
+
+class Category:
+    def __init__(self, cat):
+        self._cat = cat
+        if not self.valid():
+            raise ValueError("Invalid Category", cat)
+
+    def file_path(self, ts):
+
+        if self.is_random():
+            if not self.id():
+                return None
+            return "random/%s/%s.tfrecords" % (ts, self.id())
+
+        if self.is_protected_area():
+            if not self.id():
+                return None
+            return "protected_areas/%s/%s.tfrecords" % (self.id(), ts)
+
+        if self.is_occurrence():
+            return "occurrences/%s/%s.tfrecords" % (self._cat, ts)
+
+    def valid(self):
+        if not self._cat or "/" in self._cat or " " in self._cat:
+            return False
+        if (self.is_random() or self.is_protected_area()) and "-" not in self._cat:
+            return False
+        return True
+
+    def is_random(self):
+        return "random" in self._cat.lower()
+
+    def is_protected_area(self):
+        return "protected_area" in self._cat.lower()
+
+    def id(self):
+        if not self.is_random() and not self.is_protected_area():
+            return None
+        return self._cat.split("-")[1]
+
+    def is_occurrence(self):
+        return not self.is_random() and not self.is_occurrence()
 
 
 # @beam.typehints.with_input_types(beam.typehints.KV[str, beam.typehints.List[Example]])
-class WriteTFRecords(beam.DoFn):
-    def __init__(self, project, dir, timestamp=None):
-        super(WriteTFRecords, self).__init__()
-        self._project = project
-        self._directory = dir
-        self._time = timestamp if timestamp is not None else datetime.now().strftime("%s")
+class ExampleRecordWriter(beam.DoFn):
 
-    def _provided_directory(self):
-        dr = self._directory.get() if hasattr(self._directory, 'get') else self._directory
-        if dr is None or dr == "":
-            raise ValueError("Invalid provided write directory:", self._provided_directory())
-        return dr
+    _TEMP_DIR = "/tmp/"
 
-    def _use_cloud_storage(self):
-        return self._provided_directory().startswith("gs://")
+    def __init__(self, project, bucket=None, timestamp=None):
+        super(ExampleRecordWriter, self).__init__()
+        self._project_addr = project
+        self._bucket_addr = bucket
+        self._ts = timestamp if timestamp is not None else datetime.now().strftime("%s")
 
-    def _bucket_name(self):
-        if not self._use_cloud_storage():
-            raise ValueError("Can not parse bucket from invalid CloudStorage Path:", self._provided_directory())
-        return self._provided_directory()[len("gs://"):].split("/")[0]
+        self._local_dir = self._TEMP_DIR + "".join(random.choice(string.ascii_letters + string.digits) for x in range(random.randint(8, 12)))
 
-    def _cloud_storage_path(self, category):
-        if not self._use_cloud_storage():
+    def __del__(self):
+        if not self._local_dir.startswith(self._TEMP_DIR):
+            raise ValueError("Invalid TFRecords Output Path")
+        shutil.rmtree(self._local_dir)
+
+    def _cloud_storage_path(self, cat):
+        if not self._bucket:
             return None
-        return path.join(self._sub_path(category), self._file_name())
+        return path.join(self._bucket, cat.file_path(self._ts))
 
-    def _sub_path(self, category):
+    def _local_path(self, cat):
+        f = path.join(self._local_dir, cat.file_path(self._ts))
+        if not f.startswith(self._TEMP_DIR):
+            return None
+        dir_struct, _ = path.split(f)
+        if not path.exists(dir_struct):
+            makedirs(dir_struct)
+        return f
 
-        category = category.lower()
-
-        if category == "" or "/" in category or " " in category:
-            raise ValueError("Invalid Category")
-
-        if "random" in category:
-            return "random"
-        elif "protectedarea" in category:
-            return "protected_areas/"+category.split("-")[1]
-        else:
-            return "occurrences/%s" % category
-
-    def _local_path(self, category):
-
-        if self._provided_directory().strip("/").strip(" ") == "":
-            raise ValueError("Invalid Directory")
-
-        directory = self._provided_directory()
-        if self._use_cloud_storage():
-            directory = "/tmp/" + self._provided_directory()[len("gs://")-1:]
-
-        directory = path.join(directory, self._sub_path(category))
-
-        if not path.exists(directory):
-            makedirs(directory)
-
-        return path.join(directory, self._file_name())
-
-    def _file_name(self):
-        # return "%s.tfrecord.gz" % self._time
-        return "%s.tfrecords" % self._time
-
-    def _upload(self, category):
-        cloud_path = self._cloud_storage_path(category)
-        if cloud_path is not None:
+    def _upload(self, cat):
+        cloud_path = self._cloud_storage_path(cat)
+        local_path = self._local_path(cat)
+        if cloud_path is not None and local_path is not None:
             try:
-                bucket = storage.Client(project=self._project).bucket(self._bucket_name())
+                bucket = storage.Client(project=self._project).bucket(self._bucket)
             except exceptions.NotFound:
-                logging.error('GCS Bucket [%s] does not exist', self._bucket_name())
+                logging.error('GCS Bucket [%s] does not exist', self._bucket)
                 return
-            record = storage.Blob(cloud_path, bucket)
+
             # There is a problem with gzip, so avoid using it.
             # The go reader requires Content-Encoding: gzip in order to read, however the
             # dataflow reader requires it to be there. So save as unencoded for now, though
             # the file is at least three times larger.
             # record.content_encoding = "gzip"
-            record.upload_from_filename(self._local_path(category))
-
-    def _write(self, category, examples):
-        fpath = self._local_path(category)
-        examples.write(fpath)
-        return fpath
+            storage.Blob(cloud_path, bucket).upload_from_filename(local_path)
 
     def process(self, (category, iter)):
+        self._project = self._project_addr.get() if hasattr(self._project_addr, 'get') else self._project_addr
+        self._bucket = self._bucket_addr.get() if hasattr(self._bucket_addr, 'get') else self._bucket_addr
         examples = Examples(list(iter))
-        _ = self._write(category, examples)
-        self._upload(category)
+        cat = Category(category)
+        examples.write(self._local_path(cat))
+        self._upload(cat)
 
 
 def fetch_latest(project, bucket_name, parent_path):

@@ -14,6 +14,7 @@ from tensorflow_transform.beam import impl as tft
 # then: pip install six==1.10.0
 from tensorflow_transform.beam import tft_beam_io
 from functions import transform, utils
+from functions.transform import TransformingData
 from math import ceil
 
 def _default_project():
@@ -104,6 +105,8 @@ def filterRandomToMatchOccurrenceCount(random_example, occurrence_count):
 
 def main(argv=None):
 
+
+
     RAW_METADATA_DIR = 'raw_metadata'
     TRANSFORMED_TRAIN_DATA_FILE_PREFIX = 'train'
     TRANSFORMED_EVAL_DATA_FILE_PREFIX = 'eval'
@@ -144,16 +147,13 @@ def main(argv=None):
 
             # records = records | 'RecordsDataset' >> beam.ParDo(occurrences.Counter("main"))
 
-            # preprocessing_fn = functions.make_preprocessing_fn(transformer_pipeline_options.num_classes)
-            preprocessing_fn = transform.make_preprocessing_fn()
-
             _ = raw_metadata \
                 | 'WriteInputMetadata' >> tft_beam_io.WriteMetadata(
                 path=os.path.join(local_options.output_location, RAW_METADATA_DIR),
                 pipeline=pipeline)
 
             (transformed_dataset, transformed_metadata), transform_fn = (
-                (records, raw_metadata) | tft.AnalyzeAndTransformDataset(preprocessing_fn))
+                (records, raw_metadata) | tft.AnalyzeAndTransformDataset(TransformingData.make_preprocessing_fn()))
 
             # _ = transformed_dataset \
             #     | 'ProjectLabels' >> beam.Map(lambda e: e["taxon"]) \

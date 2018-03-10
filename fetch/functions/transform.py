@@ -1,71 +1,139 @@
-import tensorflow as tf
 from tensorflow_transform.tf_metadata import dataset_schema, dataset_metadata
-from tensorflow import FixedLenFeature, float32, int64, string
-from tensorflow.contrib.learn import ModeKeys
-import os
+import tensorflow as tf
+from os.path import isdir, join, split
+from os import makedirs
 import tensorflow_transform as tft
 from tensorflow_transform.tf_metadata import metadata_io
-from tensorflow_transform.saved import input_fn_maker
-from tensorflow import estimator
+from tensorflow_transform.saved import input_fn_maker, saved_transform_io
+from tensorflow.contrib.learn.python.learn.utils import input_fn_utils
 import constants
 from math import ceil
-from tfrecords import TFRecordParser
+from tfrecords import OccurrenceTFRecords
 import functools
 import shutil
+import six
+import apache_beam as beam
+from google.cloud import storage
 
-def make_preprocessing_fn():
+TRANSFORMED_RAW_METADATA_PATH = "raw_metadata"
+TRANSFORMED_METADATA_PATH = "transformed_metadata"
+TRANSFORM_FN_PATH = "transform_fn"
 
-    def preprocessing_fn(i):
+class TransformerFileFetcher(beam.DoFn):
+    def __init__(self, project, bucket):
+        super(TransformerFileFetcher, self).__init__()
+        self._project = project
+        self._bucket = bucket
 
-        r = {}
+    def process(self, i):
 
-        # Identifiable
-        r[constants.KEY_CATEGORY] = tft.string_to_int(i[constants.KEY_CATEGORY])
-        # Hopefully this will bucket Random and NameUsage without the necessity for boolean conversion.
+        client = storage.client.Client(project=self._project)
+        bucket = client.get_bucket(self._bucket)
 
-        # Categorical
-        r[constants.KEY_S2_TOKENS] = tft.string_to_int(i[constants.KEY_S2_TOKENS], default_value=0)
-        r[constants.KEY_ECO_BIOME] = tft.string_to_int(i[constants.KEY_ECO_BIOME], default_value=0)
-        r[constants.KEY_ECO_NUM] = tft.string_to_int(i[constants.KEY_ECO_NUM], default_value=0)
+        files = {}
+        for b in bucket.list_blobs(prefix="occurrences", fields="items/name"):
+            p, n = split(b.name)
+            if not p or not n or p == "/" or n == "/":
+                continue
+            if p in files:
+                files[p] = n if n > files[p] else files[p]
+            else:
+                files[p] = n
 
-        # Ordinal
-        r[constants.KEY_ELEVATION] = tft.scale_to_0_1(i[constants.KEY_ELEVATION])
-        r[constants.KEY_MIN_TEMP] = tft.scale_to_0_1(i[constants.KEY_MIN_TEMP])
-        r[constants.KEY_MAX_TEMP] = tft.scale_to_0_1(i[constants.KEY_MAX_TEMP])
-        r[constants.KEY_DAYLIGHT] = tft.scale_to_0_1(i[constants.KEY_DAYLIGHT])
-        r[constants.KEY_PRCP] = tft.scale_to_0_1(i[constants.KEY_PRCP])
+        for b in bucket.list_blobs(prefix="protected_areas", fields="items/name"):
+            p, n = split(b.name)
+            if not p or not n or p == "/" or n == "/":
+                continue
+            if p in files:
+                files[p] = n if n > files[p] else files[p]
+            else:
+                files[p] = n
 
-        return r
+        for i in files:
+            yield join(i, files[i])
 
-    return preprocessing_fn
+        random_paths = []
+        randoms = {}
+        for b in bucket.list_blobs(prefix="random", fields="items/name"):
+            p, n = split(b.name)
+            if not p or not n or p == "/" or n == "/":
+                continue
+            if p in random_paths:
+                randoms[p].append(n)
+            else:
+                random_paths.append(p)
+                randoms[p] = [n]
+
+        random_paths = sorted(random_paths, reverse=True)
+        if len(random_paths) == 0:
+            return
+
+        for f in randoms[random_paths[0]]:
+            yield join(random_paths[0], f)
 
 
-def create_raw_metadata(mode):
+class TransformingData:
 
-    """Input schema definition.
-    Args:
-      mode: tf.contrib.learn.ModeKeys specifying if the schema is being used for
-        train/eval or prediction.
-    Returns:
-      A `Schema` object.
-    """
-    result = ({} if mode == ModeKeys.INFER else {
-        constants.KEY_CATEGORY: FixedLenFeature(shape=[], dtype=string), # Equivalent of KEY_TAXON
-        # constants.KEY_EXAMPLE_ID: FixedLenFeature(shape=[], dtype=string),
-    })
-    result.update({
-        constants.KEY_S2_TOKENS: FixedLenFeature(shape=[8], dtype=string),
-        constants.KEY_ECO_BIOME: FixedLenFeature(shape=[], dtype=string),
-        constants.KEY_ECO_NUM: FixedLenFeature(shape=[], dtype=string),
-        constants.KEY_ELEVATION: FixedLenFeature(shape=[], dtype=int64),
-        constants.KEY_MAX_TEMP: FixedLenFeature(shape=[90], dtype=float32),
-        constants.KEY_MIN_TEMP: FixedLenFeature(shape=[90], dtype=float32),
-        constants.KEY_AVG_TEMP: FixedLenFeature(shape=[90], dtype=float32),
-        constants.KEY_PRCP: FixedLenFeature(shape=[90], dtype=float32),
-        constants.KEY_DAYLIGHT: FixedLenFeature(shape=[90], dtype=float32),
-    })
+    def __init__(self, output_path):
+        self.raw_metadata_path = join(output_path, TRANSFORMED_RAW_METADATA_PATH)
+        self.transformed_metadata_path = join(output_path, TRANSFORMED_METADATA_PATH)
+        self.transform_fn_path = join(output_path, TRANSFORM_FN_PATH)
 
-    return dataset_metadata.DatasetMetadata(schema=dataset_schema.from_feature_spec(result))
+    @staticmethod
+    def make_preprocessing_fn():
+
+        def preprocessing_fn(i):
+
+            r = {}
+
+            # Identifiable
+            # r[constants.KEY_CATEGORY] = tft.string_to_int(i[constants.KEY_CATEGORY])
+            r[constants.KEY_CATEGORY] = i[constants.KEY_CATEGORY]
+            # Hopefully this will bucket Random and NameUsage without the necessity for boolean conversion.
+
+            # Categorical
+            r[constants.KEY_S2_TOKENS] = tft.string_to_int(i[constants.KEY_S2_TOKENS], default_value=0)
+            r[constants.KEY_ECO_BIOME] = tft.string_to_int(i[constants.KEY_ECO_BIOME], default_value=0)
+            r[constants.KEY_ECO_NUM] = tft.string_to_int(i[constants.KEY_ECO_NUM], default_value=0)
+
+            # Ordinal
+            r[constants.KEY_ELEVATION] = tft.scale_to_0_1(i[constants.KEY_ELEVATION])
+            r[constants.KEY_MIN_TEMP] = tft.scale_to_0_1(i[constants.KEY_MIN_TEMP])
+            r[constants.KEY_MAX_TEMP] = tft.scale_to_0_1(i[constants.KEY_MAX_TEMP])
+            r[constants.KEY_DAYLIGHT] = tft.scale_to_0_1(i[constants.KEY_DAYLIGHT])
+            r[constants.KEY_PRCP] = tft.scale_to_0_1(i[constants.KEY_PRCP])
+
+            return r
+
+        return preprocessing_fn
+
+    @staticmethod
+    def create_raw_metadata(mode):
+
+        """Input schema definition.
+        Args:
+          mode: tf.contrib.learn.ModeKeys specifying if the schema is being used for
+            train/eval or prediction.
+        Returns:
+          A `Schema` object.
+        """
+        result = ({} if mode == tf.estimator.ModeKeys.PREDICT else {
+            constants.KEY_CATEGORY: tf.FixedLenFeature(shape=[], dtype=tf.string), # Equivalent of KEY_TAXON
+            # constants.KEY_EXAMPLE_ID: FixedLenFeature(shape=[], dtype=string),
+        })
+        result.update({
+            constants.KEY_S2_TOKENS: tf.FixedLenFeature(shape=[8], dtype=tf.string),
+            constants.KEY_ECO_BIOME: tf.FixedLenFeature(shape=[], dtype=tf.string),
+            constants.KEY_ECO_NUM: tf.FixedLenFeature(shape=[], dtype=tf.string),
+            constants.KEY_ELEVATION: tf.FixedLenFeature(shape=[], dtype=tf.int64),
+            constants.KEY_MAX_TEMP: tf.FixedLenFeature(shape=[90], dtype=tf.float32),
+            constants.KEY_MIN_TEMP: tf.FixedLenFeature(shape=[90], dtype=tf.float32),
+            constants.KEY_AVG_TEMP: tf.FixedLenFeature(shape=[90], dtype=tf.float32),
+            constants.KEY_PRCP: tf.FixedLenFeature(shape=[90], dtype=tf.float32),
+            constants.KEY_DAYLIGHT: tf.FixedLenFeature(shape=[90], dtype=tf.float32),
+        })
+
+        return dataset_metadata.DatasetMetadata(schema=dataset_schema.from_feature_spec(result))
 
 
     # features['elevation'].set_shape((1,))
@@ -85,39 +153,37 @@ def create_raw_metadata(mode):
 
 class TrainingData:
 
-    def __init__(self, train_data_path, model_path, train_batch_size, train_epochs):
+    def __init__(self, transform_data_path, model_path, train_batch_size, train_epochs):
 
         self._train_batch_size = train_batch_size
         self._train_epochs = train_epochs
 
-        if train_data_path == "":
+        if transform_data_path == "":
             raise ValueError("A path with transformed training data is required")
 
         if not model_path.startswith("/tmp"):
             raise ValueError("Invalid model directory path")
 
         self._model_path = model_path
-        if os.path.isdir(self._model_path):
+        if isdir(self._model_path):
             # Clean up existing model dir.
             shutil.rmtree(self._model_path)
 
-        os.makedirs(self._model_path)
+        makedirs(self._model_path)
 
-        self._example_path = os.path.join(train_data_path, "examples")
-        self._raw_metadata_path = os.path.join(train_data_path, "raw_metadata")
-        self._transformed_metadata_path = os.path.join(train_data_path, "transformed_metadata")
-        self._transform_fn_path = os.path.join(train_data_path, "transform_fn")
+        self._raw_metadata_path = join(transform_data_path, TRANSFORMED_RAW_METADATA_PATH)
+        self._transformed_metadata_path = join(transform_data_path, TRANSFORMED_METADATA_PATH)
+        self._transform_fn_path = join(transform_data_path, TRANSFORM_FN_PATH)
 
         for dir in [
-            self._example_path,
             self._raw_metadata_path,
             self._transformed_metadata_path,
             self._transform_fn_path,
         ]:
-            if not os.path.isdir(dir):
+            if not isdir(dir):
                 raise ValueError("Directory doesn't exist: ", dir)
 
-        self._tfrecord_parser = TFRecordParser(self._example_path+"/*.gz")
+        self._tfrecord_parser = OccurrenceTFRecords(self._example_path + "/*.gz")
 
     def _feature_columns(self):
         meta_data = metadata_io.read_metadata(self._transformed_metadata_path)
@@ -223,16 +289,19 @@ class TrainingData:
 
         return eval_fn, train_fn
 
+    def _raw_metadata(self):
+        return metadata_io.read_metadata(self._raw_metadata_path)
+
+    def _transformed_metadata(self):
+        return metadata_io.read_metadata(self._transformed_metadata_path)
+
     def _transformed_input_fn(self, raw_data_file_pattern, mode, batch_size, epochs):
 
-        raw_metadata = metadata_io.read_metadata(self._raw_metadata_path)
-        transformed_metadata=metadata_io.read_metadata(self._transformed_metadata_path)
-
-        labels = ([constants.KEY_EXAMPLE_ID] if mode == estimator.ModeKeys.PREDICT else [constants.KEY_CATEGORY])
+        labels = ([constants.KEY_EXAMPLE_ID] if mode == tf.estimator.ModeKeys.PREDICT else [constants.KEY_CATEGORY])
 
         fn = input_fn_maker.build_transforming_training_input_fn(
-            raw_metadata=raw_metadata,
-            transformed_metadata=transformed_metadata,
+            raw_metadata=self._raw_metadata(),
+            transformed_metadata=self._transformed_metadata(),
             transform_savedmodel_dir=self._transform_fn_path,
             raw_data_file_pattern=raw_data_file_pattern,
             training_batch_size=batch_size,
@@ -245,27 +314,80 @@ class TrainingData:
             reader=self._gzip_reader_fn,
             # num_epochs=(1 if mode != estimator.ModeKeys.TRAIN else None),
             num_epochs=epochs,
-            randomize_input=(mode == estimator.ModeKeys.TRAIN),
+            randomize_input=True,
+            # randomize_input=(mode == estimator.ModeKeys.TRAIN),
             queue_capacity=batch_size * 20,
         )
 
         features, labels = fn()
         labels = tf.reshape(labels, [-1])
+        labels = tf.not_equal(labels, "random")
 
-        if mode == estimator.ModeKeys.EVAL:
-            labels = tf.Print(labels, [labels])
+        # if mode == tf.estimator.ModeKeys.EVAL:
+        #     labels = tf.Print(labels, [labels])
 
-        for label in self._weather_keys():
-            features[label] = tf.map_fn(self._reshape_weather, features[label])
+        for weather_key in self._weather_keys():
+            features[weather_key] = tf.map_fn(self._reshape_weather, features[weather_key])
 
-        if mode == estimator.ModeKeys.PREDICT:
+        if mode == tf.estimator.ModeKeys.PREDICT:
             # features[constants.KEY_OCCURRENCE_ID] = labels
             return features
         else:
-            # TODO: This is obviously a problem because we don't know if 0 is occurrence or random
-            # return features, tf.not_equal(labels, "0")
-
             return features, labels
+
+    def _convert_scalars_to_vectors(self, features):
+        """Vectorize scalar columns to meet FeatureColumns input requirements."""
+        def maybe_expand_dims(tensor):
+            # Ignore the SparseTensor case.  In principle it's possible to have a
+            # rank-1 SparseTensor that needs to be expanded, but this is very
+            # unlikely.
+            if isinstance(tensor, tf.Tensor) and tensor.get_shape().ndims == 1:
+                tensor = tf.expand_dims(tensor, -1)
+            return tensor
+
+        return {name: maybe_expand_dims(tensor)
+        for name, tensor in six.iteritems(features)}
+
+    def _serving_input_receiver_fn(self):
+
+        raw_feature_spec = self._raw_metadata().schema.as_feature_spec()
+
+        # Exclude label keys and other unnecessary features.
+        # This is typically used to specify the raw labels and weights,
+        # so that transformations involving these do not pollute the serving graph.
+        all_raw_feature_keys = six.iterkeys(self._raw_metadata().schema.column_schemas)
+        raw_feature_keys = list(set(all_raw_feature_keys) - set(constants.KEY_CATEGORY))
+
+        raw_serving_feature_spec = {key: raw_feature_spec[key]
+                                    for key in raw_feature_keys}
+
+        def parsing_transforming_serving_input_receiver_fn():
+            """Serving input_fn that applies transforms to raw data in tf.Examples."""
+            raw_input_fn = input_fn_utils.build_parsing_serving_input_fn(
+                raw_serving_feature_spec, default_batch_size=None)
+            raw_features, _, inputs = raw_input_fn()
+            _, transformed_features = (
+                saved_transform_io.partially_apply_saved_transform(
+                    self._transform_fn_path, raw_features))
+
+            # Convert scalars to vectors
+            transformed_features = self._convert_scalars_to_vectors(transformed_features)
+
+            for key in self._weather_keys():
+                transformed_features[key] = tf.map_fn(self._reshape_weather, transformed_features[key])
+
+            return tf.estimator.export.ServingInputReceiver(
+                transformed_features, inputs)
+
+        return parsing_transforming_serving_input_receiver_fn
+
+    def export_model(self):
+        model = self.get_estimator()
+        export_dir = "/tmp/"
+        model.export_savedmodel(
+            export_dir_base=join(self._model_path, "exports/"),
+            serving_input_receiver_fn=self._serving_input_receiver_fn()
+        )
 
 
     def get_estimator(self):

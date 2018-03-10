@@ -160,7 +160,7 @@ def main(argv=None):
         for file in files:
 
             if "taxon-amended" not in file:
-                # This is a hack to avoid spending more time on tranformer
+                # This is a hack to avoid spending more time on transformer
                 file = ensure_taxon(protected_area_path, file)
 
             for p in estimator.predict(input_fn=functools.partial(train_shared_model.transformed_input_fn,

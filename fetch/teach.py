@@ -43,7 +43,7 @@ parser.add_argument(
 def main(argv):
 
     training_data = transform.TrainingData(
-        train_data_path=FLAGS.train_data_path,
+        transform_data_path=FLAGS.train_data_path,
         model_path=FLAGS.model_dir,
         train_batch_size=FLAGS.batch_size,
         train_epochs=FLAGS.epochs_per_eval,
@@ -65,6 +65,7 @@ def main(argv):
         print('-' * 60)
         for key in sorted(res):
             print('%s: %s' % (key, res[key]))
+
 
 
 if __name__ == '__main__':

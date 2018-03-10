@@ -8,22 +8,84 @@ TFRecordCompressionType = tf_record.TFRecordCompressionType
 from glob import iglob
 import os
 import errno
+from google.cloud import storage
+import shutil
 
-TEMP_DIRECTORY = "/tmp/floracast-model-training/"
+TEMP_DIRECTORY = "/tmp/"
 
-class TFRecordParser:
+class OccurrenceTFRecords:
 
     _total_count = 0
     _occurrence_count = 0
 
-    def __init__(self, tfrecords_path):
-        self._filepath = tfrecords_path
-        self._total_count, self._occurrence_count = self.count(tfrecords_path)
+    def __init__(self, name_usage, project, gcs_bucket):
+
         self._output_path = TEMP_DIRECTORY + "".join(choice(ascii_letters + digits) for x in range(randint(8, 12)))
-        self._eval_output = self._output_path + "/eval.tfrecords.gz"
-        self._train_output = self._output_path + "/train.tfrecords.gz"
-        if self._total_count == 0:
-            raise ValueError("No TFRecords counted")
+        self._occurrence_path = os.path.join(self._output_path, "occurrences/")
+        self._occurrence_file = os.path.join(self._occurrence_path, "occurrences.tfrecords")
+
+        self._eval_output = os.path.join(self._output_path, "eval.tfrecords.gz")
+        self._train_output = os.path.join(self._output_path, "train.tfrecords.gz")
+
+        if not self._output_path.startswith(TEMP_DIRECTORY):
+            raise ValueError("Invalid TFRecords Output Path")
+        try:
+            os.makedirs(self._output_path)
+        except OSError as exc:
+            if exc.errno != errno.EEXIST:
+                raise
+            pass
+
+        client = storage.client.Client(project=project)
+        self._gcs_bucket = client.get_bucket(gcs_bucket)
+        self._fetch_occurrences(name_usage)
+        self._fetch_random()
+
+    def __del__(self):
+        # cleanup local occurrence data.
+        if not self._output_path.startswith(TEMP_DIRECTORY):
+            raise ValueError("Invalid TFRecords Output Path")
+        shutil.rmtree(self._output_path)
+
+    def _latest_occurrence_gcs_file_path(self, name_usage):
+        file_names = [] # Should be a list of [timestamp].tfrecords
+        for blob in self._gcs_bucket.list_blobs(prefix="occurrences/"+name_usage):
+            file_name = blob.name
+            file_names.append(file_name.split("/")[len(file_name)-1])
+        if len(file_names) == 0:
+            raise ValueError("Occurrence file not found for NameUsage", name_usage)
+        return "occurrences/%s/%s" % (name_usage, file_names.sort(reverse=True)[0])
+
+    def _fetch_occurrences(self, name_usage):
+        if len(name_usage) == 0:
+            raise ValueError("Invalid NameUsage")
+        latest_occurrence_file = self._latest_occurrence_gcs_file_path(name_usage)
+        self._gcs_bucket.get_blob(latest_occurrence_file).download_to_filename(self._occurrence_file)
+        self._occurrence_count = OccurrenceTFRecords.count(self._occurrence_file)
+
+    def _latest_random_path(self):
+        dates = set() # Should be a list of [timestamp].tfrecords
+        for blob in self._gcs_bucket.list_blobs(prefix="random/"):
+            file_name = blob.name
+            dates.add(file_name.split("/")[1])
+        if len(dates) == 0:
+            raise ValueError("Random path not found")
+        return "random/%s" % (list(dates).sort(reverse=True)[0])
+
+    def _fetch_random(self):
+
+        gcs_random_path = self._latest_random_path()
+
+        self._random_count = 0
+        i = 0
+        while self._random_count < self._occurrence_count:
+            i += 1
+            filename = ("%d.tfrecords" % i)
+            local_file = os.path.join(self._occurrence_path, filename)
+            self._gcs_bucket.get_blob(gcs_random_path + "/" + filename).download_to_filename(local_file)
+            self._random_count += OccurrenceTFRecords.count(local_file)
+
+        self._total_count = self._occurrence_count + self._random_count
 
     @staticmethod
     def is_occurrence(s):
@@ -32,16 +94,16 @@ class TFRecordParser:
         return e.category().lower() != "random"
 
     @staticmethod
-    def count(filepath):
-        options = tf_record.TFRecordOptions(TFRecordCompressionType.GZIP)
+    def count(filepath, compression_type=TFRecordCompressionType.NONE):
+        options = tf_record.TFRecordOptions(compression_type)
         total = 0
-        occurrences = 0
+        # occurrences = 0
         for _name in iglob(filepath):
             for e in tf.python_io.tf_record_iterator(_name, options=options):
                 total += 1
-                if TFRecordParser.is_occurrence(e):
-                    occurrences += 1
-        return total, occurrences
+                # if OccurrenceTFRecords.is_occurrence(e):
+                #     occurrences += 1
+        return total
 
     def _eval_count(self, percentage_split):
         return int(ceil(self._total_count * percentage_split))
@@ -54,15 +116,6 @@ class TFRecordParser:
         return random_points
 
     def _prepare_eval_train_files(self):
-
-        if not self._output_path.startswith(TEMP_DIRECTORY):
-            raise ValueError("Invalid TFRecords Output Path")
-        try:
-            os.makedirs(self._output_path)
-        except OSError as exc:
-            if exc.errno != errno.EEXIST:
-                raise
-            pass
 
         if not self._eval_output.startswith(TEMP_DIRECTORY) or not self._eval_output.startswith(TEMP_DIRECTORY):
             raise ValueError("Invalid Eval/Train Output")
@@ -82,12 +135,12 @@ class TFRecordParser:
 
         self._prepare_eval_train_files()
 
-        options = tf_record.TFRecordOptions(TFRecordCompressionType.GZIP)
+        options = tf_record.TFRecordOptions(TFRecordCompressionType.NONE)
         eval_writer = tf.python_io.TFRecordWriter(self._eval_output, options=options)
         train_writer = tf.python_io.TFRecordWriter(self._train_output, options=options)
 
         i = 0
-        for _name in iglob(self._filepath):
+        for _name in iglob(self._occurrence_path + "/*.tfrecords"):
             for e in tf.python_io.tf_record_iterator(_name, options=options):
                 if i in random_points:
                     eval_writer.write(e)

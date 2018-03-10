@@ -7,7 +7,6 @@ from geospatial import GeospatialBounds
 import tensorflow as tf
 import constants
 
-
 class ExampleCoder(beam.coders.Coder):
 
     def __init__(self):
@@ -26,7 +25,6 @@ class ExampleCoder(beam.coders.Coder):
 LIST_TYPE_INT64 = 'int64'
 LIST_TYPE_FLOAT = 'float'
 LIST_TYPE_BYTES = 'bytes'
-
 
 class Season:
 
@@ -85,6 +83,8 @@ class Examples:
         return len(self._list)
 
     def write(self, filepath):
+        if not filepath:
+            raise ValueError("Valid file path required to write TFRecords")
         options = tf.python_io.TFRecordOptions(
             compression_type=tf.python_io.TFRecordCompressionType.NONE
         )
@@ -213,6 +213,20 @@ class Example:
         if c is None or c == "":
             raise ValueError('Invalid example category')
         return c
+
+    def pipeline_category(self):
+        if not self.random_batch_id() == 0:
+            return "random-%d" % self.random_batch_id()
+        else:
+            return self.category()
+
+    def random_batch_id(self):
+        if not "random" in self.category().lower():
+            return 0
+        id = self.example_id().split("-")[1]
+        if id == "" or id == "0":
+            raise ValueError("Invalid Random Batch ID")
+        return int(id)
 
     def set_category(self, category):
         if category == "":

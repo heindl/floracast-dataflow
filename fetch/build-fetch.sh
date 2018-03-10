@@ -14,14 +14,16 @@ AREA_DATES=$(./area_dates.sh "20180201")
 
 python -m fetch \
          --runner DataflowRunner \
-         --data_location "gs://floracast-datamining/" \
+         --bucket "floracast-datamining" \
          --temp_location="gs://floracast-datamining/temp" \
          --staging_location="gs://floracast-datamining/staging" \
          --job_name "floracast-fetch-$TIME" \
-         --nameusages "9sYKdRe6OUgzTwabsjjuFiwVU" \
+         --random True \
          --setup_file /Users/m/Desktop/floracast/dataflow/fetch/setup.py
 #         --requirements_file /Users/m/Desktop/floracast/dataflow/fetch/requirements.txt
 #
 #
 #--protected_areas "$AREA_DATES" \
-#--random True \
+
+
+#         --nameusages "9sYKdRe6OUgzTwabsjjuFiwVU" \

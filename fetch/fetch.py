@@ -7,8 +7,9 @@ import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions, StandardOptions, SetupOptions
 from functions.fetch import FetchRandom, FetchNameUsages, FetchOccurrences, FetchProtectedAreas
 from functions.weather import FetchWeatherDoFn
-from functions.write import WriteTFRecords
+from functions.write import ExampleRecordWriter
 from functions.example import Example
+from datetime import datetime
 
 # If error after upgrading apache beam: metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases
 # then: pip install six==1.10.0
@@ -26,13 +27,13 @@ class LocalPipelineOptions(PipelineOptions):
         # Intermediate TFRecords are stored in their own directory, each with a corresponding metadata file.
         # The metadata lists how many records, how many of each taxon label.
         parser.add_value_provider_argument(
-            '--data_location',
-            required=False,
-            help='The intermediate TFRecords file that contains downloaded features from BigQuery'
+            '--bucket',
+            required=True,
+            help='The GCS bucket to store TFRecord files'
         )
 
         parser.add_value_provider_argument(
-            '--nameusages',
+            '--name_usages',
             required=False,
             default=None,
             type=str,
@@ -103,7 +104,7 @@ def run(argv=None):
                           | 'FetchNameUsages' >> beam.ParDo(
                                 FetchNameUsages(
                                     project=cloud_options.project,
-                                    nameusages=local_pipeline_options.nameusages
+                                    nameusages=local_pipeline_options.name_usages
                                 )
                             ) \
                           | 'FetchOccurrences' >> beam.ParDo(
@@ -121,13 +122,14 @@ def run(argv=None):
                         FetchWeatherDoFn(project=cloud_options.project)
                       ) \
                    | 'ProjectCategoryKV' >> beam.Map(
-                        lambda e: (e.category(), e)
+                        lambda e: (e.pipeline_category(), e)
                     ).with_input_types(Example).with_output_types(beam.typehints.KV[str, Example]) \
                    | 'GroupByCategory' >> beam.GroupByKey().with_input_types(beam.typehints.KV[str, Example]).with_output_types(beam.typehints.KV[str, beam.typehints.Iterable[Example]]) \
                    | 'WriteRecords' >> beam.ParDo(
-                        WriteTFRecords(
+                        ExampleRecordWriter(
                             project=cloud_options.project,
-                            dir=local_pipeline_options.data_location
+                            bucket=local_pipeline_options.bucket,
+                            timestamp=datetime.now().strftime("%s"),
                         )
                     )
 

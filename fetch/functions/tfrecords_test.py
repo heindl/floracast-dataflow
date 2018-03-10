@@ -1,5 +1,5 @@
 import unittest
-from tfrecords import TFRecordParser
+from tfrecords import OccurrenceTFRecords
 
 
 class TFRecordsTestCase(unittest.TestCase):
@@ -9,7 +9,7 @@ class TFRecordsTestCase(unittest.TestCase):
 
         example_file = "/tmp/floracast-datamining/transformed/aho2iyxvo37rjezikho6xbwmq/1520463606/examples/*.gz"
 
-        parser = TFRecordParser(example_file)
+        parser = OccurrenceTFRecords(example_file)
         self.assertEqual(parser._total_count, 434)
         self.assertEqual(parser._occurrence_count, 192)
         self.assertEqual(parser._eval_count(0.05), 22)

@@ -114,7 +114,7 @@ class FetchRandom(beam.DoFn):
 
         for o in col.get():
             try:
-                e = ParseExampleFromFirestore("Random", o.id, o.to_dict())
+                e = ParseExampleFromFirestore("random", o.id, o.to_dict())
             except ValueError as error:
                 logging.error('Random Occurrence [%s] could not be parsed into Example: %s', o.id, error)
                 continue
