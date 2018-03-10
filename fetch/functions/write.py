@@ -69,12 +69,13 @@ class ExampleRecordWriter(beam.DoFn):
     def __del__(self):
         if not self._local_dir.startswith(self._TEMP_DIR):
             raise ValueError("Invalid TFRecords Output Path")
-        shutil.rmtree(self._local_dir)
+        if path.isdir(self._local_dir):
+            shutil.rmtree(self._local_dir)
 
     def _cloud_storage_path(self, cat):
         if not self._bucket:
             return None
-        return path.join(self._bucket, cat.file_path(self._ts))
+        return cat.file_path(self._ts)
 
     def _local_path(self, cat):
         f = path.join(self._local_dir, cat.file_path(self._ts))

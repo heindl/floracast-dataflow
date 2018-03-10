@@ -38,6 +38,7 @@ if __name__ == '__main__':
             "apache-beam==2.3.0",
             "google-cloud==0.32.0",
             "tensorflow==1.6.0",
+            "tensorflow-transform==0.5.0",
             "astral==1.6",
             "geopy==1.11.0",
             "numpy==1.14.1",

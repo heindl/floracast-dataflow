@@ -19,7 +19,7 @@ DATE=$(date '+%s')
 #gsutil rsync -d -r "gs://$RANDOM_PATH" "/tmp/$RANDOM_PATH"
 
 #TRANSFORMED_PATH="/tmp/floracast-datamining/transformed/$TAXON/$DATE"
-TRANSFORMED_PATH="/tmp/floracast-datamining/transformed/aho2iyxvo37rjezikho6xbwmq/$DATE"
+#TRANSFORMED_PATH="/tmp/floracast-datamining/transformed/aho2iyxvo37rjezikho6xbwmq/$DATE"
 
 #rm -rf "$TRANSFORMED_PATH"
 #mkdir -p
@@ -33,12 +33,8 @@ TRANSFORMED_PATH="/tmp/floracast-datamining/transformed/aho2iyxvo37rjezikho6xbwm
 
 python ./transform.py \
     --runner=DirectRunner \
-    --job_name="tensorflow-transform-aho2iyxvo37rjezikho6xbwmq-$DATE" \
-    --occurrence_file="gs://floracast-datamining/occurrences/9sykdre6ougztwabsjjufiwvu/1520457865.tfrecords" \
+    --job_name="tensorflow-transform-$DATE" \
+    --bucket="floracast-datamining" \
     --temp_location="/tmp/floracast-datamining/temp" \
-    --random_file="gs://floracast-datamining/random/1520448273.tfrecords" \
-    --output_location="$TRANSFORMED_PATH" \
-    --mode "train" \
-    --percent_eval 10 \
-    --setup_file /Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/fetch/setup.py
+    --setup_file /Users/m/Desktop/floracast/dataflow/fetch/setup.py
 #    --workerLogLevelOverrides=com.google.cloud.dataflow#DEBUG

@@ -1,5 +1,5 @@
 import unittest
-from transform import TransformerFileFetcher
+from transform import FetchExampleFiles
 
 
 class ExampleFetchTestCase(unittest.TestCase):
@@ -9,7 +9,7 @@ class ExampleFetchTestCase(unittest.TestCase):
     def test_transform_file_fetcher(self):
         """Are random points correctly fetched?"""
 
-        fetcher = TransformerFileFetcher(project=self._PROJECT, bucket="floracast-datamining")
+        fetcher = FetchExampleFiles(project=self._PROJECT, bucket="floracast-datamining")
 
         for p in fetcher.process(0):
             print(p)

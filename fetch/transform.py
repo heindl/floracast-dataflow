@@ -2,20 +2,16 @@
 from __future__ import division
 
 import logging
-import os
 from tensorflow.contrib.learn import ModeKeys
 import apache_beam as beam
-from apache_beam import pvalue
 from apache_beam.io.filesystem import CompressionTypes
 from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions, StandardOptions, SetupOptions
-from tensorflow_transform import coders
 from tensorflow_transform.beam import impl as tft
 # If error after upgradeing apache beam: metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases
 # then: pip install six==1.10.0
 from tensorflow_transform.beam import tft_beam_io
-from functions import transform, utils
-from functions.transform import TransformingData
-from math import ceil
+from functions.transform import TransformData, FetchExampleFiles
+from apache_beam.io.tfrecordio import _TFRecordSource, _TFRecordUtil
 
 def _default_project():
     import os
@@ -31,45 +27,37 @@ class LocalPipelineOptions(PipelineOptions):
     @classmethod
     def _add_argparse_args(cls, parser):
 
-        #### FETCH ####
-
         # Intermediate TFRecords are stored in their own directory, each with a corresponding metadata file.
         # The metadata lists how many records, how many of each taxon label.
-        parser.add_argument(
-            '--output_location',
-            required=True,
-            type=str,
-            help='The location to write transformed tfrecords'
-        )
+
+        # parser.add_argument(
+        #     '--output_location',
+        #     required=True,
+        #     type=str,
+        #     help='The location to write transformed tfrecords'
+        # )
+        #
+        # parser.add_argument(
+        #     '--bucket',
+        #     required=False,
+        #     type=str,
+        #     help='The GCS Bucket.'
+        # )
 
         parser.add_argument(
-            '--occurrence_file',
-            required=True,
-            type=str,
-            help='The GCS TFRecord file of Occurrences.'
-        )
-
-        parser.add_argument(
-            '--random_file',
-            required=True,
-            type=str,
-            help='The location of random tfrecords.'
-        )
-
-        parser.add_argument(
-            '--mode',
-            required=True,
+            '--bucket',
+            required=False,
             type=str,
             help='train, eval, infer'
         )
 
-        parser.add_argument(
-            '--percent_eval',
-            required=True,
-            default=10,
-            type=int,
-            help='Percentage to use for testing.'
-        )
+        # parser.add_argument(
+        #     '--percent_eval',
+        #     required=True,
+        #     default=10,
+        #     type=int,
+        #     help='Percentage to use for testing.'
+        # )
 
 class Decoder(beam.DoFn):
 
@@ -85,33 +73,46 @@ class Decoder(beam.DoFn):
             # self._counter = self._counter + 1
             # print("invalid", self._counter)
 
-def parse_taxon_timestamp_from_occurrence_path(p):
-    if p.endswith("/"):
-        p = p[:-1]
+# def parse_taxon_timestamp_from_occurrence_path(p):
+#     if p.endswith("/"):
+#         p = p[:-1]
+#
+#     s = p.split("/")
+#
+#     return s[len(s) - 2], s[len(s) - 1]
 
-    s = p.split("/")
 
-    return s[len(s) - 2], s[len(s) - 1]
+# def filterRandomToMatchOccurrenceCount(random_example, occurrence_count):
+#     b_info = random_example.example_id().split("-")
+#     b_size = b_info[2]
+#     b_number = b_info[0]
+#     if b_number <= ceil(occurrence_count / b_size):
+#         yield random_example
 
 
-def filterRandomToMatchOccurrenceCount(random_example, occurrence_count):
-    b_info = random_example.example_id().split("-")
-    b_size = b_info[2]
-    b_number = b_info[0]
-    if b_number <= ceil(occurrence_count / b_size):
-        yield random_example
+class ReadExamples(beam.DoFn):
+    def __init__(self):
+        super(ReadExamples, self).__init__()
 
+    def process(self, file_name, coder):
+
+        src = _TFRecordSource(file_pattern=file_name,
+                        compression_type=CompressionTypes.UNCOMPRESSED,
+                        coder=coder,
+                        validate=True)
+
+        with src.open_file(file_name) as file_handle:
+            while True:
+                record = _TFRecordUtil.read_record(file_handle)
+                if record is None:
+                    return  # Reached EOF
+                else:
+                    yield coder.decode(record)
 
 
 def main(argv=None):
 
-
-
-    RAW_METADATA_DIR = 'raw_metadata'
-    TRANSFORMED_TRAIN_DATA_FILE_PREFIX = 'train'
-    TRANSFORMED_EVAL_DATA_FILE_PREFIX = 'eval'
-    raw_metadata = transform.create_raw_metadata(ModeKeys.TRAIN)
-    example_converter = coders.ExampleProtoCoder(raw_metadata.schema)
+    transform_data = TransformData()
 
     pipeline_options = PipelineOptions(flags=argv)
     # ['--setup_file', os.path.abspath(os.path.join(os.path.dirname(__file__), 'setup.py'))],
@@ -126,42 +127,26 @@ def main(argv=None):
     with beam.Pipeline(standard_options.runner, options=pipeline_options) as pipeline:
         with tft.Context(temp_dir=cloud_options.temp_location):
 
-            occurrences = pipeline \
-                      | 'ReadOccurrenceTFRecords' >> beam.io.ReadFromTFRecord(
-                file_pattern=local_options.occurrence_file,
-                compression_type=CompressionTypes.UNCOMPRESSED,
-            ) \
-                      | 'DecodeOccurrenceProtoExamples' >> beam.ParDo(Decoder(), example_converter.decode)
+            examples = pipeline \
+                     | 'SetFileFetcherInMotion' >> beam.Create([1]).with_output_types(int) \
+                     | 'FetchLatestFiles' >> beam.ParDo(FetchExampleFiles(
+                                project=cloud_options.project,
+                                bucket=local_options.bucket,
+                            )) \
+                     | 'ReadExamples' >> beam.ParDo(ReadExamples(), transform_data.coder)
 
-            occurrence_count = occurrences | beam.combiners.Count.Globally()
+            # occurrence_count = occurrences | beam.combiners.Count.Globally() >> pvalue.AsSingleton(occurrence_count)
 
-            random_records = pipeline \
-                             | 'ReadRandomTFRecords' >> beam.io.ReadFromTFRecord(
-                                file_pattern=local_options.random_file,
-                                compression_type=CompressionTypes.UNCOMPRESSED,
-            ) \
-                             | 'DecodeRandomProtoExamples' >> beam.ParDo(Decoder(), example_converter.decode) \
-                             | 'FilterRandomCloserToOccurrenceCount' >> beam.Filter(filterRandomToMatchOccurrenceCount, pvalue.AsSingleton(occurrence_count))
-
-            records = (occurrences, random_records) | beam.Flatten()
-
-            # records = records | 'RecordsDataset' >> beam.ParDo(occurrences.Counter("main"))
-
-            _ = raw_metadata \
+            _ = transform_data.create_raw_metadata(ModeKeys.TRAIN) \
                 | 'WriteInputMetadata' >> tft_beam_io.WriteMetadata(
-                path=os.path.join(local_options.output_location, RAW_METADATA_DIR),
+                path=transform_data.raw_metadata_path,
                 pipeline=pipeline)
 
             (transformed_dataset, transformed_metadata), transform_fn = (
-                (records, raw_metadata) | tft.AnalyzeAndTransformDataset(TransformingData.make_preprocessing_fn()))
-
-            # _ = transformed_dataset \
-            #     | 'ProjectLabels' >> beam.Map(lambda e: e["taxon"]) \
-            #     | 'RemoveLabelDuplicates' >> beam.RemoveDuplicates() \
-            #     | 'WriteLabels' >> beam.io.WriteToText(local_options.output_location, file_name_suffix='labels.txt')
+                (examples, transform_data.create_raw_metadata(ModeKeys.TRAIN)) | tft.AnalyzeAndTransformDataset(transform_data.make_preprocessing_fn()))
 
             _ = (transform_fn
-                 | 'WriteTransformFn' >> tft_beam_io.WriteTransformFn(local_options.output_location))
+                 | 'WriteTransformFn' >> tft_beam_io.WriteTransformFn(transform_data.output_path))
 
             # random_seed = int(datetime.now().strftime("%s"))
             # def train_eval_partition_fn(ex, unused_num_partitions):
@@ -172,12 +157,13 @@ def main(argv=None):
 
             # coder = coders.ExampleProtoCoder(transformed_metadata.schema)
 
-            _ = records \
-                | 'SerializeTrainExamples' >> beam.Map(example_converter.encode) \
-                | 'ShuffleTraining' >> utils.Shuffle() \
-                | 'WriteTraining' >> beam.io.WriteToTFRecord(
-                os.path.join(local_options.output_location, "examples", TRANSFORMED_TRAIN_DATA_FILE_PREFIX),
-                file_name_suffix='.tfrecord.gz')
+            # _ = examples \
+            #     | 'SerializeTrainExamples' >> beam.Map(example_coder.encode) \
+            #     | 'ShuffleTraining' >> utils.Shuffle() \
+            #     | 'WriteTraining' >> beam.io.WriteToTFRecord(
+            #
+            #     os.path.join(local_options.output_location, "examples", TRANSFORMED_TRAIN_DATA_FILE_PREFIX),
+            #     file_name_suffix='.tfrecord.gz')
 
 
 

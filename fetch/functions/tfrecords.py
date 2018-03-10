@@ -45,7 +45,8 @@ class OccurrenceTFRecords:
         # cleanup local occurrence data.
         if not self._output_path.startswith(TEMP_DIRECTORY):
             raise ValueError("Invalid TFRecords Output Path")
-        shutil.rmtree(self._output_path)
+        if os.path.isdir(self._output_path):
+            shutil.rmtree(self._output_path)
 
     def _latest_occurrence_gcs_file_path(self, name_usage):
         file_names = [] # Should be a list of [timestamp].tfrecords

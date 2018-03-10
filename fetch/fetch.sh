@@ -3,7 +3,7 @@
 # Maybe just use this for now, which uses app engine to run chron without calling template
 
 TIME=$(date '+%s')
-AREA_DATES=$(./area_dates.sh "20180201")
+AREA_DATES=$(./area_dates.sh "20170310")
 
 #python -m fetch \
 #         --runner DataflowRunner \
@@ -18,12 +18,12 @@ python -m fetch \
          --temp_location="gs://floracast-datamining/temp" \
          --staging_location="gs://floracast-datamining/staging" \
          --job_name "floracast-fetch-$TIME" \
-         --random True \
+         --protected_areas "$AREA_DATES" \
          --setup_file /Users/m/Desktop/floracast/dataflow/fetch/setup.py
 #         --requirements_file /Users/m/Desktop/floracast/dataflow/fetch/requirements.txt
 #
 #
-#--protected_areas "$AREA_DATES" \
+
 
 
 #         --nameusages "9sYKdRe6OUgzTwabsjjuFiwVU" \

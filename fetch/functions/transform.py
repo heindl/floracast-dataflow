@@ -14,14 +14,16 @@ import shutil
 import six
 import apache_beam as beam
 from google.cloud import storage
+from datetime import datetime
+from tensorflow_transform import coders
 
 TRANSFORMED_RAW_METADATA_PATH = "raw_metadata"
 TRANSFORMED_METADATA_PATH = "transformed_metadata"
 TRANSFORM_FN_PATH = "transform_fn"
 
-class TransformerFileFetcher(beam.DoFn):
+class FetchExampleFiles(beam.DoFn):
     def __init__(self, project, bucket):
-        super(TransformerFileFetcher, self).__init__()
+        super(FetchExampleFiles, self).__init__()
         self._project = project
         self._bucket = bucket
 
@@ -29,6 +31,8 @@ class TransformerFileFetcher(beam.DoFn):
 
         client = storage.client.Client(project=self._project)
         bucket = client.get_bucket(self._bucket)
+
+        prefix = "gs://"+self._bucket
 
         files = {}
         for b in bucket.list_blobs(prefix="occurrences", fields="items/name"):
@@ -50,7 +54,7 @@ class TransformerFileFetcher(beam.DoFn):
                 files[p] = n
 
         for i in files:
-            yield join(i, files[i])
+            yield join(prefix, i, files[i])
 
         random_paths = []
         randoms = {}
@@ -69,15 +73,19 @@ class TransformerFileFetcher(beam.DoFn):
             return
 
         for f in randoms[random_paths[0]]:
-            yield join(random_paths[0], f)
+            yield join(prefix, random_paths[0], f)
 
 
-class TransformingData:
+class TransformData:
 
-    def __init__(self, output_path):
-        self.raw_metadata_path = join(output_path, TRANSFORMED_RAW_METADATA_PATH)
-        self.transformed_metadata_path = join(output_path, TRANSFORMED_METADATA_PATH)
-        self.transform_fn_path = join(output_path, TRANSFORM_FN_PATH)
+    def __init__(self, bucket="floracast-datamining"):
+
+        self.output_path = "gs://" + bucket + "/transformers/" + datetime.now().strftime("%s")
+
+        self.raw_metadata_path = join(self.output_path, TRANSFORMED_RAW_METADATA_PATH)
+        self.transformed_metadata_path = join(self.output_path, TRANSFORMED_METADATA_PATH)
+        self.transform_fn_path = join(self.output_path, TRANSFORM_FN_PATH)
+        self.coder = coders.ExampleProtoCoder(self.create_raw_metadata(tf.estimator.ModeKeys.TRAIN).schema)
 
     @staticmethod
     def make_preprocessing_fn():
