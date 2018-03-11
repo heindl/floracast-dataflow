@@ -18,7 +18,7 @@ python -m fetch \
          --temp_location="gs://floracast-datamining/temp" \
          --staging_location="gs://floracast-datamining/staging" \
          --job_name "floracast-fetch-$TIME" \
-         --protected_areas "$AREA_DATES" \
+         --protected_area_dates "$AREA_DATES" \
          --setup_file /Users/m/Desktop/floracast/dataflow/fetch/setup.py
 #         --requirements_file /Users/m/Desktop/floracast/dataflow/fetch/requirements.txt
 #

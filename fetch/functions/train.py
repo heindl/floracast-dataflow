@@ -1,0 +1,328 @@
+import tensorflow as tf
+from os.path import isdir, join
+from os import makedirs
+from tensorflow_transform.tf_metadata import metadata_io
+from tensorflow_transform.saved import input_fn_maker, saved_transform_io
+from tensorflow.contrib.learn.python.learn.utils import input_fn_utils
+import constants
+from math import ceil
+from occurrences import OccurrenceTFRecords
+import functools
+import six
+from datetime import datetime
+import transform
+from google.cloud import storage
+import string
+import random
+
+class TrainingData:
+
+    _TEMP_DIR = "/tmp/"
+
+    def __init__(self, project, gcs_bucket, name_usage_id, train_batch_size, train_epochs, transform_data_path=None, model_path=None):
+
+        self._name_usage_id = name_usage_id
+        self._train_batch_size = train_batch_size
+        self._train_epochs = train_epochs
+        self._ts = datetime.now().strftime("%s")
+        self._project=project
+        self._gcs_bucket=gcs_bucket
+
+        self._local_path = self._make_temp_dir()
+
+        self._model_path = model_path if model_path else join(self._local_path, "model")
+
+        self._transform_data_path = transform_data_path if transform_data_path else self._fetch_latest_transformer()
+
+        self._raw_metadata_path = join(self._transform_data_path, transform.TRANSFORMED_RAW_METADATA_PATH)
+        self._transformed_metadata_path = join(self._transform_data_path, transform.TRANSFORMED_METADATA_PATH)
+        self._transform_fn_path = join(self._transform_data_path, transform.TRANSFORM_FN_PATH)
+
+        for dir in [
+            self._raw_metadata_path,
+            self._transformed_metadata_path,
+            self._transform_fn_path,
+        ]:
+            if not isdir(dir):
+                raise ValueError("Directory doesn't exist: ", dir)
+
+        self._tfrecord_parser = OccurrenceTFRecords(
+            name_usage_id=name_usage_id,
+            project=self._project,
+            gcs_bucket=self._gcs_bucket,
+        )
+
+    def _make_temp_dir(self):
+        dir = self._TEMP_DIR + "".join(random.choice(string.ascii_letters + string.digits) for x in range(random.randint(8, 12)))
+        makedirs(dir)
+        return dir
+
+    def _fetch_latest_transformer(self):
+        bucket = storage.Client(project=self._project).bucket(self._gcs_bucket)
+
+        file_list = {}
+        for b in bucket.list_blobs():
+            date = b.name.split("/")[1]
+            if date in file_list:
+                file_list[date].append(b)
+            else:
+                file_list[date] = [b]
+
+        latest_date = sorted(file_list.keys(), reverse=True)[0]
+
+        for f in file_list[latest_date]:
+            f.download_to_filename(join(self._local_path, f.name))
+
+        return join(self._local_path, "transformers", latest_date)
+
+    def _feature_columns(self):
+        meta_data = metadata_io.read_metadata(self._transformed_metadata_path)
+
+        eco_num_buckets = meta_data.schema[constants.KEY_ECO_NUM].domain.max_value
+        eco_biome_buckets = meta_data.schema[constants.KEY_ECO_BIOME].domain.max_value
+        s2_token_buckets = meta_data.schema[constants.KEY_S2_TOKENS].domain.max_value
+
+        eco_num_column = tf.feature_column.categorical_column_with_identity(
+            constants.KEY_ECO_NUM,
+            num_buckets=eco_num_buckets,
+            default_value=0
+        )
+
+        eco_biome_column = tf.feature_column.categorical_column_with_identity(
+            constants.KEY_ECO_BIOME,
+            num_buckets=eco_biome_buckets,
+            default_value=0
+        )
+
+        s2_token_column = tf.feature_column.categorical_column_with_identity(
+            constants.KEY_S2_TOKENS,
+            num_buckets=s2_token_buckets,
+            default_value=0
+        )
+
+        eco_num_embedding_dimensions = ceil(eco_num_buckets ** 0.25)
+        s2_token_embedding_dimensions = ceil(s2_token_buckets ** 0.25)
+
+        return [
+            tf.feature_column.numeric_column(constants.KEY_ELEVATION, shape=[]),
+            tf.feature_column.numeric_column(constants.KEY_MAX_TEMP, shape=[8]),
+            tf.feature_column.numeric_column(constants.KEY_MIN_TEMP, shape=[8]),
+            tf.feature_column.numeric_column(constants.KEY_PRCP, shape=[8]),
+            tf.feature_column.numeric_column(constants.KEY_DAYLIGHT, shape=[8]),
+            # Indicator column for eco_biome because there are only 9 categories.
+            tf.feature_column.indicator_column(eco_biome_column),
+            tf.feature_column.embedding_column(eco_num_column, dimension=eco_num_embedding_dimensions),
+            tf.feature_column.embedding_column(s2_token_column, dimension=s2_token_embedding_dimensions),
+        ]
+
+    def _reshape_weather(self, f):
+        f = tf.reshape(f, [18, 5])
+        f = tf.reduce_mean(f, 1)
+        f = tf.slice(f, [10], [8])
+        return f
+
+    def _all_feature_keys(self):
+        return self._weather_keys() + [
+            constants.KEY_ELEVATION,
+            constants.KEY_ECO_NUM,
+            constants.KEY_ECO_BIOME,
+            constants.KEY_S2_TOKENS,
+        ]
+
+    def _weather_keys(self):
+        return [
+            constants.KEY_MAX_TEMP,
+            constants.KEY_MIN_TEMP,
+            constants.KEY_PRCP,
+            constants.KEY_DAYLIGHT,
+        ]
+
+    # def get_label_vocabularly(train_data_path):
+    #     labels = []
+    #     label_files = glob.glob(train_data_path + "/labels*")
+    #     for file in label_files:
+    #         with open(file, 'r') as label_file:
+    #             taxa = label_file.read().splitlines()
+    #             for t in taxa:
+    #                 labels.append(t)
+    #
+    #     return labels
+
+    def _gzip_reader_fn(self):
+        return tf.TFRecordReader(
+            options=tf.python_io.TFRecordOptions(
+                compression_type=tf.python_io.TFRecordCompressionType.GZIP,
+            )
+        )
+
+    def input_functions(self, percentage_split):
+
+        eval_file, train_file = self._tfrecord_parser.train_test_split(percentage_split)
+
+        eval_batch_size, _ = self._tfrecord_parser.count(eval_file)
+
+        print("calling eval input function", eval_file, eval_batch_size)
+        print("calling train input function", train_file, self._train_batch_size, self._train_epochs)
+
+
+        train_fn = functools.partial(self._transformed_input_fn,
+                                     raw_data_file_pattern=train_file,
+                                     mode=tf.estimator.ModeKeys.TRAIN,
+                                     batch_size=self._train_batch_size,
+                                     epochs=self._train_epochs)
+
+        eval_fn = functools.partial(self._transformed_input_fn,
+                                    raw_data_file_pattern=eval_file,
+                                    mode=tf.estimator.ModeKeys.EVAL,
+                                    batch_size=eval_batch_size,
+                                    epochs=1)
+
+        return eval_fn, train_fn
+
+    def _raw_metadata(self):
+        return metadata_io.read_metadata(self._raw_metadata_path)
+
+    def _transformed_metadata(self):
+        return metadata_io.read_metadata(self._transformed_metadata_path)
+
+    def _transformed_input_fn(self, raw_data_file_pattern, mode, batch_size, epochs):
+
+        labels = ([constants.KEY_EXAMPLE_ID] if mode == tf.estimator.ModeKeys.PREDICT else [constants.KEY_CATEGORY])
+
+        fn = input_fn_maker.build_transforming_training_input_fn(
+            raw_metadata=self._raw_metadata(),
+            transformed_metadata=self._transformed_metadata(),
+            transform_savedmodel_dir=self._transform_fn_path,
+            raw_data_file_pattern=raw_data_file_pattern,
+            training_batch_size=batch_size,
+            # transformed_label_keys=constants.KEY_CATEGORY,
+            transformed_label_keys=labels,
+            transformed_feature_keys=self._all_feature_keys(),
+            key_feature_name=None,
+            convert_scalars_to_vectors=True,
+            # Read batch features.
+            reader=self._gzip_reader_fn,
+            # num_epochs=(1 if mode != estimator.ModeKeys.TRAIN else None),
+            num_epochs=epochs,
+            randomize_input=True,
+            # randomize_input=(mode == estimator.ModeKeys.TRAIN),
+            queue_capacity=batch_size * 20,
+        )
+
+        features, labels = fn()
+        labels = tf.reshape(labels, [-1])
+        labels = tf.not_equal(labels, "random")
+
+        # if mode == tf.estimator.ModeKeys.EVAL:
+        #     labels = tf.Print(labels, [labels])
+
+        for weather_key in self._weather_keys():
+            features[weather_key] = tf.map_fn(self._reshape_weather, features[weather_key])
+
+        if mode == tf.estimator.ModeKeys.PREDICT:
+            # features[constants.KEY_OCCURRENCE_ID] = labels
+            return features
+        else:
+            return features, labels
+
+    def _convert_scalars_to_vectors(self, features):
+        """Vectorize scalar columns to meet FeatureColumns input requirements."""
+        def maybe_expand_dims(tensor):
+            # Ignore the SparseTensor case.  In principle it's possible to have a
+            # rank-1 SparseTensor that needs to be expanded, but this is very
+            # unlikely.
+            if isinstance(tensor, tf.Tensor) and tensor.get_shape().ndims == 1:
+                tensor = tf.expand_dims(tensor, -1)
+            return tensor
+
+        return {name: maybe_expand_dims(tensor)
+                for name, tensor in six.iteritems(features)}
+
+    def _serving_input_receiver_fn(self):
+
+        raw_feature_spec = self._raw_metadata().schema.as_feature_spec()
+
+        # Exclude label keys and other unnecessary features.
+        # This is typically used to specify the raw labels and weights,
+        # so that transformations involving these do not pollute the serving graph.
+        all_raw_feature_keys = six.iterkeys(self._raw_metadata().schema.column_schemas)
+        raw_feature_keys = list(set(all_raw_feature_keys) - set(constants.KEY_CATEGORY))
+
+        raw_serving_feature_spec = {key: raw_feature_spec[key]
+                                    for key in raw_feature_keys}
+
+        def parsing_transforming_serving_input_receiver_fn():
+            """Serving input_fn that applies transforms to raw data in tf.Examples."""
+            raw_input_fn = input_fn_utils.build_parsing_serving_input_fn(
+                raw_serving_feature_spec, default_batch_size=None)
+            raw_features, _, inputs = raw_input_fn()
+            _, transformed_features = (
+                saved_transform_io.partially_apply_saved_transform(
+                    self._transform_fn_path, raw_features))
+
+            # Convert scalars to vectors
+            transformed_features = self._convert_scalars_to_vectors(transformed_features)
+
+            for key in self._weather_keys():
+                transformed_features[key] = tf.map_fn(self._reshape_weather, transformed_features[key])
+
+            return tf.estimator.export.ServingInputReceiver(
+                transformed_features, inputs)
+
+        return parsing_transforming_serving_input_receiver_fn
+
+    def export_model(self):
+        model = self.get_estimator()
+        export_dir = "/tmp/"
+        model.export_savedmodel(
+            export_dir_base=join(self._model_path, "exports/"),
+            serving_input_receiver_fn=self._serving_input_receiver_fn()
+        )
+
+
+    def get_estimator(self):
+
+        # run_config = tf.estimator.RunConfig(model_dir=FLAGS.model_dir)
+
+        return tf.estimator.DNNClassifier(
+            feature_columns=self._feature_columns(),
+            hidden_units=[100, 75, 50, 25],
+            # optimizer=tf.train.ProximalAdagradOptimizer(
+            #     learning_rate=0.01,
+            #     l1_regularization_strength=0.001
+            # ),
+            model_dir=self._model_path,
+        )
+
+# def get_estimator(run_config, feature_columns):
+#
+#     def _get_model_fn(estimator):
+#         # def _model_fn(features, labels, mode):
+#         def _model_fn(features, labels, mode, config):
+#             if mode == tf.estimator.ModeKeys.PREDICT:
+#                 key = features.pop(constants.KEY_EXAMPLE_ID)
+#             # params = estimator.params
+#             model_fn_ops = estimator._model_fn(
+#                 # features=features, labels=labels, mode=mode, params=params)
+#                 features=features, labels=labels, mode=mode, config=config)
+#             if mode == tf.estimator.ModeKeys.PREDICT:
+#                 model_fn_ops.predictions[constants.KEY_EXAMPLE_ID] = key
+#                 # model_fn_ops.output_alternatives[None][1]['occurrence_id'] = key
+#             return model_fn_ops
+#         return _model_fn
+#
+#         # classifier = tf.contrib.learn.Estimator(
+#     return tf.estimator.Estimator(
+#         model_fn=_get_model_fn(
+#             # tf.contrib.learn.DNNClassifier(
+#             tf.estimator.DNNClassifier(
+#                 feature_columns=feature_columns,
+#                 hidden_units=[100, 75, 50, 25],
+#                 # optimizer=tf.train.ProximalAdagradOptimizer(
+#                 #     learning_rate=0.01,
+#                 #     l1_regularization_strength=0.001
+#                 # ),
+#             )
+#         ),
+#         config=run_config,
+#     )

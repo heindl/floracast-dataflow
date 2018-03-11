@@ -5,7 +5,7 @@ import logging
 
 import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions, StandardOptions, SetupOptions
-from functions.fetch import FetchRandom, FetchNameUsages, FetchOccurrences, FetchProtectedAreas
+from functions.fetch import FetchRandom, FetchNameUsages, FetchOccurrences, GenerateProtectedAreaBatches, FetchProtectedAreas, ExplodeProtectedAreaDates
 from functions.weather import FetchWeatherDoFn
 from functions.write import ExampleRecordWriter
 from functions.example import Example
@@ -47,7 +47,7 @@ class LocalPipelineOptions(PipelineOptions):
             help='Restrict example fetch to this taxon')
 
         parser.add_value_provider_argument(
-            '--protected_areas',
+            '--protected_area_dates',
             required=False,
             default=None,
             type=str,
@@ -92,10 +92,16 @@ def run(argv=None):
 
             protected_areas = pipeline \
                               | 'SetProtectedAreasInMotion' >> beam.Create([1]).with_output_types(int) \
+                              | 'FetchProtectedAreaBatches' >> beam.ParDo(GenerateProtectedAreaBatches(
+                                    project=cloud_options.project,
+                                    protected_area_dates=local_pipeline_options.protected_area_dates
+                                )) \
                               | 'FetchProtectedAreas' >> beam.ParDo(
-                                    FetchProtectedAreas(
-                                        project=cloud_options.project,
-                                        protected_area_dates=local_pipeline_options.protected_areas
+                                    FetchProtectedAreas(project=cloud_options.project)
+                                ) \
+                              | 'ExplodeProtectedAreaDates' >> beam.ParDo(
+                                    ExplodeProtectedAreaDates(
+                                        protected_area_dates=local_pipeline_options.protected_area_dates
                                     )
                                 )
 
@@ -107,9 +113,7 @@ def run(argv=None):
                                     nameusages=local_pipeline_options.name_usages
                                 )
                             ) \
-                          | 'FetchOccurrences' >> beam.ParDo(
-                                FetchOccurrences(cloud_options.project)
-                            )
+                          | 'FetchOccurrences' >> beam.ParDo(FetchOccurrences(cloud_options.project))
 
             examples = (occurrences, protected_areas, random) | beam.Flatten()
 

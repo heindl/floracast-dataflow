@@ -2,10 +2,11 @@
 # from __future__ import division
 
 import apache_beam as beam
-from google.cloud import firestore
+from google.cloud import firestore, exceptions
 from example import Example, ParseExampleFromFirestore
 import logging
 from utils import parse_pipeline_argument
+import copy
 
 # @beam.typehints.with_input_types(beam.typehints.Tuple[str, str, str])
 @beam.typehints.with_input_types(str)
@@ -121,31 +122,72 @@ class FetchRandom(beam.DoFn):
             yield e
 
 
+BATCH_COUNT = 100
+
 @beam.typehints.with_input_types(int)
-@beam.typehints.with_output_types(Example)
-class FetchProtectedAreas(beam.DoFn):
+@beam.typehints.with_output_types(int)
+class GenerateProtectedAreaBatches(beam.DoFn):
     def __init__(self, project, protected_area_dates):
-        super(FetchProtectedAreas, self).__init__()
+        super(GenerateProtectedAreaBatches, self).__init__()
         self._project = project
         self._protected_area_dates = protected_area_dates
-
-    def process(self, i):
+    def process(self, _):
+        logging.debug("Fetching ProtectedAreas from Firestore")
 
         dates = parse_pipeline_argument(self._protected_area_dates)
         if dates is None or dates.strip() == "":
             return
 
-        date_list = dates.split(",")
+        client = firestore.Client(project=self._project)
+        i = 0
 
-        logging.debug("Fetching ProtectedAreas from Firestore with %d dates", len(date_list))
+        while True:
+            try:
+                docs = list(client.collection(u'ProtectedAreas').offset(i).limit(1).get())
+                _ = docs[0].id
+            except ValueError:
+                return
+            yield i
+            i = i + BATCH_COUNT
 
-        for o in firestore.Client(project=self._project).collection(u'ProtectedAreas').get():
-            for d in date_list:
-                area_fields = o.to_dict()
-                area_fields["FormattedDate"] = d
-                try:
-                    e = ParseExampleFromFirestore("ProtectedArea-"+d, o.id, area_fields)
-                except ValueError as error:
-                    logging.error('ProtectedArea [%s] could not be parsed into Example: %s', o.id, error)
-                    continue
-                yield e
+
+
+@beam.typehints.with_input_types(int)
+@beam.typehints.with_output_types(beam.typehints.Dict[str, beam.typehints.Any])
+class FetchProtectedAreas(beam.DoFn):
+    def __init__(self, project):
+        super(FetchProtectedAreas, self).__init__()
+        self._project = project
+
+    def process(self, offset):
+        logging.debug("Fetching ProtectedAreas from Firestore")
+
+        client = firestore.Client(project=self._project)
+
+        for o in client.collection(u'ProtectedAreas').offset(offset).limit(BATCH_COUNT).get():
+            yield o.to_dict()
+
+
+@beam.typehints.with_input_types(beam.typehints.Dict[str, beam.typehints.Any])
+@beam.typehints.with_output_types(Example)
+class ExplodeProtectedAreaDates(beam.DoFn):
+    def __init__(self, protected_area_dates):
+        super(ExplodeProtectedAreaDates, self).__init__()
+        self._protected_area_dates = protected_area_dates
+
+    def process(self, area):
+
+        dates = parse_pipeline_argument(self._protected_area_dates)
+        if dates is None or dates.strip() == "":
+            return
+
+        for d in dates.split(","):
+            area_copy = copy.deepcopy(area)
+
+            area_copy["FormattedDate"] = d
+            try:
+                e = ParseExampleFromFirestore("protected_area-"+d, area_copy["GeoFeatureSet"]["CoordinateKey"], area_copy)
+            except ValueError as error:
+                logging.error('ProtectedArea [%s] could not be parsed into Example: %s', area_copy["GeoFeatureSet"]["CoordinateKey"], error)
+                continue
+            yield e

@@ -24,11 +24,15 @@ from functions import transform
 parser = argparse.ArgumentParser()
 
 parser.add_argument(
-    '--train_data_path', type=str, required=True)
+    '--name_usage_id', type=str, required=True)
 
-parser.add_argument(
-    '--model_dir', type=str, required=True,
-    help='Base directory for the model.')
+# parser.add_argument(
+#     '--transformer', type=str, required=False,
+#     help='Use a specific transformer file.')
+#
+# parser.add_argument(
+#     '--model_dir', type=str, required=False,
+#     help='Save to a specific directory.')
 
 parser.add_argument(
     '--train_epochs', type=int, default=20, help='Number of training epochs.')
@@ -43,8 +47,8 @@ parser.add_argument(
 def main(argv):
 
     training_data = transform.TrainingData(
-        transform_data_path=FLAGS.train_data_path,
-        model_path=FLAGS.model_dir,
+        # transform_data_path=FLAGS.train_data_path,
+        # model_path=FLAGS.model_dir,
         train_batch_size=FLAGS.batch_size,
         train_epochs=FLAGS.epochs_per_eval,
     )

@@ -1,5 +1,5 @@
 import unittest
-from tfrecords import OccurrenceTFRecords
+from occurrences import OccurrenceTFRecords
 
 
 class TFRecordsTestCase(unittest.TestCase):
@@ -7,9 +7,11 @@ class TFRecordsTestCase(unittest.TestCase):
     def test_tf_records_count(self):
         """Do we recieve the correct tfrecords count?"""
 
-        example_file = "/tmp/floracast-datamining/transformed/aho2iyxvo37rjezikho6xbwmq/1520463606/examples/*.gz"
-
-        parser = OccurrenceTFRecords(example_file)
+        parser = OccurrenceTFRecords(
+            name_usage_id="9sykdre6ougztwabsjjufiwvu",
+            project="floracast-firestore",
+            gcs_bucket="floracast-datamining",
+        )
         self.assertEqual(parser._total_count, 434)
         self.assertEqual(parser._occurrence_count, 192)
         self.assertEqual(parser._eval_count(0.05), 22)

@@ -1,6 +1,6 @@
 import tensorflow as tf
 from random import randint, choice
-from math import ceil, floor
+from math import ceil
 from example import Example
 from string import ascii_letters, digits
 from tensorflow.python.lib.io import tf_record
@@ -18,7 +18,7 @@ class OccurrenceTFRecords:
     _total_count = 0
     _occurrence_count = 0
 
-    def __init__(self, name_usage, project, gcs_bucket):
+    def __init__(self, name_usage_id, project, gcs_bucket):
 
         self._output_path = TEMP_DIRECTORY + "".join(choice(ascii_letters + digits) for x in range(randint(8, 12)))
         self._occurrence_path = os.path.join(self._output_path, "occurrences/")
@@ -36,10 +36,10 @@ class OccurrenceTFRecords:
                 raise
             pass
 
-        client = storage.client.Client(project=project)
-        self._gcs_bucket = client.get_bucket(gcs_bucket)
-        self._fetch_occurrences(name_usage)
+        self._gcs_bucket = storage.client.Client(project=project).get_bucket(gcs_bucket)
+        self._fetch_occurrences(name_usage_id)
         self._fetch_random()
+        self._total_count = self._occurrence_count + self._random_count
 
     def __del__(self):
         # cleanup local occurrence data.
@@ -85,8 +85,6 @@ class OccurrenceTFRecords:
             local_file = os.path.join(self._occurrence_path, filename)
             self._gcs_bucket.get_blob(gcs_random_path + "/" + filename).download_to_filename(local_file)
             self._random_count += OccurrenceTFRecords.count(local_file)
-
-        self._total_count = self._occurrence_count + self._random_count
 
     @staticmethod
     def is_occurrence(s):
