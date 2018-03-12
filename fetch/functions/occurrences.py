@@ -139,13 +139,15 @@ class OccurrenceTFRecords:
 
         self._prepare_eval_train_files()
 
-        options = tf_record.TFRecordOptions(TFRecordCompressionType.NONE)
-        eval_writer = tf.python_io.TFRecordWriter(self._eval_output, options=options)
-        train_writer = tf.python_io.TFRecordWriter(self._train_output, options=options)
+        write_options = tf_record.TFRecordOptions(TFRecordCompressionType.GZIP)
+        read_options = tf_record.TFRecordOptions(TFRecordCompressionType.NONE)
+
+        eval_writer = tf.python_io.TFRecordWriter(self._eval_output, options=write_options)
+        train_writer = tf.python_io.TFRecordWriter(self._train_output, options=write_options)
 
         i = 0
         for _name in iglob(self._occurrence_path + "/*.tfrecords"):
-            for e in tf.python_io.tf_record_iterator(_name, options=options):
+            for e in tf.python_io.tf_record_iterator(_name, options=read_options):
                 if i in random_points:
                     eval_writer.write(e)
                 else:

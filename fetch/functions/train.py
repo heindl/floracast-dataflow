@@ -16,6 +16,8 @@ import string
 import random
 import errno
 import shutil
+from tensorflow.python.lib.io import tf_record
+TFRecordCompressionType = tf_record.TFRecordCompressionType
 
 class TrainingData:
 
@@ -180,7 +182,7 @@ class TrainingData:
 
         eval_file, train_file = self._tfrecord_parser.train_test_split(percentage_split)
 
-        eval_batch_size = self._tfrecord_parser.count(eval_file)
+        eval_batch_size = self._tfrecord_parser.count(eval_file, compression_type=TFRecordCompressionType.GZIP)
 
         train_fn = functools.partial(self._transformed_input_fn,
                                      raw_data_file_pattern=train_file,

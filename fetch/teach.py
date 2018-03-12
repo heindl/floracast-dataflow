@@ -19,12 +19,12 @@ from __future__ import print_function
 import sys
 import tensorflow as tf
 import argparse
-from functions import transform
+from functions import train
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument(
-    '--name_usage_id', type=str, required=True)
+# parser.add_argument(
+#     '--name_usage_id', type=str, required=True)
 
 # parser.add_argument(
 #     '--transformer', type=str, required=False,
@@ -36,7 +36,7 @@ parser.add_argument(
 
 parser.add_argument(
     '--train_epochs', type=int, default=20, help='Number of training epochs.')
-
+#
 parser.add_argument(
     '--epochs_per_eval', type=int, default=2,
     help='The number of training epochs to run between evaluations.')
@@ -46,9 +46,10 @@ parser.add_argument(
 
 def main(argv):
 
-    training_data = transform.TrainingData(
-        # transform_data_path=FLAGS.train_data_path,
-        # model_path=FLAGS.model_dir,
+    training_data = train.TrainingData(
+        project="floracast-firestore",
+        gcs_bucket="floracast-datamining",
+        name_usage_id="9sykdre6ougztwabsjjufiwvu",
         train_batch_size=FLAGS.batch_size,
         train_epochs=FLAGS.epochs_per_eval,
     )

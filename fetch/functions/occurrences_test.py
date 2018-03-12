@@ -1,6 +1,9 @@
 import unittest
 from occurrences import OccurrenceTFRecords
 
+from tensorflow.python.lib.io import tf_record
+TFRecordCompressionType = tf_record.TFRecordCompressionType
+
 
 class TFRecordsTestCase(unittest.TestCase):
 
@@ -19,17 +22,17 @@ class TFRecordsTestCase(unittest.TestCase):
 
         eval_file, train_file = parser.train_test_split(0.05)
 
-        initial_eval_total = parser.count(eval_file)
+        initial_eval_total = parser.count(eval_file, compression_type=TFRecordCompressionType.GZIP)
         self.assertEqual(initial_eval_total, 28)
 
-        initial_train_total = parser.count(train_file)
+        initial_train_total = parser.count(train_file, compression_type=TFRecordCompressionType.GZIP)
         self.assertEqual(initial_train_total, 527)
 
         parser.train_test_split(0.05)
-        secondary_eval_total = parser.count(eval_file)
+        secondary_eval_total = parser.count(eval_file, compression_type=TFRecordCompressionType.GZIP)
         self.assertEqual(secondary_eval_total, 28)
 
-        secondary_train_total = parser.count(train_file)
+        secondary_train_total = parser.count(train_file, compression_type=TFRecordCompressionType.GZIP)
         self.assertEqual(secondary_train_total, 527)
 
 
