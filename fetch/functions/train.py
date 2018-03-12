@@ -14,6 +14,8 @@ import transform
 from google.cloud import storage
 import string
 import random
+import errno
+import shutil
 
 class TrainingData:
 
@@ -52,6 +54,13 @@ class TrainingData:
             gcs_bucket=self._gcs_bucket,
         )
 
+    def __del__(self):
+        # cleanup local occurrence data.
+        if not self._local_path.startswith(self._TEMP_DIR):
+            raise ValueError("Invalid Train Output Path")
+        if isdir(self._local_path):
+            shutil.rmtree(self._local_path)
+
     def _make_temp_dir(self):
         dir = self._TEMP_DIR + "".join(random.choice(string.ascii_letters + string.digits) for x in range(random.randint(8, 12)))
         makedirs(dir)
@@ -61,19 +70,31 @@ class TrainingData:
         bucket = storage.Client(project=self._project).bucket(self._gcs_bucket)
 
         file_list = {}
-        for b in bucket.list_blobs():
-            date = b.name.split("/")[1]
-            if date in file_list:
-                file_list[date].append(b)
+        for b in bucket.list_blobs(prefix="transformers/"):
+            if b.name.endswith("/"):
+                dirname = "/".join(b.name.split("/")[2:])
+                if len(dirname) > 0:
+                    try:
+                        makedirs(join(self._local_path, dirname))
+                    except OSError as err:
+                        if err == errno.EEXIST:
+                            pass
+                continue
+            d = b.name.split("/")[1]
+            if d in file_list:
+                file_list[d].append(b)
             else:
-                file_list[date] = [b]
+                file_list[d] = [b]
 
-        latest_date = sorted(file_list.keys(), reverse=True)[0]
+        latest_date = sorted(list(file_list), reverse=True)[0]
+        #
+        # bucket.get_blob("transformers/"+latest_date+"/").download_to_filename(self._local_path)
 
         for f in file_list[latest_date]:
-            f.download_to_filename(join(self._local_path, f.name))
+            fname = "/".join(f.name.split("/")[2:])
+            f.download_to_filename(join(self._local_path, fname))
 
-        return join(self._local_path, "transformers", latest_date)
+        return join(self._local_path)
 
     def _feature_columns(self):
         meta_data = metadata_io.read_metadata(self._transformed_metadata_path)
@@ -159,11 +180,7 @@ class TrainingData:
 
         eval_file, train_file = self._tfrecord_parser.train_test_split(percentage_split)
 
-        eval_batch_size, _ = self._tfrecord_parser.count(eval_file)
-
-        print("calling eval input function", eval_file, eval_batch_size)
-        print("calling train input function", train_file, self._train_batch_size, self._train_epochs)
-
+        eval_batch_size = self._tfrecord_parser.count(eval_file)
 
         train_fn = functools.partial(self._transformed_input_fn,
                                      raw_data_file_pattern=train_file,

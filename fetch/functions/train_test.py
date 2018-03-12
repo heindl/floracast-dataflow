@@ -17,12 +17,11 @@ class TrainingDataTestCase(unittest.TestCase):
             train_epochs=1,
         )
 
-        for p in fetcher.process(0):
-            print(p)
+        eval, train = data_handler.input_functions(0.05)
 
 
 
 
 if __name__ == '__main__':
-    suite = unittest.defaultTestLoader.loadTestsFromTestCase(ExampleFetchTestCase)
+    suite = unittest.defaultTestLoader.loadTestsFromTestCase(TrainingDataTestCase)
     unittest.TextTestRunner().run(suite)
