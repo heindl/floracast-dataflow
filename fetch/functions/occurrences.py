@@ -27,18 +27,21 @@ class OccurrenceTFRecords:
         self._eval_output = os.path.join(self._output_path, "eval.tfrecords.gz")
         self._train_output = os.path.join(self._output_path, "train.tfrecords.gz")
 
-        if not self._output_path.startswith(TEMP_DIRECTORY):
+        if not self._occurrence_path.startswith(TEMP_DIRECTORY):
             raise ValueError("Invalid TFRecords Output Path")
         try:
-            os.makedirs(self._output_path)
+            os.makedirs(self._occurrence_path)
         except OSError as exc:
             if exc.errno != errno.EEXIST:
                 raise
             pass
 
-        self._gcs_bucket = storage.client.Client(project=project).get_bucket(gcs_bucket)
+        self._client = storage.Client(project)
+
+        self._gcs_bucket = self._client.get_bucket(gcs_bucket)
         self._fetch_occurrences(name_usage_id)
         self._fetch_random()
+
         self._total_count = self._occurrence_count + self._random_count
 
     def __del__(self):
@@ -48,20 +51,22 @@ class OccurrenceTFRecords:
         if os.path.isdir(self._output_path):
             shutil.rmtree(self._output_path)
 
-    def _latest_occurrence_gcs_file_path(self, name_usage):
-        file_names = [] # Should be a list of [timestamp].tfrecords
-        for blob in self._gcs_bucket.list_blobs(prefix="occurrences/"+name_usage):
-            file_name = blob.name
-            file_names.append(file_name.split("/")[len(file_name)-1])
+    def _latest_gcs_occurrence_blob(self, name_usage):
+        file_names = {} # Should be a list of [timestamp].tfrecords
+
+        for b in self._gcs_bucket.list_blobs(prefix="occurrences/"+name_usage):
+            _, f = os.path.split(b.name)
+            file_names[f] = b
         if len(file_names) == 0:
             raise ValueError("Occurrence file not found for NameUsage", name_usage)
-        return "occurrences/%s/%s" % (name_usage, file_names.sort(reverse=True)[0])
+        k = sorted(file_names.keys(), reverse=True)[0]
+        return file_names[k]
 
     def _fetch_occurrences(self, name_usage):
         if len(name_usage) == 0:
             raise ValueError("Invalid NameUsage")
-        latest_occurrence_file = self._latest_occurrence_gcs_file_path(name_usage)
-        self._gcs_bucket.get_blob(latest_occurrence_file).download_to_filename(self._occurrence_file)
+        obj = self._latest_gcs_occurrence_blob(name_usage)
+        obj.download_to_filename(self._occurrence_file)
         self._occurrence_count = OccurrenceTFRecords.count(self._occurrence_file)
 
     def _latest_random_path(self):
@@ -71,7 +76,7 @@ class OccurrenceTFRecords:
             dates.add(file_name.split("/")[1])
         if len(dates) == 0:
             raise ValueError("Random path not found")
-        return "random/%s" % (list(dates).sort(reverse=True)[0])
+        return "random/%s" % sorted(list(dates), reverse=True)[0]
 
     def _fetch_random(self):
 

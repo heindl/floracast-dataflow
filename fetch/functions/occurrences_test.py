@@ -12,34 +12,25 @@ class TFRecordsTestCase(unittest.TestCase):
             project="floracast-firestore",
             gcs_bucket="floracast-datamining",
         )
-        self.assertEqual(parser._total_count, 434)
+        self.assertEqual(parser._total_count, 555)
         self.assertEqual(parser._occurrence_count, 192)
-        self.assertEqual(parser._eval_count(0.05), 22)
-        self.assertEqual(len(parser._generate_random(0.05)), 22)
+        self.assertEqual(parser._eval_count(0.05), 28)
+        self.assertEqual(len(parser._generate_random(0.05)), 28)
 
         eval_file, train_file = parser.train_test_split(0.05)
 
-        initial_eval_total, initial_eval_occurrences = parser.count(eval_file)
-        self.assertEqual(initial_eval_total, 22)
-        # print("intitial_eval_occurrences", initial_eval_occurrences)
-        self.assertGreater(initial_eval_occurrences, 1)
+        initial_eval_total = parser.count(eval_file)
+        self.assertEqual(initial_eval_total, 28)
 
-        initial_train_total, initial_train_occurrences = parser.count(train_file)
-        self.assertEqual(initial_train_total, 412)
-        self.assertGreater(initial_train_occurrences, 50)
-        # print("initial_train_occurrences", initial_train_occurrences)
+        initial_train_total = parser.count(train_file)
+        self.assertEqual(initial_train_total, 527)
 
         parser.train_test_split(0.05)
-        secondary_eval_total, secondary_eval_occurrences = parser.count(eval_file)
-        self.assertEqual(secondary_eval_total, 22)
-        self.assertNotEqual(initial_eval_occurrences, secondary_eval_occurrences)
-        self.assertGreater(secondary_eval_occurrences, 1)
-        # print("intitial_eval_occurrences", secondary_eval_occurrences)
+        secondary_eval_total = parser.count(eval_file)
+        self.assertEqual(secondary_eval_total, 28)
 
-        secondary_train_total, secondary_train_occurrences = parser.count(train_file)
-        self.assertEqual(secondary_train_total, 412)
-        self.assertNotEqual(secondary_train_occurrences, initial_train_occurrences)
-        # print("secondary_train_occurrences", secondary_train_occurrences)
+        secondary_train_total = parser.count(train_file)
+        self.assertEqual(secondary_train_total, 527)
 
 
 

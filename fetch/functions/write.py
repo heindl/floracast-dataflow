@@ -50,7 +50,7 @@ class Category:
         return self._cat.split("-")[1]
 
     def is_occurrence(self):
-        return not self.is_random() and not self.is_occurrence()
+        return not self.is_random() and not self.is_protected_area()
 
 
 # @beam.typehints.with_input_types(beam.typehints.KV[str, beam.typehints.List[Example]])
