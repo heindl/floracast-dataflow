@@ -1,6 +1,6 @@
 import tensorflow as tf
 from os.path import isdir, join
-from os import makedirs
+from os import makedirs, walk
 from tensorflow_transform.tf_metadata import metadata_io
 from tensorflow_transform.saved import input_fn_maker, saved_transform_io
 from tensorflow.contrib.learn.python.learn.utils import input_fn_utils
@@ -15,9 +15,9 @@ from google.cloud import storage
 import string
 import random
 import errno
-import shutil
 from tensorflow.python.lib.io import tf_record
 TFRecordCompressionType = tf_record.TFRecordCompressionType
+from shutil import rmtree
 
 class TrainingData:
 
@@ -61,7 +61,7 @@ class TrainingData:
         if not self._local_path.startswith(self._TEMP_DIR):
             raise ValueError("Invalid Train Output Path")
         if isdir(self._local_path):
-            shutil.rmtree(self._local_path)
+            rmtree(self._local_path)
 
     def _make_temp_dir(self):
         dir = self._TEMP_DIR + "".join(random.choice(string.ascii_letters + string.digits) for x in range(random.randint(8, 12)))
@@ -292,11 +292,21 @@ class TrainingData:
 
     def export_model(self):
         model = self.get_estimator()
-        export_dir = "/tmp/"
         model.export_savedmodel(
             export_dir_base=join(self._model_path, "exports/"),
             serving_input_receiver_fn=self._serving_input_receiver_fn()
         )
+
+    def upload_exported_model(self):
+        bucket = storage.Client(project=self._project).bucket(self._gcs_bucket)
+
+        export_dir = join(self._model_path, "exports/")
+        for subdir, dirs, files in walk(export_dir):
+            subdir = subdir[len(export_dir):]
+            for file in files:
+                local_path = join(export_dir, subdir, file)
+                gcs_path = "models/%s/%s" % (self._name_usage_id, join(subdir, file))
+                bucket.blob(gcs_path).upload_from_filename(local_path)
 
 
     def get_estimator(self):

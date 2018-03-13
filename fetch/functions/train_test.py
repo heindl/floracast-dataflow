@@ -15,9 +15,13 @@ class TrainingDataTestCase(unittest.TestCase):
             name_usage_id="9sykdre6ougztwabsjjufiwvu",
             train_batch_size=20,
             train_epochs=1,
+            transform_data_path="/tmp/WNswVraXTPzy",
+            model_path="/tmp/WNswVraXTPzy/model",
         )
 
-        eval, train = data_handler.input_functions(0.05)
+        data_handler.upload_exported_model()
+
+        # eval, train = data_handler.input_functions(0.05)
 
 
 

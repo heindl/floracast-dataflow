@@ -71,6 +71,7 @@ def main(argv):
         for key in sorted(res):
             print('%s: %s' % (key, res[key]))
 
+    training_data.export_model()
 
 
 if __name__ == '__main__':
