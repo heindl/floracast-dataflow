@@ -1,12 +1,12 @@
 import tensorflow as tf
-import train_shared_model
+import train_shared.train_shared.train_shared_model
 import functools
 import time
 
-train_input_fn = functools.partial(train_shared_model.transformed_input_fn,
-                  transformed_location="/tmp/floracast-datamining/transformed/53713/1513571852",
-                  batch_size=10,
-                  mode=tf.estimator.ModeKeys.TRAIN,
+train_input_fn = functools.partial(train_shared.train_shared.train_shared_model.transformed_input_fn,
+                                   transformed_location="/tmp/floracast-datamining/transformed/53713/1513571852",
+                                   batch_size=10,
+                                   mode=tf.estimator.ModeKeys.TRAIN,
                                    epochs=1)
 
 # for x in range(0, 20):

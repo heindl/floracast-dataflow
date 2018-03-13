@@ -27,18 +27,23 @@ import setuptools
 
 if __name__ == '__main__':
     setuptools.setup(
-        name='protected_areas',
+        name='floracast_dataflow',
         version='0.0.1',
-        description='Floracast dataflow pipeline.',
+        description='The necessary python sections of the Floracast Machine Learning Pipeline: Dataflow, Tensorflow, and Google Cloud',
         packages=setuptools.find_packages(),
         url="https://bitbucket.org/heindl/dataflow",
         author="mph",
         author_email="matt@floracast.com",
         install_requires=[
-            "apache-beam==2.2.0",
+            "apache-beam==2.3.0",
+            "google-cloud==0.32.0",
+            "tensorflow==1.6.0",
+            "tensorflow-transform==0.5.0",
+            "astral==1.6",
             "geopy==1.11.0",
-            "tensorflow==1.4.0",
-            "tensorflow-transform==0.3.1",
-            "six==1.10.0"
+            "numpy==1.14.1",
+            "pandas==0.22.0",
+            "scikit-learn==0.19.1",
+            "google-cloud-bigquery==0.31.0"
         ]
     )
