@@ -119,73 +119,69 @@ class TrainingData:
 
         # Note: Tested ECO_BIOME & ECO_Region individually, and as seperate features in the model,
         # but the crossed column has a slightly higher precision.
-        if constants.KEY_ECO_REGION in self._experiment['columns']:
-            eco_num_buckets = meta_data.schema[constants.KEY_ECO_NUM].domain.max_value
-            eco_biome_buckets = meta_data.schema[constants.KEY_ECO_BIOME].domain.max_value
-            eco_biome_column = tf.feature_column.categorical_column_with_identity(
-                constants.KEY_ECO_BIOME,
-                num_buckets=eco_biome_buckets,
+        # if constants.KEY_ECO_REGION in self._experiment['columns']:
+        eco_num_buckets = meta_data.schema[constants.KEY_ECO_NUM].domain.max_value
+        eco_biome_buckets = meta_data.schema[constants.KEY_ECO_BIOME].domain.max_value
+        eco_biome_column = tf.feature_column.categorical_column_with_identity(
+            constants.KEY_ECO_BIOME,
+            num_buckets=eco_biome_buckets,
+            default_value=0
+        )
+        eco_num_column = tf.feature_column.categorical_column_with_identity(
+            constants.KEY_ECO_NUM,
+            num_buckets=eco_num_buckets,
+            default_value=0
+        )
+        region_column = tf.feature_column.crossed_column(
+            [eco_biome_column, eco_num_column],
+            hash_bucket_size=1000
+        )
+        # Note: Tried embedding_column but indicator column was significantly more accurate.
+        res.append(tf.feature_column.indicator_column(region_column))
+
+        # for column in self._experiment['columns']:
+        for s2_level in [3,4,5]:
+            s2_token_column = 's2_token_%d' % s2_level
+            s2_token_buckets = meta_data.schema[s2_token_column].domain.max_value
+            s2_token_column = tf.feature_column.categorical_column_with_identity(
+                s2_token_column,
+                num_buckets=s2_token_buckets,
                 default_value=0
             )
-            eco_num_column = tf.feature_column.categorical_column_with_identity(
-                constants.KEY_ECO_NUM,
-                num_buckets=eco_num_buckets,
-                default_value=0
-            )
-            region_column = tf.feature_column.crossed_column(
-                [eco_biome_column, eco_num_column],
-                hash_bucket_size=1000
-            )
-            # Note: Tried embedding_column but indicator column was significantly more accurate.
-            res.append(tf.feature_column.indicator_column(region_column))
+            s2_token_embedding_dimensions = ceil(s2_token_buckets ** 0.25)
+            res.append(tf.feature_column.embedding_column(s2_token_column, dimension=s2_token_embedding_dimensions))
 
-        for column in self._experiment['columns']:
-            if 's2_token_' in column:
-                s2_token_buckets = meta_data.schema[column].domain.max_value
-                s2_token_column = tf.feature_column.categorical_column_with_identity(
-                    column,
-                    num_buckets=s2_token_buckets,
-                    default_value=0
-                )
-                s2_token_embedding_dimensions = ceil(s2_token_buckets ** 0.25)
-                res.append(tf.feature_column.embedding_column(s2_token_column, dimension=s2_token_embedding_dimensions))
+        # if constants.KEY_MAX_TEMP in self._experiment['columns']:
+        res.append(tf.feature_column.numeric_column(
+            constants.KEY_MAX_TEMP,
+            shape=[72])
+        )
 
-        if constants.KEY_MAX_TEMP in self._experiment['columns']:
-            res.append(tf.feature_column.numeric_column(
-                constants.KEY_MAX_TEMP,
-                shape=[self._experiment['shape']])
-            )
+        # if constants.KEY_MIN_TEMP in self._experiment['columns']:
+        res.append(tf.feature_column.numeric_column(
+            constants.KEY_MIN_TEMP,
+            shape=[72])
+        )
 
-        if constants.KEY_MIN_TEMP in self._experiment['columns']:
-            res.append(tf.feature_column.numeric_column(
-                constants.KEY_MIN_TEMP,
-                shape=[self._experiment['shape']])
-            )
+        # if constants.KEY_PRCP in self._experiment['columns']:
+        res.append(tf.feature_column.numeric_column(
+            constants.KEY_PRCP,
+            shape=[96])
+        )
 
-        if constants.KEY_PRCP in self._experiment['columns']:
-            res.append(tf.feature_column.numeric_column(
-                constants.KEY_PRCP,
-                shape=[self._experiment['shape']])
-            )
+        # if constants.KEY_ELEVATION in self._experiment['columns']:
+        res.append(tf.feature_column.numeric_column(
+            constants.KEY_ELEVATION,
+            shape=[])
+        )
 
-        if constants.KEY_ELEVATION in self._experiment['columns']:
-            res.append(tf.feature_column.numeric_column(constants.KEY_ELEVATION, shape=[]))
-
-        if constants.KEY_DAYLIGHT in self._experiment['columns']:
-            res.append(tf.feature_column.numeric_column(constants.KEY_DAYLIGHT, shape=[self._experiment['shape']]))
+        # if constants.KEY_DAYLIGHT in self._experiment['columns']:
+        res.append(tf.feature_column.numeric_column(
+            constants.KEY_DAYLIGHT,
+            shape=[10])
+        )
 
         return res
-
-
-    def _reshape_weather(self, f):
-        days = 2
-        if self._experiment is not None:
-            days = self._experiment['days']
-
-        f = tf.reshape(f, [120 / days, days])
-        f = tf.reduce_mean(f, 1)
-        f = tf.slice(f, [self._experiment['slice_index']], [self._experiment['shape']])
-        return f
 
     def _all_feature_keys(self):
         return self._weather_keys() + [
@@ -276,21 +272,63 @@ class TrainingData:
         )
 
         features, labels = fn()
-        labels = tf.reshape(labels, [-1])
-        labels = tf.not_equal(labels, "random")
-
-        # if mode == tf.estimator.ModeKeys.EVAL:
-        #     labels = tf.Print(labels, [labels])
-
-        for weather_key in self._weather_keys():
-            if weather_key in self._experiment['columns']:
-                features[weather_key] = tf.map_fn(self._reshape_weather, features[weather_key])
+        features = self._transform_features(features)
+        labels = self._transform_labels(labels)
 
         if mode == tf.estimator.ModeKeys.PREDICT:
             # features[constants.KEY_OCCURRENCE_ID] = labels
             return features
         else:
             return features, labels
+
+    @staticmethod
+    def reshape_weather_fn(days_per_batch, slice_percentage=None):
+
+        def reshape_weather(f):
+
+            batch_count = int(120 / days_per_batch)
+
+            f = tf.reshape(f, [batch_count, days_per_batch])
+            f = tf.reduce_mean(f, 1)
+            if slice_percentage is not None:
+
+                index = int(round(batch_count * slice_percentage))
+
+                f = tf.slice(f, [index], [int(batch_count - index)])
+            return f
+
+        return reshape_weather
+
+    def _transform_labels(self, labels):
+        labels = tf.reshape(labels, [-1])
+        labels = tf.not_equal(labels, "random")
+        return labels
+
+    def _transform_features(self, features):
+
+        # if mode == tf.estimator.ModeKeys.EVAL:
+        #     labels = tf.Print(labels, [labels])
+        features[constants.KEY_MIN_TEMP] = tf.map_fn(
+            TrainingData.reshape_weather_fn(1, 0.40),
+            features[constants.KEY_MIN_TEMP],
+        )
+
+        features[constants.KEY_MAX_TEMP] = tf.map_fn(
+            TrainingData.reshape_weather_fn(1, 0.40),
+            features[constants.KEY_MAX_TEMP],
+        )
+
+        features[constants.KEY_PRCP] = tf.map_fn(
+            TrainingData.reshape_weather_fn(1, 0.20),
+            features[constants.KEY_PRCP],
+        )
+
+        features[constants.KEY_DAYLIGHT] = tf.map_fn(
+            TrainingData.reshape_weather_fn(12),
+            features[constants.KEY_DAYLIGHT],
+        )
+
+        return features
 
     def _convert_scalars_to_vectors(self, features):
         """Vectorize scalar columns to meet FeatureColumns input requirements."""
@@ -329,9 +367,7 @@ class TrainingData:
 
             # Convert scalars to vectors
             transformed_features = self._convert_scalars_to_vectors(transformed_features)
-
-            for key in self._weather_keys():
-                transformed_features[key] = tf.map_fn(self._reshape_weather, transformed_features[key])
+            transformed_features = self._transform_features(transformed_features)
 
             return tf.estimator.export.ServingInputReceiver(
                 transformed_features, inputs)

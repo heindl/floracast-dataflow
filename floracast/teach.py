@@ -21,7 +21,7 @@ import argparse
 import sys
 
 from functions import train
-from functions import experiments
+# from functions import experiments
 
 from functions import occurrences
 
@@ -71,9 +71,9 @@ parser.add_argument(
 
 def main(argv):
 
-    exp = experiments.Experiments()
+    # exp = experiments.Experiments()
 
-    name_usage_id = "2xUhop2"
+    name_usage_id = "qWlT2bh"
 
     occurrence_records = occurrences.OccurrenceTFRecords(
         name_usage_id=name_usage_id,
@@ -81,41 +81,43 @@ def main(argv):
         gcs_bucket="floracast-datamining",
     )
 
-    print("Total Experiments", exp.count())
+    # print("Total Experiments", exp.count())
 
-    for experiment_number in range(exp.count()):
+    # for experiment_number in range(exp.count()):
 
-        training_data = train.TrainingData(
-            project="floracast-firestore",
-            gcs_bucket="floracast-datamining",
-            name_usage_id=name_usage_id,
-            train_batch_size=FLAGS.batch_size,
-            train_epochs=FLAGS.epochs_per_eval,
-            occurrence_records=occurrence_records,
-            transform_data_path='/tmp/bkOkg1YYUKup',
-            experiment=exp.get(experiment_number)
-            # model_path='/tmp/SQtjlLHyi/model'
-        )
+    training_data = train.TrainingData(
+        project="floracast-firestore",
+        gcs_bucket="floracast-datamining",
+        name_usage_id=name_usage_id,
+        train_batch_size=FLAGS.batch_size,
+        train_epochs=FLAGS.epochs_per_eval,
+        occurrence_records=occurrence_records,
+        # transform_data_path='/tmp/bkOkg1YYUKup',
+        # experiment=exp.get(experiment_number)
+        # model_path='/tmp/SQtjlLHyi/model'
+    )
 
-        model = training_data.get_estimator()
+    model = training_data.get_estimator()
 
-        # Train and evaluate the model every `FLAGS.epochs_per_eval` epochs.
-        for n in range(FLAGS.train_epochs // FLAGS.epochs_per_eval):
+    # Train and evaluate the model every `FLAGS.epochs_per_eval` epochs.
+    for n in range(FLAGS.train_epochs // FLAGS.epochs_per_eval):
 
-            eval_input_fn, train_input_fn = training_data.input_functions(0.05)
+        eval_input_fn, train_input_fn = training_data.input_functions(0.05)
 
-            model.train(input_fn=train_input_fn)
+        model.train(input_fn=train_input_fn)
 
-            res = model.evaluate(input_fn=eval_input_fn)
+        res = model.evaluate(input_fn=eval_input_fn)
 
-            exp.register_eval(experiment_number, res)
+        print(res)
+
+        # exp.register_eval(experiment_number, res)
 
 
         # training_data.export_model()
 
         # training_data.upload_exported_model()
 
-    exp.print_tsv()
+    # exp.print_tsv()
 
 
 if __name__ == '__main__':

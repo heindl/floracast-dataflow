@@ -2,26 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d5d946e7-fd45-4ccd-884b-e8aec6a492d9" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/floracast/functions/experiments.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/floracast/analytics/print_input_fn.py" beforeDir="false" afterPath="$PROJECT_DIR$/floracast/functions/print_input_fn.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/floracast/area_dates.sh" beforeDir="false" afterPath="$PROJECT_DIR$/floracast/area_dates.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/floracast/fetch.sh" beforeDir="false" afterPath="$PROJECT_DIR$/floracast/fetch.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/floracast/functions/constants.py" beforeDir="false" afterPath="$PROJECT_DIR$/floracast/functions/constants.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/floracast/functions/example.py" beforeDir="false" afterPath="$PROJECT_DIR$/floracast/functions/example.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/floracast/functions/example_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/floracast/functions/example_test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/floracast/functions/fetch.py" beforeDir="false" afterPath="$PROJECT_DIR$/floracast/functions/fetch.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/floracast/functions/fetch_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/floracast/functions/fetch_test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/floracast/functions/occurrences.py" beforeDir="false" afterPath="$PROJECT_DIR$/floracast/functions/occurrences.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/floracast/functions/print_input_fn.py" beforeDir="false" afterPath="$PROJECT_DIR$/floracast/functions/print_input_fn.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/floracast/functions/train.py" beforeDir="false" afterPath="$PROJECT_DIR$/floracast/functions/train.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/floracast/functions/transform.py" beforeDir="false" afterPath="$PROJECT_DIR$/floracast/functions/transform.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/floracast/functions/transform_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/floracast/functions/transform_test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/floracast/functions/weather.py" beforeDir="false" afterPath="$PROJECT_DIR$/floracast/functions/weather.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/floracast/functions/weather_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/floracast/functions/weather_test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/floracast/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/floracast/setup.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/floracast/teach.py" beforeDir="false" afterPath="$PROJECT_DIR$/floracast/teach.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/floracast/teach.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/floracast/transform.sh" beforeDir="false" afterPath="$PROJECT_DIR$/floracast/transform.sh" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -44,8 +27,8 @@
       <file leaf-file-name="train.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/floracast/functions/train.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="910">
-              <caret line="195" column="32" selection-start-line="195" selection-start-column="32" selection-end-line="195" selection-end-column="32" />
+            <state relative-caret-position="207">
+              <caret line="24" column="8" selection-start-line="24" selection-start-column="8" selection-end-line="24" selection-end-column="8" />
               <folding>
                 <element signature="e#0#23#0" expanded="true" />
               </folding>
@@ -56,8 +39,8 @@
       <file leaf-file-name="constants.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/floracast/functions/constants.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="165">
-              <caret line="11" selection-start-line="11" selection-end-line="11" />
+            <state relative-caret-position="135">
+              <caret line="9" selection-start-line="9" selection-end-line="9" />
             </state>
           </provider>
         </entry>
@@ -74,11 +57,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="print_input_fn.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="print_input_fn.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/floracast/functions/print_input_fn.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="300">
-              <caret line="20" column="32" lean-forward="true" selection-start-line="20" selection-start-column="32" selection-end-line="20" selection-end-column="32" />
+            <state relative-caret-position="505">
+              <caret line="37" column="42" selection-start-line="37" selection-start-column="42" selection-end-line="37" selection-end-column="42" />
               <folding>
                 <element signature="e#0#23#0" expanded="true" />
               </folding>
@@ -113,8 +96,8 @@
       <file leaf-file-name="teach.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/floracast/teach.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="457">
-              <caret line="117" column="13" selection-start-line="117" selection-start-column="13" selection-end-line="117" selection-end-column="13" />
+            <state relative-caret-position="255">
+              <caret line="77" column="2" lean-forward="true" selection-start-line="77" selection-start-column="2" selection-end-line="82" />
               <folding>
                 <element signature="e#713#744#0" expanded="true" />
               </folding>
@@ -122,7 +105,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="occurrences.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="occurrences.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/floracast/functions/occurrences.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="247">
@@ -143,8 +126,8 @@
       <file leaf-file-name="fetch.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/floracast/functions/fetch.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="311">
-              <caret line="32" lean-forward="true" selection-start-line="32" selection-end-line="32" />
+            <state relative-caret-position="345">
+              <caret line="38" lean-forward="true" selection-start-line="38" selection-end-line="38" />
               <folding>
                 <element signature="e#76#102#0" expanded="true" />
               </folding>
@@ -163,7 +146,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>contri</find>
       <find>mode</find>
       <find>get_timestamp_from_path</find>
       <find>rand</find>
@@ -189,10 +171,11 @@
       <find>random</find>
       <find>variables</find>
       <find>* 10</find>
-      <find>reshape</find>
       <find>CoordinateToken</find>
       <find>tfrec</find>
       <find>not in evals</find>
+      <find>reshape</find>
+      <find>staticmet</find>
     </findStrings>
     <replaceStrings>
       <replace />
@@ -281,10 +264,10 @@
         <option value="$PROJECT_DIR$/floracast/functions/constants.py" />
         <option value="$PROJECT_DIR$/floracast/functions/transform.py" />
         <option value="$PROJECT_DIR$/floracast/functions/occurrences.py" />
+        <option value="$PROJECT_DIR$/floracast/functions/experiments.py" />
         <option value="$PROJECT_DIR$/floracast/functions/train.py" />
         <option value="$PROJECT_DIR$/floracast/teach.py" />
         <option value="$PROJECT_DIR$/floracast/functions/print_input_fn.py" />
-        <option value="$PROJECT_DIR$/floracast/functions/experiments.py" />
       </list>
     </option>
   </component>
@@ -301,9 +284,9 @@
     </treeState>
   </component>
   <component name="ProjectFrameBounds" fullScreen="true">
-    <option name="x" value="490" />
-    <option name="y" value="23" />
-    <option name="width" value="748" />
+    <option name="x" value="199" />
+    <option name="y" value="22" />
+    <option name="width" value="1046" />
     <option name="height" value="709" />
   </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
@@ -685,12 +668,12 @@
       <workItem from="1522437166082" duration="1423000" />
       <workItem from="1522464171532" duration="334000" />
       <workItem from="1523397822064" duration="86000" />
-      <workItem from="1524401753779" duration="61533000" />
+      <workItem from="1524401753779" duration="71615000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1372348000" />
+    <option name="totallyTimeSpent" value="1382430000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1280" height="800" extended-state="0" />
@@ -929,23 +912,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/floracast/functions/fetch.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="311">
-          <caret line="32" lean-forward="true" selection-start-line="32" selection-end-line="32" />
-          <folding>
-            <element signature="e#76#102#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/floracast/functions/constants.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="165">
-          <caret line="11" selection-start-line="11" selection-end-line="11" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/floracast/functions/transform.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="260">
@@ -960,36 +926,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="210">
           <caret line="14" column="20" lean-forward="true" selection-start-line="14" selection-start-column="20" selection-end-line="14" selection-end-column="20" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/floracast/functions/train.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="910">
-          <caret line="195" column="32" selection-start-line="195" selection-start-column="32" selection-end-line="195" selection-end-column="32" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/floracast/teach.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="457">
-          <caret line="117" column="13" selection-start-line="117" selection-start-column="13" selection-end-line="117" selection-end-column="13" />
-          <folding>
-            <element signature="e#713#744#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/floracast/functions/print_input_fn.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="20" column="32" lean-forward="true" selection-start-line="20" selection-start-column="32" selection-end-line="20" selection-end-column="32" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1017,6 +953,53 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="247">
           <caret line="131" column="33" lean-forward="true" selection-start-line="131" selection-start-column="33" selection-end-line="131" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/floracast/functions/fetch.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="345">
+          <caret line="38" lean-forward="true" selection-start-line="38" selection-end-line="38" />
+          <folding>
+            <element signature="e#76#102#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/floracast/functions/constants.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="135">
+          <caret line="9" selection-start-line="9" selection-end-line="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/floracast/teach.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="255">
+          <caret line="77" column="2" lean-forward="true" selection-start-line="77" selection-start-column="2" selection-end-line="82" />
+          <folding>
+            <element signature="e#713#744#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/floracast/functions/train.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="207">
+          <caret line="24" column="8" selection-start-line="24" selection-start-column="8" selection-end-line="24" selection-end-column="8" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/floracast/functions/print_input_fn.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="505">
+          <caret line="37" column="42" selection-start-line="37" selection-start-column="42" selection-end-line="37" selection-end-column="42" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

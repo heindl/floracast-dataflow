@@ -1,13 +1,24 @@
 import tensorflow as tf
 import train
+import occurrences
+
+name_usage_id = "qWlT2bh"
+
+occurrence_records = occurrences.OccurrenceTFRecords(
+    name_usage_id=name_usage_id,
+    project="floracast-firestore",
+    gcs_bucket="floracast-datamining",
+)
+
 
 training_data = train.TrainingData(
     project="floracast-firestore",
     gcs_bucket="floracast-datamining",
-    name_usage_id="qWlT2bh",
+    name_usage_id=name_usage_id,
     train_batch_size=20,
     train_epochs=1,
-    transform_data_path='/tmp/zwTPA2M1I',
+    occurrence_records=occurrence_records,
+    # transform_data_path='/tmp/zwTPA2M1I',
 )
 
 eval_input_fn, train_input_fn = training_data.input_functions(0.05)
