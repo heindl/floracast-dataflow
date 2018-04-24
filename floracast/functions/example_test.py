@@ -5,22 +5,39 @@ import datetime
 
 class ExampleParseTestCase(unittest.TestCase):
 
-    _CATEGORY = "AHo2IYxvo37RjezIkho6xBWmq"
+    _CATEGORY = "Io1ftG"
 
     def test_example_creation_from_firestore(self):
         """Is an example successfully created from a Firestore dictionary?"""
 
-        id = "AHo2IYxvo37RjezIkho6xBWmq-27-923908968"
+        id = "Io1ftG-27-923908968"
         f = {
             'GeoFeatureSet': {
-                'CoordinateKey': '43.736|-73.210',
                 'EcoNum': 7,
                 'Elevation': 215,
                 'SourceType': '27',
                 'GeoPoint': {'latitude': 43.736238, 'longitude': -73.210352},
                 'TargetID': '2594602',
                 'EcoBiome': 4,
-                'S2Tokens': {'1': '8c', '0': '9', '3': '89c', '2': '89', '5': '89e4', '4': '89f', '7': '89e04', '6': '89e1'},
+                'S2Tokens': {
+                    "0": "5",
+                    "1": "4c",
+                    "2": "4d",
+                    "3": "4cc",
+                    "4": "4cb",
+                    "5": "4ca4",
+                    "6": "4ca5",
+                    "7": "4ca4c",
+                    "8": "4ca4d",
+                    "9": "4ca4dc",
+                    "10": "4ca4d9",
+                    "11": "4ca4d9c",
+                    "12": "4ca4d9d",
+                    "13": "4ca4d9d4",
+                    "14": "4ca4d9d7",
+                    "15": "4ca4d9d7c",
+                    "16": "4ca4d9d7f"
+                },
                 'CoordinatesEstimated': False,
                 'EcoRealm': 5,
                 'SourceOccurrenceID': '923908968'
@@ -32,8 +49,8 @@ class ExampleParseTestCase(unittest.TestCase):
 
         self.assertEqual(ex.example_id(), id)
         self.assertEqual(ex.category(), self._CATEGORY)
-        self.assertEqual(ex.longitude(), -73.210352)
-        self.assertEqual(ex.latitude(), 43.736238)
+        self.assertAlmostEqual(ex.longitude(), -73.2103500)
+        self.assertAlmostEqual(ex.latitude(), 43.73623657)
         self.assertEqual(ex.date_string(), '20100510')
         self.assertEqual(ex.datetime().date(), datetime.date(2010, 5, 10))
         self.assertEqual(ex.season().as_int(), Season.Spring)
@@ -42,7 +59,7 @@ class ExampleParseTestCase(unittest.TestCase):
         self.assertEqual(ex.elevation(), 215)
         self.assertEqual(ex.month_name(), "May")
         self.assertEqual(ex.equality_key(), "%s|||43.7362|||-73.2104|||20100510" % self._CATEGORY)
-        self.assertEqual(ex.season_region_key(2), "2010-1-89")
+        self.assertEqual(ex.season_region_key(2), "2010-1-4d")
         self.assertEqual(ex.eco_region(), ('5', '4', '7'))
 
         for i in f['GeoFeatureSet']["S2Tokens"]:

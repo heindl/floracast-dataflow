@@ -13,3 +13,5 @@ KEY_S2_TOKENS = 's2_tokens'
 KEY_ECO_BIOME = 'eco_biome'
 KEY_ECO_REALM = 'eco_realm'
 KEY_ECO_NUM = 'eco_num'
+
+KEY_ECO_REGION = 'eco_region' # Cross-Column between Biome and Num

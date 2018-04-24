@@ -35,15 +35,15 @@ if __name__ == '__main__':
         author="mph",
         author_email="matt@floracast.com",
         install_requires=[
-            "apache-beam==2.3.0",
+            "apache-beam==2.4.0",
             "google-cloud==0.32.0",
-            "tensorflow==1.6.0",
-            "tensorflow-transform==0.5.0",
+            "tensorflow==1.7.0",
+            "tensorflow-transform==0.6.0",
             "astral==1.6",
-            "geopy==1.11.0",
-            "numpy==1.14.1",
+            "geopy==1.13.0",
+            "numpy==1.14.2",
             "pandas==0.22.0",
             "scikit-learn==0.19.1",
-            "google-cloud-bigquery==0.31.0"
+            "google-cloud-bigquery==1.1.0"
         ]
     )

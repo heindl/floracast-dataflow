@@ -56,7 +56,7 @@ class FetchNameUsages(beam.DoFn):
         self._project = project
         self._nameusages = nameusages
 
-    def process(self, i):
+    def process(self, i=0):
 
         nameusages = parse_pipeline_argument(self._nameusages)
 
@@ -65,14 +65,11 @@ class FetchNameUsages(beam.DoFn):
 
         for nameusage_id in nameusages.split(","):
 
-            nameusage_id = unicode(nameusage_id, "utf-8")
+            nameusage_id.strip()
 
             logging.debug("Fetching NameUsage [%s] from Firestore", nameusage_id)
 
-            db = firestore.Client(project=self._project)
-            col = db.collection(u'NameUsages')
-
-            usage = col.document(nameusage_id).get()
+            usage = firestore.Client(project=self._project).document(u'NameUsages/%s' % nameusage_id).get()
 
             logging.debug("Received NameUsage [%s] from Firestore", nameusage_id)
 
@@ -186,8 +183,8 @@ class ExplodeProtectedAreaDates(beam.DoFn):
 
             area_copy["FormattedDate"] = d
             try:
-                e = ParseExampleFromFirestore("protected_area-"+d, area_copy["GeoFeatureSet"]["CoordinateKey"], area_copy)
+                e = ParseExampleFromFirestore("protected_area-"+d, area_copy["GeoFeatureSet"]["S2Tokens"]["15"], area_copy)
             except ValueError as error:
-                logging.error('ProtectedArea [%s] could not be parsed into Example: %s', area_copy["GeoFeatureSet"]["CoordinateKey"], error)
+                logging.error('ProtectedArea [%s] could not be parsed into Example: %s', area_copy["GeoFeatureSet"]["S2Tokens"]["15"], error)
                 continue
             yield e

@@ -6,7 +6,6 @@ from tensorflow_transform.saved import input_fn_maker, saved_transform_io
 from tensorflow.contrib.learn.python.learn.utils import input_fn_utils
 import constants
 from math import ceil
-from occurrences import OccurrenceTFRecords
 import functools
 import six
 from datetime import datetime
@@ -17,13 +16,27 @@ import random
 import errno
 from tensorflow.python.lib.io import tf_record
 TFRecordCompressionType = tf_record.TFRecordCompressionType
-from shutil import rmtree
+
 
 class TrainingData:
 
     _TEMP_DIR = "/tmp/"
 
-    def __init__(self, project, gcs_bucket, name_usage_id, train_batch_size, train_epochs, transform_data_path=None, model_path=None):
+    def __init__(self,
+                 project,
+                 gcs_bucket,
+                 name_usage_id,
+                 train_batch_size,
+                 train_epochs,
+                 occurrence_records,
+                 transform_data_path=None,
+                 model_path=None,
+                 experiment=None
+                 ):
+
+        self._experiment = experiment
+        if self._experiment is not None:
+            print('Launching Experiment %d' % self._experiment['id'])
 
         self._name_usage_id = name_usage_id
         self._train_batch_size = train_batch_size
@@ -50,18 +63,18 @@ class TrainingData:
             if not isdir(dir):
                 raise ValueError("Directory doesn't exist: ", dir)
 
-        self._tfrecord_parser = OccurrenceTFRecords(
-            name_usage_id=name_usage_id,
-            project=self._project,
-            gcs_bucket=self._gcs_bucket,
-        )
+        self._tfrecord_parser = occurrence_records
 
     def __del__(self):
         # cleanup local occurrence data.
-        if not self._local_path.startswith(self._TEMP_DIR):
-            raise ValueError("Invalid Train Output Path")
-        if isdir(self._local_path):
-            rmtree(self._local_path)
+        # if not self._local_path.startswith(self._TEMP_DIR):
+        #     raise ValueError("Invalid Train Output Path")
+        # if isdir(self._local_path):
+        #     rmtree(self._local_path)
+        # print("local_path", self._local_path)
+        # print("model_path", self._model_path)
+        print("transform_path", self._transform_data_path)
+
 
     def _make_temp_dir(self):
         dir = self._TEMP_DIR + "".join(random.choice(string.ascii_letters + string.digits) for x in range(random.randint(8, 12)))
@@ -99,49 +112,79 @@ class TrainingData:
         return join(self._local_path)
 
     def _feature_columns(self):
+
         meta_data = metadata_io.read_metadata(self._transformed_metadata_path)
 
-        eco_num_buckets = meta_data.schema[constants.KEY_ECO_NUM].domain.max_value
-        eco_biome_buckets = meta_data.schema[constants.KEY_ECO_BIOME].domain.max_value
-        s2_token_buckets = meta_data.schema[constants.KEY_S2_TOKENS].domain.max_value
+        res = []
 
-        eco_num_column = tf.feature_column.categorical_column_with_identity(
-            constants.KEY_ECO_NUM,
-            num_buckets=eco_num_buckets,
-            default_value=0
-        )
+        # Note: Tested ECO_BIOME & ECO_Region individually, and as seperate features in the model,
+        # but the crossed column has a slightly higher precision.
+        if constants.KEY_ECO_REGION in self._experiment['columns']:
+            eco_num_buckets = meta_data.schema[constants.KEY_ECO_NUM].domain.max_value
+            eco_biome_buckets = meta_data.schema[constants.KEY_ECO_BIOME].domain.max_value
+            eco_biome_column = tf.feature_column.categorical_column_with_identity(
+                constants.KEY_ECO_BIOME,
+                num_buckets=eco_biome_buckets,
+                default_value=0
+            )
+            eco_num_column = tf.feature_column.categorical_column_with_identity(
+                constants.KEY_ECO_NUM,
+                num_buckets=eco_num_buckets,
+                default_value=0
+            )
+            region_column = tf.feature_column.crossed_column(
+                [eco_biome_column, eco_num_column],
+                hash_bucket_size=1000
+            )
+            # Note: Tried embedding_column but indicator column was significantly more accurate.
+            res.append(tf.feature_column.indicator_column(region_column))
 
-        eco_biome_column = tf.feature_column.categorical_column_with_identity(
-            constants.KEY_ECO_BIOME,
-            num_buckets=eco_biome_buckets,
-            default_value=0
-        )
+        for column in self._experiment['columns']:
+            if 's2_token_' in column:
+                s2_token_buckets = meta_data.schema[column].domain.max_value
+                s2_token_column = tf.feature_column.categorical_column_with_identity(
+                    column,
+                    num_buckets=s2_token_buckets,
+                    default_value=0
+                )
+                s2_token_embedding_dimensions = ceil(s2_token_buckets ** 0.25)
+                res.append(tf.feature_column.embedding_column(s2_token_column, dimension=s2_token_embedding_dimensions))
 
-        s2_token_column = tf.feature_column.categorical_column_with_identity(
-            constants.KEY_S2_TOKENS,
-            num_buckets=s2_token_buckets,
-            default_value=0
-        )
+        if constants.KEY_MAX_TEMP in self._experiment['columns']:
+            res.append(tf.feature_column.numeric_column(
+                constants.KEY_MAX_TEMP,
+                shape=[self._experiment['shape']])
+            )
 
-        eco_num_embedding_dimensions = ceil(eco_num_buckets ** 0.25)
-        s2_token_embedding_dimensions = ceil(s2_token_buckets ** 0.25)
+        if constants.KEY_MIN_TEMP in self._experiment['columns']:
+            res.append(tf.feature_column.numeric_column(
+                constants.KEY_MIN_TEMP,
+                shape=[self._experiment['shape']])
+            )
 
-        return [
-            tf.feature_column.numeric_column(constants.KEY_ELEVATION, shape=[]),
-            tf.feature_column.numeric_column(constants.KEY_MAX_TEMP, shape=[8]),
-            tf.feature_column.numeric_column(constants.KEY_MIN_TEMP, shape=[8]),
-            tf.feature_column.numeric_column(constants.KEY_PRCP, shape=[8]),
-            tf.feature_column.numeric_column(constants.KEY_DAYLIGHT, shape=[8]),
-            # Indicator column for eco_biome because there are only 9 categories.
-            tf.feature_column.indicator_column(eco_biome_column),
-            tf.feature_column.embedding_column(eco_num_column, dimension=eco_num_embedding_dimensions),
-            tf.feature_column.embedding_column(s2_token_column, dimension=s2_token_embedding_dimensions),
-        ]
+        if constants.KEY_PRCP in self._experiment['columns']:
+            res.append(tf.feature_column.numeric_column(
+                constants.KEY_PRCP,
+                shape=[self._experiment['shape']])
+            )
+
+        if constants.KEY_ELEVATION in self._experiment['columns']:
+            res.append(tf.feature_column.numeric_column(constants.KEY_ELEVATION, shape=[]))
+
+        if constants.KEY_DAYLIGHT in self._experiment['columns']:
+            res.append(tf.feature_column.numeric_column(constants.KEY_DAYLIGHT, shape=[self._experiment['shape']]))
+
+        return res
+
 
     def _reshape_weather(self, f):
-        f = tf.reshape(f, [18, 5])
+        days = 2
+        if self._experiment is not None:
+            days = self._experiment['days']
+
+        f = tf.reshape(f, [120 / days, days])
         f = tf.reduce_mean(f, 1)
-        f = tf.slice(f, [10], [8])
+        f = tf.slice(f, [self._experiment['slice_index']], [self._experiment['shape']])
         return f
 
     def _all_feature_keys(self):
@@ -150,6 +193,10 @@ class TrainingData:
             constants.KEY_ECO_NUM,
             constants.KEY_ECO_BIOME,
             constants.KEY_S2_TOKENS,
+            # Maybe 's2_token_3'
+            's2_token_3',
+            's2_token_4',
+            's2_token_5',
         ]
 
     def _weather_keys(self):
@@ -225,7 +272,7 @@ class TrainingData:
             num_epochs=epochs,
             randomize_input=True,
             # randomize_input=(mode == estimator.ModeKeys.TRAIN),
-            queue_capacity=batch_size * 20,
+            queue_capacity=(batch_size + 1) if (mode == tf.estimator.ModeKeys.EVAL) else (batch_size * 20),
         )
 
         features, labels = fn()
@@ -236,7 +283,8 @@ class TrainingData:
         #     labels = tf.Print(labels, [labels])
 
         for weather_key in self._weather_keys():
-            features[weather_key] = tf.map_fn(self._reshape_weather, features[weather_key])
+            if weather_key in self._experiment['columns']:
+                features[weather_key] = tf.map_fn(self._reshape_weather, features[weather_key])
 
         if mode == tf.estimator.ModeKeys.PREDICT:
             # features[constants.KEY_OCCURRENCE_ID] = labels
@@ -316,6 +364,7 @@ class TrainingData:
         return tf.estimator.DNNClassifier(
             feature_columns=self._feature_columns(),
             hidden_units=[100, 75, 50, 25],
+            # hidden_units=[75],
             # optimizer=tf.train.ProximalAdagradOptimizer(
             #     learning_rate=0.01,
             #     l1_regularization_strength=0.001

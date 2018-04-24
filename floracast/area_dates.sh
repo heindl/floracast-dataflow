@@ -12,7 +12,7 @@ while [ "$currentTs" -le "$endTs" ]
 do
 
   weekDay=$(date -j -f "%s" "$currentTs" "+%u")
-  if [ "$weekDay" == "1" ] || [ "$weekDay" == "5" ]; then
+  if [ "$weekDay" == "2" ] || [ "$weekDay" == "5" ]; then
      d=$(date -j -f "%s" $currentTs "+%Y%m%d")
      res+=",$d"
   fi

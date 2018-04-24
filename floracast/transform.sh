@@ -36,5 +36,5 @@ python ./transform.py \
     --job_name="tensorflow-transform-$DATE" \
     --bucket="floracast-datamining" \
     --temp_location="/tmp/floracast-datamining/temp" \
-    --setup_file /Users/m/Desktop/floracast/dataflow/fetch/setup.py
+    --setup_file /Users/m/Desktop/floracast/dataflow/floracast/setup.py
 #    --workerLogLevelOverrides=com.google.cloud.dataflow#DEBUG

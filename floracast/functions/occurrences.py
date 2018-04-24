@@ -84,7 +84,7 @@ class OccurrenceTFRecords:
 
         self._random_count = 0
         i = 0
-        while self._random_count < self._occurrence_count:
+        while self._random_count < (self._occurrence_count * 10):
             i += 1
             filename = ("%d.tfrecords" % i)
             local_file = os.path.join(self._occurrence_path, filename)

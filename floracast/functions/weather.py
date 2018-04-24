@@ -22,7 +22,7 @@ class FetchWeatherDoFn(beam.DoFn):
         super(FetchWeatherDoFn, self).__init__()
         self._project = project,
         self._max_weather_station_distance = 100 # Kilometers
-        self._weather_days_before = 90
+        self._weather_days_before = 120
 
     def process(self, batch):
 

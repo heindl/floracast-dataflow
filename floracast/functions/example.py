@@ -307,8 +307,8 @@ class Example:
         return '%s-%d-%s' % (self.year_string(), self.season().as_int(), self.s2_token(cell_level))
 
     def set_s2_tokens(self, cells):
-        if len(cells) != 8:
-            raise ValueError('Example requires eight S2 cells')
+        if len(cells) != 17:
+            raise ValueError('Example requires 17 S2 cells')
 
         if type(cells) == list:
             for i, c in enumerate(cells):
@@ -407,8 +407,19 @@ def ParseExampleFromFirestore(category_id, example_id, o):
 
     e.set_date(str(o['FormattedDate']))
 
-    e.set_latitude(float(o['GeoFeatureSet']['GeoPoint']['latitude']))
-    e.set_longitude(float(o['GeoFeatureSet']['GeoPoint']['longitude']))
+    lat = 0
+    lng = 0
+    geopoint = o['GeoFeatureSet']['GeoPoint']
+
+    if type(geopoint) == dict:
+        lat = geopoint['latitude']
+        lng = geopoint['longitude']
+    else: # Assume to be a GeoPoint
+        lat = geopoint.latitude
+        lng = geopoint.longitude
+
+    e.set_latitude(float(lat))
+    e.set_longitude(float(lng))
 
     if 'Elevation' not in o['GeoFeatureSet']:
         raise ValueError('Elevation must be set in Firestore Occurrence')

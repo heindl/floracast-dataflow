@@ -16,10 +16,14 @@
 # from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-import sys
 import tensorflow as tf
 import argparse
+import sys
+
 from functions import train
+from functions import experiments
+
+from functions import occurrences
 
 parser = argparse.ArgumentParser()
 
@@ -35,46 +39,87 @@ parser = argparse.ArgumentParser()
 #     help='Save to a specific directory.')
 
 parser.add_argument(
-    '--train_epochs', type=int, default=20, help='Number of training epochs.')
+    '--train_epochs', type=int, default=40, help='Number of training epochs.')
 #
 parser.add_argument(
-    '--epochs_per_eval', type=int, default=2,
+    '--epochs_per_eval', type=int, default=5,
     help='The number of training epochs to run between evaluations.')
 
 parser.add_argument(
-    '--batch_size', type=int, default=20, help='Number of examples per batch.')
+    '--batch_size', type=int, default=50, help='Number of examples per batch.')
+
+# def main(argv):
+#
+#     model = tf.estimator.DNNClassifier(
+#         feature_columns=[],
+#         # hidden_units=[100, 75, 50, 25],
+#         hidden_units=[75],
+#         model_dir='/tmp/lhYkSxbfSPhG/model')
+#     vars = model.get_variable_names()
+#     print("Input Length", model.get_variable_value('dnn/logits/bias'))
+#     for v in vars:
+#         print(v)
+
+    # with tf.Session(graph=tf.Graph()) as sess:
+    #     tf.saved_model.loader.load(
+    #         sess, [tf.saved_model.tag_constants.SERVING], '/tmp/SQtjlLHyi/model/exports/1524417008')
+    #
+    #     pb_visual_writer = summary.FileWriter('/tmp/tf_log_dir')
+    #     pb_visual_writer.add_graph(sess.graph)
+    #     print("Model Imported. Visualize by running: "
+    #           "tensorboard --logdir={}".format('/tmp/tf_log_dir'))
 
 def main(argv):
 
-    training_data = train.TrainingData(
+    exp = experiments.Experiments()
+
+    name_usage_id = "2xUhop2"
+
+    occurrence_records = occurrences.OccurrenceTFRecords(
+        name_usage_id=name_usage_id,
         project="floracast-firestore",
         gcs_bucket="floracast-datamining",
-        name_usage_id="9sykdre6ougztwabsjjufiwvu",
-        train_batch_size=FLAGS.batch_size,
-        train_epochs=FLAGS.epochs_per_eval,
     )
 
-    model = training_data.get_estimator()
+    print("Total Experiments", exp.count())
 
-    # Train and evaluate the model every `FLAGS.epochs_per_eval` epochs.
-    for n in range(FLAGS.train_epochs // FLAGS.epochs_per_eval):
+    for experiment_number in range(exp.count()):
 
-        eval_input_fn, train_input_fn = training_data.input_functions(0.05)
+        training_data = train.TrainingData(
+            project="floracast-firestore",
+            gcs_bucket="floracast-datamining",
+            name_usage_id=name_usage_id,
+            train_batch_size=FLAGS.batch_size,
+            train_epochs=FLAGS.epochs_per_eval,
+            occurrence_records=occurrence_records,
+            transform_data_path='/tmp/bkOkg1YYUKup',
+            experiment=exp.get(experiment_number)
+            # model_path='/tmp/SQtjlLHyi/model'
+        )
 
-        model.train(input_fn=train_input_fn)
+        model = training_data.get_estimator()
 
-        res = model.evaluate(input_fn=eval_input_fn)
+        # Train and evaluate the model every `FLAGS.epochs_per_eval` epochs.
+        for n in range(FLAGS.train_epochs // FLAGS.epochs_per_eval):
 
-        # Display evaluation metrics
-        print('Results at epoch', (n + 1) * FLAGS.epochs_per_eval)
-        print('-' * 60)
-        for key in sorted(res):
-            print('%s: %s' % (key, res[key]))
+            eval_input_fn, train_input_fn = training_data.input_functions(0.05)
 
-    training_data.export_model()
+            model.train(input_fn=train_input_fn)
+
+            res = model.evaluate(input_fn=eval_input_fn)
+
+            exp.register_eval(experiment_number, res)
+
+
+        # training_data.export_model()
+
+        # training_data.upload_exported_model()
+
+    exp.print_tsv()
 
 
 if __name__ == '__main__':
-    tf.logging.set_verbosity(tf.logging.INFO)
+    # tf.logging.set_verbosity(tf.logging.INFO)
+    tf.logging.set_verbosity(tf.logging.ERROR)
     FLAGS, unparsed = parser.parse_known_args()
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)

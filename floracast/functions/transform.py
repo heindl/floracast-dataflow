@@ -91,7 +91,10 @@ class TransformData:
             # Hopefully this will bucket Random and NameUsage without the necessity for boolean conversion.
 
             # Categorical
-            r[constants.KEY_S2_TOKENS] = tft.string_to_int(i[constants.KEY_S2_TOKENS], default_value=0)
+            token_list = tf.split(i[constants.KEY_S2_TOKENS], num_or_size_splits=17, axis=1)
+            for token_level in range(17):
+                r[ 's2_token_%d' % token_level] = tft.string_to_int(token_list[token_level], default_value=0)
+
             r[constants.KEY_ECO_BIOME] = tft.string_to_int(i[constants.KEY_ECO_BIOME], default_value=0)
             r[constants.KEY_ECO_NUM] = tft.string_to_int(i[constants.KEY_ECO_NUM], default_value=0)
 
@@ -121,15 +124,15 @@ class TransformData:
             # constants.KEY_EXAMPLE_ID: FixedLenFeature(shape=[], dtype=string),
         })
         result.update({
-            constants.KEY_S2_TOKENS: tf.FixedLenFeature(shape=[8], dtype=tf.string),
+            constants.KEY_S2_TOKENS: tf.FixedLenFeature(shape=[17], dtype=tf.string),
             constants.KEY_ECO_BIOME: tf.FixedLenFeature(shape=[], dtype=tf.string),
             constants.KEY_ECO_NUM: tf.FixedLenFeature(shape=[], dtype=tf.string),
             constants.KEY_ELEVATION: tf.FixedLenFeature(shape=[], dtype=tf.int64),
-            constants.KEY_MAX_TEMP: tf.FixedLenFeature(shape=[90], dtype=tf.float32),
-            constants.KEY_MIN_TEMP: tf.FixedLenFeature(shape=[90], dtype=tf.float32),
-            constants.KEY_AVG_TEMP: tf.FixedLenFeature(shape=[90], dtype=tf.float32),
-            constants.KEY_PRCP: tf.FixedLenFeature(shape=[90], dtype=tf.float32),
-            constants.KEY_DAYLIGHT: tf.FixedLenFeature(shape=[90], dtype=tf.float32),
+            constants.KEY_MAX_TEMP: tf.FixedLenFeature(shape=[120], dtype=tf.float32),
+            constants.KEY_MIN_TEMP: tf.FixedLenFeature(shape=[120], dtype=tf.float32),
+            constants.KEY_AVG_TEMP: tf.FixedLenFeature(shape=[120], dtype=tf.float32),
+            constants.KEY_PRCP: tf.FixedLenFeature(shape=[120], dtype=tf.float32),
+            constants.KEY_DAYLIGHT: tf.FixedLenFeature(shape=[120], dtype=tf.float32),
         })
 
         return dataset_metadata.DatasetMetadata(schema=dataset_schema.from_feature_spec(result))
