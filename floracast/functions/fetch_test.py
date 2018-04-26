@@ -1,9 +1,9 @@
 import unittest
-from fetch import FetchRandom, FetchOccurrences, GenerateProtectedAreaBatches, FetchProtectedAreas, FetchNameUsages
 from write import ExampleRecordWriter
 from datetime import datetime
 from occurrences import OccurrenceTFRecords
 from os import path
+import fetch
 
 
 class ExampleFetchTestCase(unittest.TestCase):
@@ -11,29 +11,34 @@ class ExampleFetchTestCase(unittest.TestCase):
     _PROJECT = "floracast-firestore"
     # _CATEGORY = "AHo2IYxvo37RjezIkho6xBWmq"
 
-    def test_name_usage_fetch(self):
-        usageFetcher = FetchNameUsages(project=self._PROJECT, nameusages="2xUhop2,8vMzLmz,BL6T9EP")
-        sources = list(usageFetcher.process())
-        self.assertEqual(len(sources), 17)
+    # def test_name_usage_fetch(self):
+    #     usageFetcher = FetchNameUsages(project=self._PROJECT, nameusages="2xUhop2,8vMzLmz,BL6T9EP")
+    #     sources = list(usageFetcher.process())
+    #     self.assertEqual(len(sources), 17)
 
+    # def test_generator(self):
+    #     generator = fetch.GeneratePointBatches(project=self._PROJECT, collection="ProtectedAreas", engage=True)
+    #
+    #     l = list(generator.process(0))
+    #     self.assertEqual(len(l), 17)
 
-    def test_occurrence_fetch(self):
-        """Are occurrences correctly fetched?"""
-
-        occurrence_fetcher = FetchOccurrences(project=self._PROJECT)
-        occurrences = list(occurrence_fetcher.process("ugkG3de-|-27-|-2526530"))
-
-        self.assertEqual(len(occurrences), 829)
-
-        example_groups = {}
-        for o in occurrences:
-            k = o.season_region_key(2)
-            if k not in example_groups:
-                example_groups[k] = [o]
-            else:
-                example_groups[k].append(o)
-
-        self.assertEqual(len(example_groups), 232)
+    # def test_occurrence_fetch(self):
+    #     """Are occurrences correctly fetched?"""
+    #
+    #     occurrence_fetcher = FetchOccurrences(project=self._PROJECT)
+    #     occurrences = list(occurrence_fetcher.process("ugkG3de-|-27-|-2526530"))
+    #
+    #     self.assertEqual(len(occurrences), 829)
+    #
+    #     example_groups = {}
+    #     for o in occurrences:
+    #         k = o.season_region_key(2)
+    #         if k not in example_groups:
+    #             example_groups[k] = [o]
+    #         else:
+    #             example_groups[k].append(o)
+    #
+    #     self.assertEqual(len(example_groups), 232)
 
         # l = []
         # for o in example_groups["2017-1-89"]:
@@ -82,14 +87,15 @@ class ExampleFetchTestCase(unittest.TestCase):
     #
     #     self.assertEqual(OccurrenceTFRecords.count(f), 635)
     #
-    # def test_protected_area(self):
-    #
-    #     batcher = GenerateProtectedAreaBatches(project=self._PROJECT, protected_area_dates="20060102")
-    #     print(list(batcher.process(0)))
-    #
-    #     area_fetcher = FetchProtectedAreas(project=self._PROJECT)
-    #     areas = list(area_fetcher.process(100))
-    #     print("FetchAreas", len(areas))
+    def test_protected_area(self):
+
+        generated = [[1524709454106576809L, 1524709500681148827L], [1524709500681148827L, 1524709543101281776L], [1524709543101281776L, 1524709583649974355L], [1524709583649974355L, 1524709626241070371L], [1524709626241070371L, 1524709667218791883L], [1524709667218791883L, 1524709709006832435L], [1524709709006832435L, 1524709753325271926L], [1524709753325271926L, 1524709793774425660L], [1524709793774425660L, 1524709838484958710L], [1524709838484958710L, 1524709882179012422L], [1524709882179012422L, 1524709925496147411L], [1524709925496147411L, 1524709967040278683L], [1524709967040278683L, 1524710007745831715L], [1524710007745831715L, 1524710048097675428L], [1524710048097675428L, 1524710089237106967L], [1524710089237106967L, 1524710129613449631L], [1524710129613449631L, 0]]
+        total = 0
+        for g in generated:
+            area_fetcher = fetch.FetchProtectedAreas(project=self._PROJECT)
+            total = total + len(list(area_fetcher.process(g)))
+
+        self.assertEqual(total, 8294)
 
 
 

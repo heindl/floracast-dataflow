@@ -14,6 +14,7 @@ from google.cloud import storage
 import string
 import random
 import errno
+import occurrences
 from tensorflow.python.lib.io import tf_record
 TFRecordCompressionType = tf_record.TFRecordCompressionType
 
@@ -140,7 +141,7 @@ class TrainingData:
         res.append(tf.feature_column.indicator_column(region_column))
 
         # for column in self._experiment['columns']:
-        for s2_level in [3,4,5]:
+        for s2_level in [3,4]:
             s2_token_column = 's2_token_%d' % s2_level
             s2_token_buckets = meta_data.schema[s2_token_column].domain.max_value
             s2_token_column = tf.feature_column.categorical_column_with_identity(
@@ -189,10 +190,10 @@ class TrainingData:
             constants.KEY_ECO_NUM,
             constants.KEY_ECO_BIOME,
             constants.KEY_S2_TOKENS,
-            # Maybe 's2_token_3'
+            # Maybe 's2_token_2'
             's2_token_3',
             's2_token_4',
-            's2_token_5',
+            # 's2_token_5', # Appeared to overfit.
         ]
 
     def _weather_keys(self):
@@ -221,11 +222,11 @@ class TrainingData:
             )
         )
 
-    def input_functions(self, percentage_split):
+    def input_functions(self):
 
-        eval_file, train_file = self._tfrecord_parser.train_test_split(percentage_split)
+        eval_file, train_file = self._tfrecord_parser.train_test_split()
 
-        eval_batch_size = self._tfrecord_parser.count(eval_file, compression_type=TFRecordCompressionType.GZIP)
+        eval_batch_size = occurrences.OccurrenceTFRecords.count(eval_file, compression_type=TFRecordCompressionType.GZIP)
 
         train_fn = functools.partial(self._transformed_input_fn,
                                      raw_data_file_pattern=train_file,

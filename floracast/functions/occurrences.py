@@ -9,47 +9,82 @@ from glob import iglob
 import os
 import errno
 from google.cloud import storage
-import shutil
 
 TEMP_DIRECTORY = "/tmp/"
 
 class OccurrenceTFRecords:
 
-    _total_count = 0
-    _occurrence_count = 0
-
-    def __init__(self, name_usage_id, project, gcs_bucket):
+    def __init__(self,
+                 name_usage_id,
+                 project,
+                 gcs_bucket,
+                 occurrence_path=None,
+                 random_path=None,
+                 multiplier_of_random_to_occurrences=5,
+                 test_train_split_percentage=0.05,
+        ):
 
         self._output_path = TEMP_DIRECTORY + "".join(choice(ascii_letters + digits) for x in range(randint(8, 12)))
-        self._occurrence_path = os.path.join(self._output_path, "occurrences/")
+
+        self._occurrence_path = occurrence_path if occurrence_path is not None else os.path.join(self._output_path, "occurrences/")
+        self._random_path = random_path if random_path is not None else os.path.join(self._output_path, "random/")
+
         self._occurrence_file = os.path.join(self._occurrence_path, "occurrences.tfrecords")
 
         self._eval_output = os.path.join(self._output_path, "eval.tfrecords.gz")
         self._train_output = os.path.join(self._output_path, "train.tfrecords.gz")
 
-        if not self._occurrence_path.startswith(TEMP_DIRECTORY):
+        if not self._occurrence_path.startswith(TEMP_DIRECTORY) or not self._random_path.startswith(TEMP_DIRECTORY) or not self._output_path.startswith(TEMP_DIRECTORY):
             raise ValueError("Invalid TFRecords Output Path")
+
         try:
-            os.makedirs(self._occurrence_path)
+            os.makedirs(self._output_path)
         except OSError as exc:
             if exc.errno != errno.EEXIST:
                 raise
             pass
 
-        self._client = storage.Client(project)
+        if occurrence_path is None:
+            try:
+                os.makedirs(self._occurrence_path)
+            except OSError as exc:
+                if exc.errno != errno.EEXIST:
+                    raise
+                pass
+            self._client = storage.Client(project)
+            self._gcs_bucket = self._client.get_bucket(gcs_bucket)
+            self._fetch_occurrences(name_usage_id)
 
-        self._gcs_bucket = self._client.get_bucket(gcs_bucket)
-        self._fetch_occurrences(name_usage_id)
-        self._fetch_random()
+        self._occurrence_count = OccurrenceTFRecords.count(self._occurrence_file)
 
-        self._total_count = self._occurrence_count + self._random_count
+        if random_path is None:
+            try:
+                os.makedirs(self._random_path)
+            except OSError as exc:
+                if exc.errno != errno.EEXIST:
+                    raise
+                pass
+            self._client = storage.Client(project)
+            self._gcs_bucket = self._client.get_bucket(gcs_bucket)
+            self._fetch_random()
+
+        self._count_random_directory(test_train_split_percentage)
+
+        total_random_count = multiplier_of_random_to_occurrences * self._occurrence_count
+
+
+        self._eval_random_count = int(round(total_random_count * test_train_split_percentage))
+        self._eval_occurrence_count = int(round(self._occurrence_count * test_train_split_percentage))
+
+        self._train_random_count = total_random_count - self._eval_random_count
+        self._train_occurrence_count = self._occurrence_count - self._eval_occurrence_count
 
     def __del__(self):
         # cleanup local occurrence data.
         if not self._output_path.startswith(TEMP_DIRECTORY):
             raise ValueError("Invalid TFRecords Output Path")
-        if os.path.isdir(self._output_path):
-            shutil.rmtree(self._output_path)
+        # if os.path.isdir(self._output_path):
+        #     shutil.rmtree(self._output_path)
 
     def _latest_gcs_occurrence_blob(self, name_usage):
         file_names = {} # Should be a list of [timestamp].tfrecords
@@ -62,12 +97,12 @@ class OccurrenceTFRecords:
         k = sorted(file_names.keys(), reverse=True)[0]
         return file_names[k]
 
+
     def _fetch_occurrences(self, name_usage):
         if len(name_usage) == 0:
             raise ValueError("Invalid NameUsage")
         obj = self._latest_gcs_occurrence_blob(name_usage)
         obj.download_to_filename(self._occurrence_file)
-        self._occurrence_count = OccurrenceTFRecords.count(self._occurrence_file)
 
     def _latest_random_path(self):
         dates = set() # Should be a list of [timestamp].tfrecords
@@ -78,18 +113,26 @@ class OccurrenceTFRecords:
             raise ValueError("Random path not found")
         return "random/%s" % sorted(list(dates), reverse=True)[0]
 
-    def _fetch_random(self):
-
-        gcs_random_path = self._latest_random_path()
-
+    def _count_random_directory(self, test_train_split_percentage):
         self._random_count = 0
+        self._random_file_count = 0
+        for f in iglob(self._random_path+"/*.tfrecords"):
+            self._random_file_count += 1
+            self._random_count = self._random_count + OccurrenceTFRecords.count(f)
+        self._random_occurrences_per_file = int(round(self._random_count / self._random_file_count))
+        self._random_eval_per_file = int(round((test_train_split_percentage * self._random_occurrences_per_file)))
+
+    def _fetch_random(self):
+        gcs_random_path = self._latest_random_path()
         i = 0
-        while self._random_count < (self._occurrence_count * 10):
+        while True:
             i += 1
             filename = ("%d.tfrecords" % i)
-            local_file = os.path.join(self._occurrence_path, filename)
-            self._gcs_bucket.get_blob(gcs_random_path + "/" + filename).download_to_filename(local_file)
-            self._random_count += OccurrenceTFRecords.count(local_file)
+            local_file = os.path.join(self._random_path, filename)
+            blob = self._gcs_bucket.get_blob(gcs_random_path + "/" + filename)
+            if blob is None:
+                return
+            blob.download_to_filename(local_file)
 
     @staticmethod
     def is_occurrence(s):
@@ -109,14 +152,36 @@ class OccurrenceTFRecords:
                 #     occurrences += 1
         return total
 
-    def _eval_count(self, percentage_split):
-        return int(ceil(self._total_count * percentage_split))
+    @staticmethod
+    def get_first_id(filepath, compression_type=TFRecordCompressionType.NONE):
+        for _name in iglob(filepath):
+            for s in tf.python_io.tf_record_iterator(
+                    _name,
+                    options=tf_record.TFRecordOptions(compression_type)
+            ):
+                e = Example()
+                e.decode_from_string(s)
+                return e.example_id()
 
-    def _generate_random(self, percentage_split):
+
+    def _generate_random_filenames(self):
+        files = set()
+        required_file_count = int(round((
+                (self._train_random_count + self._eval_random_count) / self._random_occurrences_per_file)
+        ))
+        while len(files) <= required_file_count:
+            i = randint(0, self._random_file_count-1)
+            local_file = os.path.join(self._random_path, "%d.tfrecords" % i)
+            files.add(local_file)
+        return files
+
+    @staticmethod
+    def _generate_random_eval_positions(c, filesize):
+        if c == 0:
+            return None
         random_points = set()
-
-        while len(random_points) < self._eval_count(percentage_split):
-            random_points.add(randint(0, self._total_count-1))
+        while len(random_points) < c:
+            random_points.add(randint(0, filesize-1))
         return random_points
 
     def _prepare_eval_train_files(self):
@@ -127,17 +192,10 @@ class OccurrenceTFRecords:
         open(self._eval_output, "w").close()
         open(self._train_output, "w").close()
 
-    def train_test_split(self, percentage_split):
+    def train_test_split(self):
 
-        if percentage_split >= 1:
-            raise ValueError("Percentage split is expected to be less than 1")
-
-        if not self._eval_output.startswith(TEMP_DIRECTORY) or not self._eval_output.startswith(TEMP_DIRECTORY):
+        if not self._eval_output.startswith(TEMP_DIRECTORY) or not self._train_output.startswith(TEMP_DIRECTORY):
             raise ValueError("Invalid Eval/Train Output")
-
-        random_points = self._generate_random(percentage_split)
-
-        self._prepare_eval_train_files()
 
         write_options = tf_record.TFRecordOptions(TFRecordCompressionType.GZIP)
         read_options = tf_record.TFRecordOptions(TFRecordCompressionType.NONE)
@@ -145,71 +203,34 @@ class OccurrenceTFRecords:
         eval_writer = tf.python_io.TFRecordWriter(self._eval_output, options=write_options)
         train_writer = tf.python_io.TFRecordWriter(self._train_output, options=write_options)
 
-        i = 0
-        for _name in iglob(self._occurrence_path + "/*.tfrecords"):
-            for e in tf.python_io.tf_record_iterator(_name, options=read_options):
-                if i in random_points:
+        occurrence_eval_positions = self._generate_random_eval_positions(
+            self._eval_occurrence_count,
+            self._occurrence_count,
+        )
+        for i, e in enumerate(tf.python_io.tf_record_iterator(self._occurrence_file, options=read_options)):
+            if i in occurrence_eval_positions:
+                eval_writer.write(e)
+            else:
+                train_writer.write(e)
+
+        _eval_random_count = 0
+        _train_random_count = 0
+        for f in self._generate_random_filenames():
+            file_size = OccurrenceTFRecords.count(f)
+            remaining_eval_count = (self._eval_random_count - _eval_random_count)
+            random_eval_positions = OccurrenceTFRecords._generate_random_eval_positions(
+                (remaining_eval_count if remaining_eval_count < self._random_eval_per_file else self._random_eval_per_file),
+                file_size,
+            )
+            for i, e in enumerate(tf.python_io.tf_record_iterator(f, options=read_options)):
+                if random_eval_positions is not None and i in random_eval_positions:
+                    _eval_random_count += 1
                     eval_writer.write(e)
-                else:
+                elif i not in random_eval_positions and _train_random_count < self._train_random_count:
+                    _train_random_count += 1
                     train_writer.write(e)
-                i += 1
 
         eval_writer.close()
         train_writer.close()
 
         return self._eval_output, self._train_output
-
-# raw_metadata = metadata_io.read_metadata(
-#     "/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/train/1505519173/transformed_metadata/")
-# input_fn = task.get_transformed_reader_input_fn(
-#            raw_metadata,
-#            "/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/train/1505519173/train_data/*.gz",
-#            1000,
-#             tf.estimator.ModeKeys.TRAIN)
-#
-
-# input_fn=task.get_test_prediction_data_fn(args={
-#     "train_data_path": "/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/train/1505856591"
-# },
-#     raw_data_file_pattern="/Users/m/Downloads/forests-data.tfrecords"
-# )
-# x, y = input_fn()
-#
-# y = tf.contrib.learn.run_n({'x': x})
-# print(y)
-
-# serving_input_func = task.get_serving_input_fn(args={
-#             "train_data_path": "/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/train/1505856591"
-#         },
-#         raw_label_keys=['taxon'])
-#
-# print(serving_input_func())
-
-# options = tf_record.TFRecordOptions(TFRecordCompressionType.GZIP)
-# writer = tf.python_io.TFRecordWriter("/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/occurrences/1505437167/2.tfrecord.gz", options=options)
-
-# total = 0
-# taxa = {}
-# # with io.open('./data.txt', 'w', encoding='utf-8') as f:
-# for filename in iglob('/Users/m/Desktop/phenograph/infra/src/bitbucket.org/heindl/dataflow/gs/floracast-models/occurrences/1508609812/*.gz'):
-#     # print(filename)
-#     for example in tf.python_io.tf_record_iterator(filename, options=options):
-#         e = tf.train.Example.FromString(example)
-#         total = total + 1
-#         taxon = e.features.feature["taxon"].bytes_list.value[0]
-#         if taxon in taxa:
-#             taxa[taxon] += 1
-#         else:
-#             taxa[taxon] = 1
-#
-# print("total occurrences: ", total)
-# print("total taxa: ", len(taxa.keys()))
-# print("occurrences per taxa: ")
-# for k, v in sorted(taxa.items(), key=operator.itemgetter(1)):
-#     print(k, v)
-    # _ = e.features.feature.pop("taxon")
-    # e.features.feature["taxon"].bytes_list.value.append(val)
-    # writer.write(e.SerializeToString())
-
-    # writer.close()
-    # f.write(unicode(json.dumps({'b64': base64.b64encode(example)}, ensure_ascii=False)))

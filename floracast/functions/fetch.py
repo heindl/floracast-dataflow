@@ -89,28 +89,28 @@ class FetchNameUsages(beam.DoFn):
                         logging.debug("Yielding Occurrence Source: %s", res)
                         yield res
 
-@beam.typehints.with_input_types(int)
+ORDER_BY_VALUE = u'GeoFeatureSet.ModifiedAt'
+
+@beam.typehints.with_input_types(beam.typehints.Tuple[long, long])
 @beam.typehints.with_output_types(Example)
 class FetchRandom(beam.DoFn):
-    def __init__(self, project, should_fetch):
+    def __init__(self, project):
         super(FetchRandom, self).__init__()
         self._project = project
-        self._should_fetch = should_fetch
 
-    def process(self, i):
+    def process(self, offset):
 
-        should_fetch = parse_pipeline_argument(self._should_fetch)
-        if should_fetch is None or should_fetch is False:
-            return
+        ref = firestore.Client(project=self._project).collection(u'Random')
 
-        logging.debug("Fetching Random from Firestore")
+        start = list(ref.where(ORDER_BY_VALUE, "==", offset[0]).get())[0]
 
-        db = firestore.Client(project=self._project)
-        col = db.collection(u'Random')
+        q = ref.order_by(ORDER_BY_VALUE).start_at(start)
 
-        # logging.debug("Received %d Random Occurrences from Firestore", len(random_occurrences))
+        if offset[1] != 0:
+            end = list(ref.where(ORDER_BY_VALUE, "==", offset[1]).get())[0]
+            q = q.end_before(end)
 
-        for o in col.get():
+        for o in q.get():
             try:
                 e = ParseExampleFromFirestore("random", o.id, o.to_dict())
             except ValueError as error:
@@ -118,38 +118,41 @@ class FetchRandom(beam.DoFn):
                 continue
             yield e
 
-
-BATCH_COUNT = 100
-
 @beam.typehints.with_input_types(int)
-@beam.typehints.with_output_types(int)
-class GenerateProtectedAreaBatches(beam.DoFn):
-    def __init__(self, project, protected_area_dates):
-        super(GenerateProtectedAreaBatches, self).__init__()
+@beam.typehints.with_output_types(beam.typehints.Tuple[long, long]) # Start, End
+class GeneratePointBatches(beam.DoFn):
+    def __init__(self, project, collection, engage):
+        super(GeneratePointBatches, self).__init__()
         self._project = project
-        self._protected_area_dates = protected_area_dates
-    def process(self, _):
-        logging.debug("Fetching ProtectedAreas from Firestore")
+        self._collection = collection
+        self._engage = engage
 
-        dates = parse_pipeline_argument(self._protected_area_dates)
-        if dates is None or dates.strip() == "":
+    def process(self,i=0):
+
+        engage = parse_pipeline_argument(self._engage)
+        if engage is not True:
             return
 
-        client = firestore.Client(project=self._project)
-        i = 0
+        q = firestore.Client(project=self._project).collection(self._collection).order_by(ORDER_BY_VALUE)
+
+        startRef = list(q.limit(1).get())[0]
 
         while True:
             try:
-                docs = list(client.collection(u'ProtectedAreas').offset(i).limit(1).get())
-                _ = docs[0].id
-            except ValueError:
+                endRef = list(q
+                    .start_at(startRef)
+                    .offset(250)
+                    .limit(1)
+                    .get())[0]
+                yield [startRef.get(ORDER_BY_VALUE), endRef.get(ORDER_BY_VALUE)]
+            except IndexError:
+                yield [startRef.get(ORDER_BY_VALUE), 0]
                 return
-            yield i
-            i = i + BATCH_COUNT
+            startRef = endRef
 
 
 
-@beam.typehints.with_input_types(int)
+@beam.typehints.with_input_types(beam.typehints.Tuple[long, long])
 @beam.typehints.with_output_types(beam.typehints.Dict[str, beam.typehints.Any])
 class FetchProtectedAreas(beam.DoFn):
     def __init__(self, project):
@@ -157,11 +160,18 @@ class FetchProtectedAreas(beam.DoFn):
         self._project = project
 
     def process(self, offset):
-        logging.debug("Fetching ProtectedAreas from Firestore")
 
-        client = firestore.Client(project=self._project)
+        ref = firestore.Client(project=self._project).collection(u'ProtectedAreas')
 
-        for o in client.collection(u'ProtectedAreas').offset(offset).limit(BATCH_COUNT).get():
+        start = list(ref.where(ORDER_BY_VALUE, "==", offset[0]).get())[0]
+
+        q = ref.order_by(ORDER_BY_VALUE).start_at(start)
+
+        if offset[1] != 0:
+            end = list(ref.where(ORDER_BY_VALUE, "==", offset[1]).get())[0]
+            q = q.end_before(end)
+
+        for o in q.get():
             yield o.to_dict()
 
 

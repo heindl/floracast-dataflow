@@ -4,8 +4,8 @@ from __future__ import division
 import logging
 
 import apache_beam as beam
-from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions, StandardOptions, SetupOptions
-from functions.fetch import FetchRandom, FetchNameUsages, FetchOccurrences, GenerateProtectedAreaBatches, FetchProtectedAreas, ExplodeProtectedAreaDates
+from apache_beam.options.pipeline_options import PipelineOptions, DirectOptions, GoogleCloudOptions, StandardOptions, SetupOptions
+from functions import fetch
 from functions.weather import FetchWeatherDoFn
 from functions.write import ExampleRecordWriter
 from functions.example import Example
@@ -39,12 +39,20 @@ class LocalPipelineOptions(PipelineOptions):
             type=str,
             help='NameUsages for which to fetch occurrences')
 
+
         parser.add_value_provider_argument(
             '--random',
             required=False,
             default=False,
             type=bool,
             help='Restrict example fetch to this taxon')
+
+        parser.add_value_provider_argument(
+            '--protected_areas',
+            required=False,
+            default=False,
+            type=bool,
+            help='Include ProtectedAreas in fetch')
 
         parser.add_value_provider_argument(
             '--protected_area_dates',
@@ -71,51 +79,56 @@ def default_project():
 
 def run(argv=None):
 
-    pipeline_options = PipelineOptions()
+    pipeline_options = DirectOptions()
+
+    standard_options = pipeline_options.view_as(StandardOptions)
 
     local_pipeline_options = pipeline_options.view_as(LocalPipelineOptions)
+
     cloud_options = pipeline_options.view_as(GoogleCloudOptions)
     cloud_options.project = default_project()
-    standard_options = pipeline_options.view_as(StandardOptions)
+
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
     with beam.Pipeline(standard_options.runner, options=pipeline_options) as pipeline:
-
             random = pipeline \
                      | 'SetRandomInMotion' >> beam.Create([1]).with_output_types(int) \
+                     | 'GenerateRandomOccurrenceBatches' >> beam.ParDo(fetch.GeneratePointBatches(
+                            project=cloud_options.project,
+                            collection="Random",
+                            engage=local_pipeline_options.random
+                        )) \
                      | 'FetchRandom' >> beam.ParDo(
-                            FetchRandom(
-                                project=cloud_options.project,
-                                should_fetch=local_pipeline_options.random
-                            )
+                            fetch.FetchRandom(project=cloud_options.project)
                         )
 
             protected_areas = pipeline \
                               | 'SetProtectedAreasInMotion' >> beam.Create([1]).with_output_types(int) \
-                              | 'FetchProtectedAreaBatches' >> beam.ParDo(GenerateProtectedAreaBatches(
+                              | 'GenerateProtectedAreaBatches' >> beam.ParDo(fetch.GeneratePointBatches(
                                     project=cloud_options.project,
-                                    protected_area_dates=local_pipeline_options.protected_area_dates
+                                    collection='ProtectedAreas',
+                                    engage=local_pipeline_options.protected_areas
                                 )) \
                               | 'FetchProtectedAreas' >> beam.ParDo(
-                                    FetchProtectedAreas(project=cloud_options.project)
+                                    fetch.FetchProtectedAreas(project=cloud_options.project)
                                 ) \
                               | 'ExplodeProtectedAreaDates' >> beam.ParDo(
-                                    ExplodeProtectedAreaDates(
+                                    fetch.ExplodeProtectedAreaDates(
                                         protected_area_dates=local_pipeline_options.protected_area_dates
                                     )
                                 )
 
-            occurrences = pipeline \
-                          | 'SetOccurrencesInMotion' >> beam.Create([1]).with_output_types(int) \
-                          | 'FetchNameUsages' >> beam.ParDo(
-                                FetchNameUsages(
-                                    project=cloud_options.project,
-                                    nameusages=local_pipeline_options.name_usages
-                                )
-                            ) \
-                          | 'FetchOccurrences' >> beam.ParDo(FetchOccurrences(cloud_options.project))
+            # occurrences = pipeline \
+            #               | 'SetOccurrencesInMotion' >> beam.Create([1]).with_output_types(int) \
+            #               | 'FetchNameUsages' >> beam.ParDo(
+            #                     fetch.FetchNameUsages(
+            #                         project=cloud_options.project,
+            #                         nameusages=local_pipeline_options.name_usages
+            #                     )
+            #                 ) \
+            #               | 'FetchOccurrences' >> beam.ParDo(fetch.FetchOccurrences(cloud_options.project))
 
-            examples = (occurrences, protected_areas, random) | beam.Flatten()
+            examples = (protected_areas, random) | beam.Flatten()
 
             _ = examples \
                    | 'ProjectSeasonRegionKV' >> beam.Map(

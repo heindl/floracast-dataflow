@@ -19,13 +19,18 @@ python -m fetch \
          --staging_location="gs://floracast-datamining/staging" \
          --job_name "floracast-fetch-$TIME" \
          --random true \
+         --protected_areas true \
          --protected_area_dates "$AREA_DATES" \
-         --name_usages "2xUhop2,8vMzLmz,BL6T9EP,MGkiZI9,MXRYVzj,PfxnNDJ,cFHSwIL,qJJlT2R,qWlT2bh,ugkG3de" \
          --setup_file /Users/m/Desktop/floracast/dataflow/floracast/setup.py
-#         --requirements_file /Users/m/Desktop/floracast/dataflow/fetch/requirements.txt
-#
-#
+
+#python -m fetch \
+#         --runner DirectRunner \
+#         --bucket "floracast-datamining" \
+#         --temp_location="/tmp/floracast-datamining/temp" \
+#         --job_name "floracast-fetch-$TIME" \
+#         --protected_areas true \
 #         --protected_area_dates "$AREA_DATES" \
+#         --setup_file /Users/m/Desktop/floracast/dataflow/floracast/setup.py
 
-
-#
+#         --requirements_file /Users/m/Desktop/floracast/dataflow/fetch/requirements.txt
+#         --name_usages "2xUhop2,8vMzLmz,BL6T9EP,MGkiZI9,MXRYVzj,PfxnNDJ,cFHSwIL,qJJlT2R,qWlT2bh,ugkG3de" \

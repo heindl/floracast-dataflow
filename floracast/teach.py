@@ -39,14 +39,14 @@ parser = argparse.ArgumentParser()
 #     help='Save to a specific directory.')
 
 parser.add_argument(
-    '--train_epochs', type=int, default=40, help='Number of training epochs.')
+    '--train_epochs', type=int, default=50, help='Number of training epochs.')
 #
 parser.add_argument(
     '--epochs_per_eval', type=int, default=5,
     help='The number of training epochs to run between evaluations.')
 
 parser.add_argument(
-    '--batch_size', type=int, default=50, help='Number of examples per batch.')
+    '--batch_size', type=int, default=25, help='Number of examples per batch.')
 
 # def main(argv):
 #
@@ -79,6 +79,10 @@ def main(argv):
         name_usage_id=name_usage_id,
         project="floracast-firestore",
         gcs_bucket="floracast-datamining",
+        occurrence_path="/tmp/dHB79w2po/occurrences/",
+        random_path="/tmp/dHB79w2po/random/",
+        multiplier_of_random_to_occurrences=1,
+        test_train_split_percentage=0.1,
     )
 
     # print("Total Experiments", exp.count())
@@ -92,7 +96,7 @@ def main(argv):
         train_batch_size=FLAGS.batch_size,
         train_epochs=FLAGS.epochs_per_eval,
         occurrence_records=occurrence_records,
-        # transform_data_path='/tmp/bkOkg1YYUKup',
+        transform_data_path='/tmp/xU1UbNGMk5Z',
         # experiment=exp.get(experiment_number)
         # model_path='/tmp/SQtjlLHyi/model'
     )
@@ -102,20 +106,23 @@ def main(argv):
     # Train and evaluate the model every `FLAGS.epochs_per_eval` epochs.
     for n in range(FLAGS.train_epochs // FLAGS.epochs_per_eval):
 
-        eval_input_fn, train_input_fn = training_data.input_functions(0.05)
+        eval_input_fn, train_input_fn = training_data.input_functions()
 
         model.train(input_fn=train_input_fn)
 
         res = model.evaluate(input_fn=eval_input_fn)
 
+        # HiddenLayer 0 would be 100 in [100]
+        for v in model.get_variable_names():
+            print(v)
+
         print(res)
 
         # exp.register_eval(experiment_number, res)
 
-
-        # training_data.export_model()
-
-        # training_data.upload_exported_model()
+    # training_data.export_model()
+    #
+    # training_data.upload_exported_model()
 
     # exp.print_tsv()
 

@@ -96,6 +96,8 @@ class ReadExamples(beam.DoFn):
 
     def process(self, file_name, coder):
 
+        print('gcs_filename', file_name)
+
         src = _TFRecordSource(file_pattern=file_name,
                         compression_type=CompressionTypes.UNCOMPRESSED,
                         coder=coder,

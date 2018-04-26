@@ -5,6 +5,8 @@ import constants
 
 
 def parse_pipeline_argument(arg):
+    print("type", type(arg))
+
     if type(arg) is tuple:
         return arg[0]
     elif hasattr(arg, 'get'):
