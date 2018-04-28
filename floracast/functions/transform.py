@@ -99,6 +99,8 @@ class TransformData:
             r[constants.KEY_ECO_NUM] = tft.string_to_int(i[constants.KEY_ECO_NUM], default_value=0)
 
             # Ordinal
+            # TODO: Add feature: difference between min and max temp.
+            # # And then include average temperature as the other.
             r[constants.KEY_ELEVATION] = tft.scale_to_0_1(i[constants.KEY_ELEVATION])
             r[constants.KEY_MIN_TEMP] = tft.scale_to_0_1(i[constants.KEY_MIN_TEMP])
             r[constants.KEY_MAX_TEMP] = tft.scale_to_0_1(i[constants.KEY_MAX_TEMP])

@@ -170,7 +170,7 @@ class OccurrenceTFRecords:
                 (self._train_random_count + self._eval_random_count) / self._random_occurrences_per_file)
         ))
         while len(files) <= required_file_count:
-            i = randint(0, self._random_file_count-1)
+            i = randint(1, self._random_file_count-1)
             local_file = os.path.join(self._random_path, "%d.tfrecords" % i)
             files.add(local_file)
         return files
@@ -178,6 +178,8 @@ class OccurrenceTFRecords:
     @staticmethod
     def _generate_random_eval_positions(c, filesize):
         if c == 0:
+            return None
+        if filesize == 0:
             return None
         random_points = set()
         while len(random_points) < c:
@@ -189,13 +191,21 @@ class OccurrenceTFRecords:
         if not self._eval_output.startswith(TEMP_DIRECTORY) or not self._eval_output.startswith(TEMP_DIRECTORY):
             raise ValueError("Invalid Eval/Train Output")
 
-        open(self._eval_output, "w").close()
-        open(self._train_output, "w").close()
+        try:
+            os.remove(self._eval_output)
+        except OSError:
+            pass
+        open(self._eval_output,"w+").close()
+
+        try:
+            os.remove(self._train_output)
+        except OSError:
+            pass
+        open(self._train_output,"w+").close()
 
     def train_test_split(self):
 
-        if not self._eval_output.startswith(TEMP_DIRECTORY) or not self._train_output.startswith(TEMP_DIRECTORY):
-            raise ValueError("Invalid Eval/Train Output")
+        self._prepare_eval_train_files()
 
         write_options = tf_record.TFRecordOptions(TFRecordCompressionType.GZIP)
         read_options = tf_record.TFRecordOptions(TFRecordCompressionType.NONE)
@@ -229,6 +239,9 @@ class OccurrenceTFRecords:
                 elif i not in random_eval_positions and _train_random_count < self._train_random_count:
                     _train_random_count += 1
                     train_writer.write(e)
+
+        eval_writer.flush()
+        train_writer.flush()
 
         eval_writer.close()
         train_writer.close()

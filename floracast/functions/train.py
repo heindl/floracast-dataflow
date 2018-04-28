@@ -135,13 +135,17 @@ class TrainingData:
         )
         region_column = tf.feature_column.crossed_column(
             [eco_biome_column, eco_num_column],
-            hash_bucket_size=1000
+            hash_bucket_size=(eco_num_buckets * eco_biome_buckets) * 10
         )
         # Note: Tried embedding_column but indicator column was significantly more accurate.
-        res.append(tf.feature_column.indicator_column(region_column))
+        # However, I'm worried about one being weighed over the other so will stick with this one.
+        # res.append(tf.feature_column.indicator_column(region_column))
+        region_embedding_dimensions = ceil((eco_num_buckets * eco_biome_buckets) ** 0.25)
+        tf.feature_column.embedding_column(region_column, dimension=region_embedding_dimensions)
+
 
         # for column in self._experiment['columns']:
-        for s2_level in [3,4]:
+        for s2_level in [3, 4]:
             s2_token_column = 's2_token_%d' % s2_level
             s2_token_buckets = meta_data.schema[s2_token_column].domain.max_value
             s2_token_column = tf.feature_column.categorical_column_with_identity(
@@ -152,22 +156,32 @@ class TrainingData:
             s2_token_embedding_dimensions = ceil(s2_token_buckets ** 0.25)
             res.append(tf.feature_column.embedding_column(s2_token_column, dimension=s2_token_embedding_dimensions))
 
-        # if constants.KEY_MAX_TEMP in self._experiment['columns']:
         res.append(tf.feature_column.numeric_column(
-            constants.KEY_MAX_TEMP,
-            shape=[72])
+            constants.KEY_AVG_TEMP,
+            shape=[24])
         )
 
-        # if constants.KEY_MIN_TEMP in self._experiment['columns']:
         res.append(tf.feature_column.numeric_column(
-            constants.KEY_MIN_TEMP,
-            shape=[72])
+            constants.KEY_TEMP_DIFFERENCE,
+            shape=[24])
         )
+
+        # if constants.KEY_MAX_TEMP in self._experiment['columns']:
+        # res.append(tf.feature_column.numeric_column(
+        #     constants.KEY_MAX_TEMP,
+        #     shape=[72])
+        # )
+
+        # if constants.KEY_MIN_TEMP in self._experiment['columns']:
+        # res.append(tf.feature_column.numeric_column(
+        #     constants.KEY_MIN_TEMP,
+        #     shape=[72])
+        # )
 
         # if constants.KEY_PRCP in self._experiment['columns']:
         res.append(tf.feature_column.numeric_column(
             constants.KEY_PRCP,
-            shape=[96])
+            shape=[32])
         )
 
         # if constants.KEY_ELEVATION in self._experiment['columns']:
@@ -192,12 +206,13 @@ class TrainingData:
             constants.KEY_S2_TOKENS,
             # Maybe 's2_token_2'
             's2_token_3',
-            's2_token_4',
-            # 's2_token_5', # Appeared to overfit.
+            's2_token_4',# Appeared to overfit, especially around washington
+            # 's2_token_5', # Appeared to overfit
         ]
 
     def _weather_keys(self):
         return [
+            # TODO: Potential Feature: Difference Between Min and Max Temp
             constants.KEY_MAX_TEMP,
             constants.KEY_MIN_TEMP,
             constants.KEY_PRCP,
@@ -269,7 +284,7 @@ class TrainingData:
             num_epochs=epochs,
             randomize_input=True,
             # randomize_input=(mode == estimator.ModeKeys.TRAIN),
-            queue_capacity=(batch_size + 1) if (mode == tf.estimator.ModeKeys.EVAL) else (batch_size * 20),
+            queue_capacity=(batch_size + 1) if (mode == tf.estimator.ModeKeys.EVAL) else (batch_size * 100),
         )
 
         features, labels = fn()
@@ -307,20 +322,35 @@ class TrainingData:
 
     def _transform_features(self, features):
 
+        stacked_temp = tf.stack([features[constants.KEY_MAX_TEMP], features[constants.KEY_MIN_TEMP]], axis=1)
+
+        features[constants.KEY_TEMP_DIFFERENCE] = stacked_temp[:, :1] - stacked_temp[:, 1:]
+
+        features[constants.KEY_AVG_TEMP] = (stacked_temp[:, :1] + stacked_temp[:, 1:]) / 2
+
+        features[constants.KEY_AVG_TEMP] = tf.map_fn(
+            TrainingData.reshape_weather_fn(3, 0.40),
+            features[constants.KEY_AVG_TEMP],
+        )
+        features[constants.KEY_TEMP_DIFFERENCE] = tf.map_fn(
+            TrainingData.reshape_weather_fn(3, 0.40),
+            features[constants.KEY_TEMP_DIFFERENCE],
+        )
+
         # if mode == tf.estimator.ModeKeys.EVAL:
         #     labels = tf.Print(labels, [labels])
-        features[constants.KEY_MIN_TEMP] = tf.map_fn(
-            TrainingData.reshape_weather_fn(1, 0.40),
-            features[constants.KEY_MIN_TEMP],
-        )
-
-        features[constants.KEY_MAX_TEMP] = tf.map_fn(
-            TrainingData.reshape_weather_fn(1, 0.40),
-            features[constants.KEY_MAX_TEMP],
-        )
+        # features[constants.KEY_MIN_TEMP] = tf.map_fn(
+        #     TrainingData.reshape_weather_fn(1, 0.40),
+        #     features[constants.KEY_MIN_TEMP],
+        # )
+        #
+        # features[constants.KEY_MAX_TEMP] = tf.map_fn(
+        #     TrainingData.reshape_weather_fn(1, 0.40),
+        #     features[constants.KEY_MAX_TEMP],
+        # )
 
         features[constants.KEY_PRCP] = tf.map_fn(
-            TrainingData.reshape_weather_fn(1, 0.20),
+            TrainingData.reshape_weather_fn(3, 0.20),
             features[constants.KEY_PRCP],
         )
 
@@ -377,10 +407,11 @@ class TrainingData:
 
     def export_model(self):
         model = self.get_estimator()
-        model.export_savedmodel(
+        exported_file = model.export_savedmodel(
             export_dir_base=join(self._model_path, "exports/"),
             serving_input_receiver_fn=self._serving_input_receiver_fn()
         )
+        print("Model Path", exported_file)
 
     def upload_exported_model(self):
         bucket = storage.Client(project=self._project).bucket(self._gcs_bucket)
@@ -400,12 +431,15 @@ class TrainingData:
 
         return tf.estimator.DNNClassifier(
             feature_columns=self._feature_columns(),
-            hidden_units=[100, 75, 50, 25],
-            # hidden_units=[75],
+            # hidden_units=[100, 75, 50, 25],
+            hidden_units=[512, 128],
             # optimizer=tf.train.ProximalAdagradOptimizer(
             #     learning_rate=0.01,
             #     l1_regularization_strength=0.001
             # ),
+            optimizer=tf.train.AdamOptimizer(
+                learning_rate=0.01,
+            ),
             model_dir=self._model_path,
         )
 

@@ -39,14 +39,17 @@ parser = argparse.ArgumentParser()
 #     help='Save to a specific directory.')
 
 parser.add_argument(
-    '--train_epochs', type=int, default=50, help='Number of training epochs.')
+    '--train_epochs', type=int, default=200, help='Number of training epochs.')
 #
 parser.add_argument(
-    '--epochs_per_eval', type=int, default=5,
+    '--epochs_per_eval', type=int, default=4,
     help='The number of training epochs to run between evaluations.')
 
 parser.add_argument(
-    '--batch_size', type=int, default=25, help='Number of examples per batch.')
+    '--batch_size', type=int, default=32, help='Number of examples per batch.')
+
+parser.add_argument(
+    '--name_usage_id', type=str, default="ugkG3de", help='Number of examples per batch.')
 
 # def main(argv):
 #
@@ -73,14 +76,12 @@ def main(argv):
 
     # exp = experiments.Experiments()
 
-    name_usage_id = "qWlT2bh"
-
     occurrence_records = occurrences.OccurrenceTFRecords(
-        name_usage_id=name_usage_id,
+        name_usage_id=FLAGS.name_usage_id,
         project="floracast-firestore",
         gcs_bucket="floracast-datamining",
-        occurrence_path="/tmp/dHB79w2po/occurrences/",
-        random_path="/tmp/dHB79w2po/random/",
+        # occurrence_path="/tmp/occurrence-data-keep/occurrences/",
+        random_path="/tmp/occurrence-data-keep/random/",
         multiplier_of_random_to_occurrences=1,
         test_train_split_percentage=0.1,
     )
@@ -92,11 +93,11 @@ def main(argv):
     training_data = train.TrainingData(
         project="floracast-firestore",
         gcs_bucket="floracast-datamining",
-        name_usage_id=name_usage_id,
+        name_usage_id=FLAGS.name_usage_id,
         train_batch_size=FLAGS.batch_size,
         train_epochs=FLAGS.epochs_per_eval,
         occurrence_records=occurrence_records,
-        transform_data_path='/tmp/xU1UbNGMk5Z',
+        transform_data_path='/tmp/transform-data-keep',
         # experiment=exp.get(experiment_number)
         # model_path='/tmp/SQtjlLHyi/model'
     )
@@ -111,17 +112,42 @@ def main(argv):
         model.train(input_fn=train_input_fn)
 
         res = model.evaluate(input_fn=eval_input_fn)
+        #
+        # for v in model.get_variable_names():
+        #     print(v)
+        # Hidden Layer 0 bias length would be 100 if [100, 50, 25] were given weights.
+        # dnn/hiddenlayer_0/bias
+        # dnn/hiddenlayer_0/bias/t_0/Adagrad
+        # dnn/hiddenlayer_0/kernel
+        # dnn/hiddenlayer_0/kernel/t_0/Adagrad
+        # dnn/hiddenlayer_1/bias
+        # dnn/hiddenlayer_1/bias/t_0/Adagrad
+        # dnn/hiddenlayer_1/kernel
+        # dnn/hiddenlayer_1/kernel/t_0/Adagrad
+        # dnn/hiddenlayer_2/bias
+        # dnn/hiddenlayer_2/bias/t_0/Adagrad
+        # dnn/hiddenlayer_2/kernel
+        # dnn/hiddenlayer_2/kernel/t_0/Adagrad
+        # dnn/hiddenlayer_3/bias
+        # dnn/hiddenlayer_3/bias/t_0/Adagrad
+        # dnn/hiddenlayer_3/kernel
+        # dnn/hiddenlayer_3/kernel/t_0/Adagrad
+        # dnn/input_from_feature_columns/input_layer/s2_token_3_embedding/embedding_weights
+        # dnn/input_from_feature_columns/input_layer/s2_token_3_embedding/embedding_weights/t_0/Adagrad
+        # dnn/input_from_feature_columns/input_layer/s2_token_4_embedding/embedding_weights
+        # dnn/input_from_feature_columns/input_layer/s2_token_4_embedding/embedding_weights/t_0/Adagrad
+        # dnn/logits/bias
+        # dnn/logits/bias/t_0/Adagrad
+        # dnn/logits/kernel
+        # dnn/logits/kernel/t_0/Adagrad
 
-        # HiddenLayer 0 would be 100 in [100]
-        for v in model.get_variable_names():
-            print(v)
-
+        # print(model.get_variable_value('dnn/input_from_feature_columns/input_layer/s2_token_3_embedding/embedding_weights'))
         print(res)
 
         # exp.register_eval(experiment_number, res)
 
-    # training_data.export_model()
-    #
+    training_data.export_model()
+
     # training_data.upload_exported_model()
 
     # exp.print_tsv()
