@@ -39,17 +39,25 @@ parser = argparse.ArgumentParser()
 #     help='Save to a specific directory.')
 
 parser.add_argument(
-    '--train_epochs', type=int, default=200, help='Number of training epochs.')
+    '--train_epochs', type=int, default=300, help='Number of training epochs.')
 #
 parser.add_argument(
-    '--epochs_per_eval', type=int, default=4,
-    help='The number of training epochs to run between evaluations.')
+    '--random-occurrences', type=str, default="gs://floracast-datamining/random/1524750739/*"
+)
+
+parser.add_argument(
+    '--occurrences', type=str, default="gs://floracast-datamining/occurrences/1524411015.tfrecords"
+)
+
+# parser.add_argument(
+#     '--epochs_per_eval', type=int, default=4,
+#     help='The number of training epochs to run between evaluations.')
 
 parser.add_argument(
     '--batch_size', type=int, default=32, help='Number of examples per batch.')
 
-parser.add_argument(
-    '--name_usage_id', type=str, default="ugkG3de", help='Number of examples per batch.')
+# parser.add_argument(
+#     '--name_usage_id', type=str, default="ugkG3de", help='Number of examples per batch.')
 
 # def main(argv):
 #

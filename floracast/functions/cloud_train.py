@@ -1,8 +1,12 @@
+# from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import tensorflow as tf
-from os.path import isdir, join
+from os import path
 from os import makedirs, walk
 from tensorflow_transform.tf_metadata import metadata_io
-from tensorflow_transform.saved import input_fn_maker, saved_transform_io
+from tensorflow_transform.saved import saved_transform_io
 from tensorflow.contrib.learn.python.learn.utils import input_fn_utils
 import constants
 from math import ceil
@@ -35,6 +39,8 @@ class TrainingData:
                  experiment=None
                  ):
 
+
+
         self._experiment = experiment
         if self._experiment is not None:
             print('Launching Experiment %d' % self._experiment['id'])
@@ -48,20 +54,20 @@ class TrainingData:
 
         self._local_path = self._make_temp_dir()
 
-        self._model_path = model_path if model_path else join(self._local_path, "model")
+        self._model_path = model_path if model_path else path.join(self._local_path, "model")
 
         self._transform_data_path = transform_data_path if transform_data_path else self._fetch_latest_transformer()
 
-        self._raw_metadata_path = join(self._transform_data_path, transform.TRANSFORMED_RAW_METADATA_PATH)
-        self._transformed_metadata_path = join(self._transform_data_path, transform.TRANSFORMED_METADATA_PATH)
-        self._transform_fn_path = join(self._transform_data_path, transform.TRANSFORM_FN_PATH)
+        self._raw_metadata_path = path.join(self._transform_data_path, transform.TRANSFORMED_RAW_METADATA_PATH)
+        self._transformed_metadata_path = path.join(self._transform_data_path, transform.TRANSFORMED_METADATA_PATH)
+        self._transform_fn_path = path.join(self._transform_data_path, transform.TRANSFORM_FN_PATH)
 
         for dir in [
             self._raw_metadata_path,
             self._transformed_metadata_path,
             self._transform_fn_path,
         ]:
-            if not isdir(dir):
+            if not path.isdir(dir):
                 raise ValueError("Directory doesn't exist: ", dir)
 
         self._tfrecord_parser = occurrence_records
@@ -91,7 +97,7 @@ class TrainingData:
                 dirname = "/".join(b.name.split("/")[2:])
                 if len(dirname) > 0:
                     try:
-                        makedirs(join(self._local_path, dirname))
+                        makedirs(path.join(self._local_path, dirname))
                     except OSError as err:
                         if err == errno.EEXIST:
                             pass
@@ -108,9 +114,9 @@ class TrainingData:
 
         for f in file_list[latest_date]:
             fname = "/".join(f.name.split("/")[2:])
-            f.download_to_filename(join(self._local_path, fname))
+            f.download_to_filename(path.join(self._local_path, fname))
 
-        return join(self._local_path)
+        return path.join(self._local_path)
 
     def _feature_columns(self):
 
@@ -153,7 +159,7 @@ class TrainingData:
                 num_buckets=s2_token_buckets,
                 default_value=0
             )
-            s2_token_embedding_dimensions = ceil(s2_token_buckets ** 0.25)s
+            s2_token_embedding_dimensions = ceil(s2_token_buckets ** 0.25)
             res.append(tf.feature_column.embedding_column(s2_token_column, dimension=s2_token_embedding_dimensions))
 
         res.append(tf.feature_column.numeric_column(
@@ -263,7 +269,27 @@ class TrainingData:
     def _transformed_metadata(self):
         return metadata_io.read_metadata(self._transformed_metadata_path)
 
-    def _transformed_input_fn(self, raw_data_file_pattern, mode, batch_size, epochs):
+    def _transformed_input_fn(self,
+                              occurrence_count,
+                              occurrence_file,
+                              random_occurrence_path,
+                              mode,
+                              batch_size,
+                              epochs
+                              ):
+
+
+        dataset = (tf.data.TFRecordDataset(occurrence_file, buffer_size=occurrence_count))
+
+        dataset = dataset.shuffle(NUM_TRAIN_INSTANCES)
+        dataset = dataset.apply(tf.contrib.data.map_and_batch(file_decode_csv, batch_size, num_parallel_batches=4))
+        dataset = dataset.prefetch(4)
+
+        raw_features, raw_label = dataset.make_one_shot_iterator().get_next()
+
+        _, transformed_features = saved_transform_io.partially_apply_saved_transform(
+            os.path.join(working_dir, transform_fn_io.TRANSFORM_FN_DIR), raw_features)
+
 
         labels = ([constants.KEY_EXAMPLE_ID] if mode == tf.estimator.ModeKeys.PREDICT else [constants.KEY_CATEGORY])
 
@@ -408,7 +434,7 @@ class TrainingData:
     def export_model(self):
         model = self.get_estimator()
         exported_file = model.export_savedmodel(
-            export_dir_base=join(self._model_path, "exports/"),
+            export_dir_base=path.join(self._model_path, "exports/"),
             serving_input_receiver_fn=self._serving_input_receiver_fn()
         )
         print("Model Path", exported_file)
@@ -416,12 +442,12 @@ class TrainingData:
     def upload_exported_model(self):
         bucket = storage.Client(project=self._project).bucket(self._gcs_bucket)
 
-        export_dir = join(self._model_path, "exports/")
+        export_dir = path.join(self._model_path, "exports/")
         for subdir, dirs, files in walk(export_dir):
             subdir = subdir[len(export_dir):]
             for file in files:
-                local_path = join(export_dir, subdir, file)
-                gcs_path = "models/%s/%s" % (self._name_usage_id, join(subdir, file))
+                local_path = path.join(export_dir, subdir, file)
+                gcs_path = "models/%s/%s" % (self._name_usage_id, path.join(subdir, file))
                 bucket.blob(gcs_path).upload_from_filename(local_path)
 
 
